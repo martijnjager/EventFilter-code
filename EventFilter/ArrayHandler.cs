@@ -3,17 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace EventFilter
 {
-    public class ArrayHandler
+    public static class Array
     {
-        public ArrayHandler()
-        {
-
-        }
-
-        public string ConvertArrayToString(string[] array, string delimater)
+        public static string ConvertArrayToString(string[] array, string delimater)
         {
             string returnString = "";
 
@@ -31,12 +27,12 @@ namespace EventFilter
             return returnString;
         }
 
-        public string[] ConvertStringToArray(string arr)
+        public static string[] ConvertStringToArray(string arr)
         {
             return new string[] { arr };
         }
 
-        public string[] ConvertStringToArray(string arr, string delimater)
+        public static string[] ConvertStringToArray(string arr, string delimater)
         {
             arr.Replace("\t", "");
             string[] array = arr.Split(new string[] { delimater }, StringSplitOptions.None);
@@ -44,7 +40,7 @@ namespace EventFilter
             return array;
         }
 
-        public string ConcatArrayToString(string[] array)
+        public static string ConcatArrayToString(string[] array)
         {
             string returnString = "";
 
@@ -56,7 +52,7 @@ namespace EventFilter
             return returnString;
         }
 
-        public string ConcatNewLineArrayToString(string[] array)
+        public static string ConcatNewLineArrayToString(string[] array)
         {
             string returnString = "";
 
@@ -71,30 +67,42 @@ namespace EventFilter
             return returnString;
         }
 
-        public string[] RecreateArray(string[] array)
-        {
-            if(array != null)
-            {
-                for(int i = 0; i < array.Length; i++)
-                {
-                    if(array[i] == null)
-                    {
-                        array.Where(w => w != array[i]).ToArray();
-                    }
-                }
-            }
-
-            return array;
-        }
-
-        public string ConvertListToString(List<string> array, string delimater)
+        public static string ConvertListToString(List<string> array, string delimater)
         {
             return string.Join(delimater, array.ToArray());
         }
 
-        public string[] ConvertListToArray(List<string> array)
+        public static string[] ConvertListToArray(List<string> array)
         {
             return array.ToArray();
+        }
+
+        public static string[] ConstructArray(List<string> list)
+        {
+            string[] arr = new string[list.Count];
+            int z = 0;
+            // Construct global eventDate
+            foreach (string str in list)
+            {
+                arr[z] = str;
+                z++;
+            }
+
+            return arr;
+        }
+
+        public static string[] ConstructEventArray(string location)
+        {
+            var lines = File.ReadLines(location);
+            string[] array = new string[lines.Count()];
+            int counter = 0;
+            foreach(var line in lines)
+            {
+                array[counter] = line;
+                ++counter;
+            }
+
+            return array;
         }
     }
 }

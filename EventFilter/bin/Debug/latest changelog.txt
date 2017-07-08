@@ -1,0 +1,1 @@
+- improved scanning and reading events that are large

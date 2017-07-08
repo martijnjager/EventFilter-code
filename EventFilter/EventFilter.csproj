@@ -63,7 +63,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ArrayHandler.cs" />
+    <Compile Include="Background.cs" />
     <Compile Include="Bug.cs" />
+    <Compile Include="FileIO.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

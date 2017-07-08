@@ -44,6 +44,7 @@
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tpEventFilter = new System.Windows.Forms.TabPage();
+            this.btnResultCleanup = new System.Windows.Forms.Button();
             this.lbEventResult = new System.Windows.Forms.ListView();
             this.columnDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnEvent = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -51,7 +52,6 @@
             this.lblTime = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.tpTemplate = new System.Windows.Forms.TabPage();
-            this.btnAnalyzeResults = new System.Windows.Forms.Button();
             this.rtbResults = new System.Windows.Forms.RichTextBox();
             this.tpBugReport = new System.Windows.Forms.TabPage();
             this.button1 = new System.Windows.Forms.Button();
@@ -63,6 +63,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.rtbBugReport = new System.Windows.Forms.RichTextBox();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.SearchEventBGWorker = new System.ComponentModel.BackgroundWorker();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
@@ -202,6 +203,7 @@
             // 
             // tpEventFilter
             // 
+            this.tpEventFilter.Controls.Add(this.btnResultCleanup);
             this.tpEventFilter.Controls.Add(this.lbEventResult);
             this.tpEventFilter.Controls.Add(this.lblTime);
             this.tpEventFilter.Controls.Add(this.label1);
@@ -216,6 +218,16 @@
             this.tpEventFilter.TabIndex = 0;
             this.tpEventFilter.Text = "tabPage1";
             this.tpEventFilter.UseVisualStyleBackColor = true;
+            // 
+            // btnResultCleanup
+            // 
+            this.btnResultCleanup.Location = new System.Drawing.Point(727, 549);
+            this.btnResultCleanup.Name = "btnResultCleanup";
+            this.btnResultCleanup.Size = new System.Drawing.Size(96, 23);
+            this.btnResultCleanup.TabIndex = 11;
+            this.btnResultCleanup.Text = "Cleanup results";
+            this.btnResultCleanup.UseVisualStyleBackColor = true;
+            this.btnResultCleanup.Click += new System.EventHandler(this.btnResultCleanup_Click);
             // 
             // lbEventResult
             // 
@@ -267,7 +279,6 @@
             // 
             // tpTemplate
             // 
-            this.tpTemplate.Controls.Add(this.btnAnalyzeResults);
             this.tpTemplate.Controls.Add(this.rtbResults);
             this.tpTemplate.Location = new System.Drawing.Point(4, 5);
             this.tpTemplate.Name = "tpTemplate";
@@ -276,16 +287,6 @@
             this.tpTemplate.TabIndex = 1;
             this.tpTemplate.Text = "tabPage2";
             this.tpTemplate.UseVisualStyleBackColor = true;
-            // 
-            // btnAnalyzeResults
-            // 
-            this.btnAnalyzeResults.Location = new System.Drawing.Point(7, 534);
-            this.btnAnalyzeResults.Name = "btnAnalyzeResults";
-            this.btnAnalyzeResults.Size = new System.Drawing.Size(102, 23);
-            this.btnAnalyzeResults.TabIndex = 1;
-            this.btnAnalyzeResults.Text = "Perform analysis";
-            this.btnAnalyzeResults.UseVisualStyleBackColor = true;
-            this.btnAnalyzeResults.Click += new System.EventHandler(this.btnAnalyzeResults_Click);
             // 
             // rtbResults
             // 
@@ -387,6 +388,11 @@
             this.rtbBugReport.TabIndex = 0;
             this.rtbBugReport.Text = "";
             // 
+            // SearchEventBGWorker
+            // 
+            this.SearchEventBGWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.SearchEventBGWorker_DoWork);
+            this.SearchEventBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.SearchEventBGWorker_ProgressChanged);
+            // 
             // backgroundWorker1
             // 
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
@@ -453,10 +459,11 @@
         private System.Windows.Forms.ListView lbEventResult;
         private System.Windows.Forms.ColumnHeader columnDate;
         private System.Windows.Forms.ColumnHeader columnEvent;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.ComponentModel.BackgroundWorker SearchEventBGWorker;
         private System.Windows.Forms.RichTextBox rtbResults;
-        private System.Windows.Forms.Button btnAnalyzeResults;
         private System.Windows.Forms.ColumnHeader columnId;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Windows.Forms.Button btnResultCleanup;
     }
 }
 

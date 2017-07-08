@@ -7,57 +7,75 @@ using System.IO;
 
 namespace EventFilter
 {
-    public class Bug
+    public static class Bug
     {
-        ArrayHandler array = new ArrayHandler();
+        public static string exception = "";
 
-        public void CreateBugReport(string eventLog, string bugreport, string keywords)
+        static string path = file.GetLocation() + "\\bugs\\";
+
+        public static void CreateBugReport(string eventLog, string bugreport, string keywords)
         {
-            var eventLogs = File.ReadLines(eventLog);
-            string[] events = new string[eventLogs.Count()];
-            string bugReport = bugreport.Replace("\n", "\r\n");
-
-            int i = -1;
-            foreach (var line in eventLogs)
+            try
             {
-                i++;
-                events[i] = line;
-            }
+                var eventLogs = File.ReadLines(eventLog);
+                string[] events = new string[eventLogs.Count()];
+                string bugReport = bugreport.Replace("\n", "\r\n");
 
-            for (i = 0; i < events.Length; i++)
-            {
-                events[i] = i + " " + events[i] + "\r\n";
-            }
-
-            string eventText = array.ConcatArrayToString(events);
-
-            if (!Directory.Exists(Directory.GetCurrentDirectory() + "\\bug"))
-            {
-                Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\bug");
-            }
-
-            File.WriteAllText(Directory.GetCurrentDirectory() + "\\bug\\bugReport.txt", bugReport);
-
-            File.WriteAllText(Directory.GetCurrentDirectory() + "\\bug\\eventLog.txt", eventText);
-
-            if (!File.Exists(Directory.GetCurrentDirectory() + "\\bug\\keywords.txt"))
-            {
-                if(!File.Exists(Directory.GetCurrentDirectory() + "\\keywords.txt"))
+                int i = -1;
+                foreach (var line in eventLogs)
                 {
-                    File.WriteAllText(Directory.GetCurrentDirectory() + "\\keywords.txt", keywords);
+                    i++;
+                    events[i] = line;
                 }
-                File.Copy(Directory.GetCurrentDirectory() + "\\keywords.txt", Directory.GetCurrentDirectory() + "\\bug" + "\\keywords.txt");
+
+                string[] eventOriginal = events;
+
+                for (i = 0; i < events.Length; i++)
+                {
+                    events[i] = i + " " + events[i] + "\r\n";
+                }
+
+                if (bugreport != "")
+                {
+                    File.WriteAllText(path + "problemReport.txt", bugReport);
+                    //CreateFile(bugReport, path + "problemReport.txt");
+                }
+
+                string eventText = Array.ConcatArrayToString(events);
+
+                File.WriteAllText(path + "eventlogBackup.txt", eventText);
+
+                //if (File.Exists(eventLog))
+                //{
+                //    if(!File.Exists(path + "eventlog.txt"))
+                //        File.Copy(eventLog, path + "eventlog.txt");
+                //}
+                //else
+                //{
+                //    //CreateFile(events, path + "eventlog.txt");
+                //    File.WriteAllText(path + "eventlog.txt", eventLog);
+                //}
+
+                if (keywords != "")
+                {
+                    File.WriteAllText(path + "keywordsBackup.txt", keywords);
+                    //CreateFile(new string[] { keywords }, path + "keywords.txt");
+                }
+            }
+            catch(Exception e)
+            {
+                exception = e.Message;
             }
         }
 
-        public static void Delete(string delete = "")
+        private static void CreateFile(string[] data, string filename)
         {
-            delete = null;
-        }
-        
-        public static void Delete(object delObj)
-        {
-            delObj = null;
+            StreamWriter bugData = new StreamWriter(filename);
+
+            for(int i =0;i<data.Length; i++)
+            {
+                bugData.WriteLine(data[i]);
+            }
         }
     }
 }

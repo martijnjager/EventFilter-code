@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Threading;
+using System.Collections;
 
 namespace EventFilter
 {
@@ -28,9 +29,6 @@ namespace EventFilter
          *      xxxxx
          *      xxxx
          *      
-         * save results in text file
-         * new folder for results
-         * 
          * Bug report - doing
          * 
          * Option: add keywords to ignore
@@ -38,58 +36,68 @@ namespace EventFilter
          */
 
 
-        public string _filePath = "";
-        public string _keyword = "";
-        public ListViewItem listview;
-        public string[] _eventArray = new string[0];
-        public string[] _eventId = new string[0];
-        public string[] _keywords = new string[0];
-        public string[,] _eventsPerKey = new string[0,100];
-        public List<string> _eventStack = new List<string>();
-
-        ArrayHandler array = new ArrayHandler();
-        BackgroundWorker IOHandler = new BackgroundWorker();
-        SearchEvents events = new SearchEvents();
-        Bug bug = new Bug();
+        private static string _filePath;
+        private static string _keyword;
+        private ListViewItem listview;
+        string[] _eventArray = new string[0];
+        string[] _keywords = new string[0];
+        
+        List<string> _eventId = new List<string>();
+        List<string> _events = new List<string>();
+        List<string> _eventDate = new List<string>();
 
         private int sortColumn = -1;
+
+        SearchEvents events = new SearchEvents();
+        Background background = new Background();
+
+        public static string FilePath
+        {
+            get { return _filePath; }
+        }
+
+        public static string Keyword
+        {
+            get { return _keyword; }
+        }
 
         public Form1()
         {
             InitializeComponent();
 
+            Directory.CreateDirectory(file.GetLocation() + "\\bugs");
+
             listview = new ListViewItem();
 
-            BugReportLog("Developer: Martijn (axe0)");
-            BugReportLog("App version: BETA");
-            BugReportLog("");
-            BugReportLog("");
+            _filePath = file.CheckFileExistence("\\eventlog.txt") ? _filePath = file.GetLocation() + "\\eventlog.txt" : "";
 
-            if (events.CheckFileExistence("\\eventlog.txt") == true)
-            {
-                _filePath = Directory.GetCurrentDirectory() + "\\eventlog.txt";
-                lblSelectedFile.Text = "Selected file: " + _filePath;
+            lblSelectedFile.Text = "Selected file: " + _filePath;
 
+            if(_filePath == "")
+                BugReportLog("No eventlog.txt found");
+            else
                 BugReportLog("Load event log from " + _filePath);
-            }
 
-            if(events.CheckFileExistence("\\keywords.txt") == true)
-            {
-                string keywords = Directory.GetCurrentDirectory() + "\\keywords.txt";
-                tbKeywords.Text = events.GetKeywords(keywords);
+            string keywords = file.CheckFileExistence("\\keywords.txt") ? keywords = file.GetLocation() + "\\keywords.txt" : "";
+            tbKeywords.Text = file.GetKeywords(keywords);
 
+            if(keywords == "")
+                BugReportLog("No keywords.txt found");
+            else
                 BugReportLog("Load keywords to use from " + keywords);
-            }
 
+            SearchEventBGWorker.WorkerReportsProgress = true;
             backgroundWorker1.WorkerReportsProgress = true;
 
             BugReportLog("Initialization completed!");
         }
 
-
+        #region buttons
         private void btnSearch_Click(object sender, EventArgs e)
         {
             BugReportLog("Start searching events");
+
+            _eventArray = null;
 
             _keyword = tbKeywords.Text;
             _keyword = _keyword.Replace(" ", "");
@@ -97,7 +105,7 @@ namespace EventFilter
 
             lbEventResult.Items.Clear();
 
-            BugReportLog("Keywords to use: " + array.ConvertArrayToString(keyWords, ", "));
+            BugReportLog("Keywords to use: " + Array.ConvertArrayToString(keyWords, ", "));
 
             if (_filePath != "openFileDialog1")
             {
@@ -107,16 +115,10 @@ namespace EventFilter
 
                 if(_keyword != "")
                 {
-                    //Thread IOThread = new Thread(new ThreadStart(SearchEvents));
-
-                    //IOThread.Start();
-
-                    if (backgroundWorker1.IsBusy == false)
+                    if (SearchEventBGWorker.IsBusy == false)
                     {
-                        backgroundWorker1.RunWorkerAsync();
+                        SearchEventBGWorker.RunWorkerAsync();
                     }
-
-                    //SearchEvents();
                 }
                 else
                 {
@@ -129,40 +131,60 @@ namespace EventFilter
             }
         }
 
-        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
+        private void btnSaveBugReport(object sender, EventArgs e)
+        {
+            if (_filePath != "" && tbKeywords.Text != "")
+            {
+                Bug.CreateBugReport(_filePath, rtbBugReport.Text, tbKeywords.Text);
+
+                if(Bug.exception != "")
+                {
+                    MessageWrite(Bug.exception, "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string directory = file.GetLocation() + "\\bugs";
+
+                MessageBox.Show("Logs have been saved in " + directory, "Logs saved", MessageBoxButtons.OK);
+            }
+                
+            else
+                MessageBox.Show("No log could be saved! Check if the eventlog and keywords are loaded", "No log", MessageBoxButtons.OK);
+        }
+
+        private void btnResultCleanup_Click(object sender, EventArgs e)
+        {
+            if(backgroundWorker1.IsBusy == false)
+            {
+                //MessageWrite("This may take some time", "Cleaning up", MessageBoxButtons.OK, MessageBoxIcon.None);
+                foreach (ListViewItem item in lbEventResult.Items)
+                {
+                    item.Remove();
+                }
+
+                backgroundWorker1.RunWorkerAsync();
+            }
+        }
+        #endregion
+
+        #region BackgroundWorkers
+        private void SearchEventBGWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
 
-            //try
-            //{
-                // Initialization
+            try
+            {
                 _keyword = tbKeywords.Text;
-                var keywords = events.ValidateKeywords(_keyword);
+                var keywords = background.ValidateKeywords(_keyword);
                 var watch = System.Diagnostics.Stopwatch.StartNew();
-
-                var lines = File.ReadLines(_filePath);
-                _eventArray = new string[lines.Count()];
-                _eventId = new string[lines.Count()];
-
+                _eventArray = Array.ConstructEventArray(_filePath);
                 int resultCount = 0;
-
-                worker.ReportProgress(1, "Log: Parameters used: \t filepath: " + _filePath + "\n\t keywords to use: " + array.ConvertArrayToString(keywords, ", "));
-
-                worker.ReportProgress(2, "Log: Lines in eventArray: " + lines.Count());
-
+                worker.ReportProgress(1, "Log: Parameters used: \t filepath: " + _filePath + "\n\t keywords to use: " + Array.ConvertArrayToString(keywords, ", "));
+                worker.ReportProgress(2, "Log: Lines in eventArray: " + _eventArray.Length);
                 int i = -1;
-                foreach (var line in lines)
-                {
-                    i++;
-                    _eventArray[i] = line;
-                }
-
                 var lastKeyword = keywords[0];
-
                 worker.ReportProgress(3, "Log: First lastKeyword: " + lastKeyword);
-
                 int progress = 3;
-
                 int keyProgress = 0;
                 int logProgress = keyProgress;
 
@@ -183,45 +205,26 @@ namespace EventFilter
 
                         if (_eventArray[i].Contains(key))
                         {
-                            int counter = 0;
+                            int a = 0;
 
-                            for (int a = -12; a < counter; a++)
+                            while (!_eventArray[i + a].Contains("Event["))
                             {
-                                /**
-                                 * Scan the event Description part to find the keyword, if not found nothing is returned.
-                                 */
-
-                                string text = _eventArray[i + a];
-                                // Count back from position of keyword to get the first line of description
-                                if (_eventArray[i - 1].Contains("Description"))
+                                if (_eventArray[i + a].Contains("Description"))
                                 {
-                                    eventEntry[1] = _eventArray[i].ToString();
-                                    resultCount++;
+                                    eventEntry[1] = _eventArray[(i + a) + 1].ToString();
+                                    _events.Add(_eventArray[i]);
+
+                                    // Add the first line of description into the list.
+                                    _eventId.Add((i + a + 1).ToString());
+
                                     localCounter++;
-
-                                    break;
+                                    resultCount++;
                                 }
-                                else
-                                {
-                                    text = _eventArray[i + a];
-                                    if (text.Contains("Description"))
-                                    {
-                                        eventEntry[1] = _eventArray[(i + a) + 1].ToString();
-                                        localCounter++;
-                                        resultCount++;
 
-                                        break;
-                                    }
-                                }
-                            }
-
-                            // Count back from position of keyword to get the date
-                            for (int a = -13; a < counter; a++)
-                            {
-                                string text = _eventArray[i + a];
-                                if (text.Contains("Date"))
+                                if (_eventArray[i + a].Contains("Date"))
                                 {
-                                    _eventId[i] = i.ToString();
+
+                                    _eventDate.Add(_eventArray[i + a]);
 
                                     // Id
                                     eventEntry[2] = i.ToString();
@@ -233,12 +236,71 @@ namespace EventFilter
 
                                     break;
                                 }
+                                a--;
+                            }
+
+                            // Count back from position of keyword to get the date
+                            //for (int a = -13; a < counter; a++)
+                            //{
+                            //    if (_eventArray[i + a].Contains("Date"))
+                            //    {
+                            //        _eventId.Add(i.ToString());
+
+                            //        _eventDate.Add(_eventArray[i + a]);
+
+                            //        // Id
+                            //        eventEntry[2] = i.ToString();
+
+                            //        eventEntry[0] = _eventArray[i + a].ToString();
+
+                            //        worker.ReportProgress(logProgress + progress, "Log: \t Line nr: " + (i + a) + ": " + eventEntry[0] + ": " + eventEntry[1]);
+                            //        logProgress++;
+
+                            //        break;
+                            //    }
+                            //}
+
+                            //for (int a = -12; a < counter; a++)
+                            //{
+                            //    if (_eventArray[i + a].Contains("Description"))
+                            //    {
+                            //        eventEntry[1] = _eventArray[(i + a) + 1].ToString();
+                            //        _events.Add(_eventArray[i]);
+                            //        localCounter++;
+                            //        resultCount++;
+
+                            //        break;
+                            //    }
+
+                                // Count back from position of keyword to get the first line of description
+                                //if (_eventArray[i - 1].Contains("Description"))
+                                //{
+                                //    eventEntry[1] = _eventArray[i].ToString();
+                                //    _events.Add(_eventArray[i]);
+                                //    resultCount++;
+                                //    localCounter++;
+
+                                //    break;
+                                //}
+                                //else
+                                //{
+                                //}
+                            //}
+
+                            if(resultCount >= 10000)
+                            {
+                                MessageWrite("There are over 5000 events matching the keywords", "Over 5000 events", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                break;
                             }
 
                             worker.ReportProgress(logProgress + progress, "Event: " + eventEntry[0] + " + " + eventEntry[1] + " + " + eventEntry[2]);
                             logProgress++;
-                            //AddListItem(eventEntry);
+                        }
                     }
+
+                    if (resultCount >= 10000)
+                    {
+                        break;
                     }
 
                     worker.ReportProgress(logProgress + progress, "Log: \nFound " + localCounter.ToString() + " with keyword " + key);
@@ -261,24 +323,25 @@ namespace EventFilter
                 var elapsedTime = watch.Elapsed.TotalSeconds;
 
                 worker.ReportProgress(logProgress + progress, "Time: Found results in: " + elapsedTime.ToString());
-                //lblTime.Text = ;
-            /*}
+
+                e.Result = _eventId;
+            }
             catch (Exception exc)
             {
-                worker.ReportProgress(0, "Error: " + exc.Message);
+                worker.ReportProgress(0, "Log: Error: " + exc.Message);
                 MessageBox.Show("A problem has occured.\nPlease notify the developer of this issue!", "App crashed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }*/
+            }
         }
 
-        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void SearchEventBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             if(e.UserState.ToString().Contains("Log: "))
             {
                 BugReportLog(e.UserState.ToString().Replace("Log: ", ""));
             }
-            if (e.UserState.ToString().Contains("Event: "))
+            if (e.UserState.ToString().Contains("Event: ") && e.UserState.ToString().Contains("Date: "))
             {
-                AddListItem(array.ConvertStringToArray(e.UserState.ToString().Replace("Event: ", ""), " + "));
+                AddListItem(Array.ConvertStringToArray(e.UserState.ToString().Replace("Event: ", ""), " + "));
             }
             if (e.UserState.ToString().Contains("Time: "))
             {
@@ -288,27 +351,57 @@ namespace EventFilter
             {
                 lblResultCount.Text = e.UserState.ToString().Replace("Counter: ", "");
             }
-
-
-            //var addViewItem = new ListViewItem(item);
-            //lbEventResult.Items.Add(addViewItem);
         }
 
-        private void btnSaveBugReport(object sender, EventArgs e)
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            bug.CreateBugReport(_filePath, rtbBugReport.Text, tbKeywords.Text);
+            //string[] eventArray = _events.ToArray();
+            string[] eventArr = events.FilterDuplicates(_events, _eventId, _eventDate);
 
-            string directory = Directory.GetCurrentDirectory() + "\\bug";
+            string[] eventId = events.eventId;
+            string[] eventDate = events.eventDate;
 
-            MessageBox.Show("Logs have been saved in " + directory, "Logs saved", MessageBoxButtons.OK);
+            int recorder = 0;
+
+            for (int i = 0; i < eventId.Length; i++)
+            {
+                string[] data = new string[3];
+                data[0] = "Data: " + eventDate[i];
+                data[1] = "Data: " + eventArr[i];
+                data[2] = "Data: " + eventId[i];
+
+                backgroundWorker1.ReportProgress(recorder, data);
+                recorder++;
+            }
+
+            backgroundWorker1.ReportProgress(recorder + 1, "Resultcount: " +lblResultCount.Text + "\t, After filtering: " + eventArr.Length);
         }
 
-        //private void SearchEvents(object sender, EventArgs e)
-        //{
-        //    BackgroundWorker 
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            if (e.UserState.ToString().Contains("Resultcount: ") == false)
+            {
+                string[] items = ((IEnumerable)e.UserState).Cast<object>().Select(x => x.ToString()).ToArray();
 
-            
-        //}
+                if (items.Length > 1)
+                {
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        items[i] = items[i].Replace("Data: ", "").Trim('{').Trim('}');
+                    }
+                    AddListItem(items);
+
+                    //BugReportLog("Filtering results to: \n\t" + array.ConvertArrayToString(items, "\n\t"));
+                }
+            }
+            else
+            {
+                lblResultCount.Text = e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}');
+            }
+        }
+        #endregion
+
+        #region Voids to append elements
 
         public void BugReportLog(string log = "")
         {
@@ -317,6 +410,7 @@ namespace EventFilter
 
         public void AddListItem(string[] item)
         {
+            BugReportLog("Adding: " + Array.ConvertArrayToString(item, "\t")+"\n");
             var addViewItem = new ListViewItem(item);
             lbEventResult.Items.Add(addViewItem);
         }
@@ -335,27 +429,9 @@ namespace EventFilter
         {
             lblTime.Text = text;
         }
+        #endregion
         
-        private void AddKeywordRtbResult(string keyword)
-        {
-            rtbResults.AppendText("[b]" + keyword + "[/b]\n");
-        }
-
-        private void AddEventRTBResults(string[,] data)
-        {
-            rtbResults.AppendText("[code]");
-            foreach(string d in data)
-            {
-                rtbResults.AppendText(d + "\n");
-            }
-            rtbResults.AppendText("[/code]\n\n");
-        }
-
-        private void AddCounterRtbResults(int counter)
-        {
-            rtbResults.AppendText("Events: " + counter.ToString() + "\n");
-        }
-
+        #region MenuItems
         private void miSaveKeywords_Click(object sender, EventArgs e)
         {
             BugReportLog("Start saving keywords");
@@ -397,12 +473,12 @@ namespace EventFilter
 
             BugReportLog("Keywords to use location: " + keyLoc);
 
-            tbKeywords.Text = events.GetKeywords(keyLoc);
+            tbKeywords.Text = file.GetKeywords(keyLoc);
         }
 
         private void miAbout_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Name: \t EventFilter\nDeveloper: Martijn (axe0)\nVersion: \t BETA\nDate: \t22-06-2017\\"+ System.DateTime.Now, "About app", MessageBoxButtons.OK);
+            MessageBox.Show("Name: \t EventFilter\nDeveloper: Martijn (axe0)\nVersion: \t BETA\nDate: \t01-07-2017\\"+ System.DateTime.Now, "About app", MessageBoxButtons.OK);
         }
 
         private void miTemplate_Click(object sender, EventArgs e)
@@ -419,12 +495,15 @@ namespace EventFilter
         {
             tabControl1.SelectedTab = tpBugReport;
         }
+        #endregion
 
-
+        #region Listview actions
         private void lbEventResult_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            //string eventData = events.SearchEvent(_eventArray, lbEventResult.SelectedItems[0].SubItems[0].Text, lbEventResult.SelectedItems[0].SubItems[1].Text, rtbBugReport.Text);
-            string eventData = events.SearchEvent(_eventArray, lbEventResult.SelectedItems[0].SubItems[2].Text);
+            BugReportLog("\n\nCalling event with id: " + lbEventResult.SelectedItems[0].SubItems[2].Text);
+            string eventData = events.SearchEvent(lbEventResult.SelectedItems[0].SubItems[2].Text);
+
+            BugReportLog("Output: \n" + eventData);
 
             MessageBox.Show(eventData, "Event log");
             eventData = "";
@@ -451,11 +530,6 @@ namespace EventFilter
 
             lbEventResult.Sort();
         }
-
-
-        private void btnAnalyzeResults_Click(object sender, EventArgs e)
-        {
-            //events.AnalyzeResults(array.ConvertStringToArray(rtbResults.Text), _keywords);
-        }
+        #endregion
     }
 }

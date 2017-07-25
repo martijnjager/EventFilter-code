@@ -65,6 +65,7 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.SearchEventBGWorker = new System.ComponentModel.BackgroundWorker();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.operatorBGWorker = new System.ComponentModel.BackgroundWorker();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tpEventFilter.SuspendLayout();
@@ -398,6 +399,11 @@
             this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
             this.backgroundWorker1.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker1_ProgressChanged);
             // 
+            // operatorBGWorker
+            // 
+            this.operatorBGWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.operatorBGWorker_DoWork);
+            this.operatorBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.operatorBGWorker_ProgressChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -464,6 +470,7 @@
         private System.Windows.Forms.ColumnHeader columnId;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.Button btnResultCleanup;
+        private System.ComponentModel.BackgroundWorker operatorBGWorker;
     }
 }
 

@@ -9,26 +9,23 @@ namespace EventFilter
 {
     class Background
     {
+        //protected int _keywordFilter = 0;
+
+        //public static string keyLocation = "\\keywords.txt";
+        //public static string eventLocation = "\\eventlog.txt";
+        public string operators;
+        public string operatorResult;
+
+        //Keyword keywords = new Keyword();
+
         public Background()
         {
 
         }
 
-        public string[] ValidateKeywords(string keywords)
-        {
-            string[] keys = keywords.Split(',');
-
-            for (int i = 0; i < keys.Length; i++)
-            {
-                keys[i] = keys[i].Trim();
-            }
-
-            return keys;
-        }
-
         public string FindEventElement(string Id)
         {
-            string[] eventArray = Array.ConstructEventArray(Form1.FilePath);
+            string[] eventArray = Array.ConstructEventArray(Keyword.EventLocation);
             List<string> data = new List<string>();
 
             bool stop = false;
@@ -95,7 +92,7 @@ namespace EventFilter
 
         public string FindEventElement(string[] eventArray, string Id, int scanStart = -13, int scanLength = 15, string StopAtPart = "Event")
         {
-            eventArray = Array.ConstructEventArray(Form1.FilePath);
+            eventArray = Array.ConstructEventArray(Keyword.EventLocation);
 
             List<string> data = new List<string>();
 
@@ -158,7 +155,7 @@ namespace EventFilter
 
         public int GetCount(string key)
         {
-            string path = Form1.FilePath;
+            string path = Keyword.EventLocation;
 
             string[] events = Array.ConstructEventArray(path);
             int countable = 0;
@@ -176,7 +173,7 @@ namespace EventFilter
 
         public string GetDescription(string Id)
         {
-            string[] eventArray = Array.ConstructEventArray(Form1.FilePath);
+            string[] eventArray = Array.ConstructEventArray(Keyword.EventLocation);
             List<string> data = new List<string>();
 
             for (int i =0; i < eventArray.Length; i++)
@@ -208,6 +205,30 @@ namespace EventFilter
             }
 
             return Array.ConcatArrayToString(data.ToArray());
+        }
+
+
+        /// <summary>
+        /// Check if file exists
+        /// </summary>
+        /// <param name="file">File path to check</param>
+        /// <returns></returns>
+        public static bool CheckFileExistence(string file)
+        {
+            if (File.Exists(file))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        /// <summary>
+        /// Shortened version of GetCurrentDirectory
+        /// </summary>
+        /// <returns></returns>
+        public static string GetLocation()
+        {
+            return Directory.GetCurrentDirectory();
         }
     }
 }

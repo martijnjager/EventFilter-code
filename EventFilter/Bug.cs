@@ -11,12 +11,14 @@ namespace EventFilter
     {
         public static string exception = "";
 
-        static string path = file.GetLocation() + "\\bugs\\";
+        static string path = Background.GetLocation() + "\\bugs\\";
 
         public static void CreateBugReport(string eventLog, string bugreport, string keywords)
         {
             try
             {
+                Directory.CreateDirectory(Background.GetLocation() + "\\bugs");
+
                 var eventLogs = File.ReadLines(eventLog);
                 string[] events = new string[eventLogs.Count()];
                 string bugReport = bugreport.Replace("\n", "\r\n");
@@ -72,7 +74,7 @@ namespace EventFilter
         {
             StreamWriter bugData = new StreamWriter(filename);
 
-            for(int i =0;i<data.Length; i++)
+            for(int i = 0; i < data.Length; i++)
             {
                 bugData.WriteLine(data[i]);
             }

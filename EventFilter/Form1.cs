@@ -15,79 +15,53 @@ namespace EventFilter
 {
     public partial class Form1 : Form
     {
-        /**
-         * TODO:
-         * File corruption:
-         *  code:
-         *      xxxx
-         *      xxxxx
-         *      xxxx
-         *  
-         * Registry corruption;
-         *  code:
-         *      xxxx
-         *      xxxxx
-         *      xxxx
-         *      
-         * Bug report - doing
-         * 
-         * Option: add keywords to ignore
-         * Option: add parameters in keywords (datebefore:xxxx, datebefore:xxxx, datebetween:xxx:xxx)
-         */
-
-
-        private static string _filePath;
-        private static string _keyword;
+        //private static string Keyword.EventLocation;
+        //private static string Keyword;
         private ListViewItem listview;
         string[] _eventArray = new string[0];
         string[] _keywords = new string[0];
         
-        List<string> _eventId = new List<string>();
-        List<string> _events = new List<string>();
-        List<string> _eventDate = new List<string>();
+        public List<string> _eventId = new List<string>();
+        public List<string> _events = new List<string>();
+        public List<string> _eventDate = new List<string>();
 
         private int sortColumn = -1;
 
-        SearchEvents events = new SearchEvents();
-        Background background = new Background();
-
-        public static string FilePath
-        {
-            get { return _filePath; }
-        }
-
-        public static string Keyword
-        {
-            get { return _keyword; }
-        }
+        SearchEvents _event = new SearchEvents();
+        Background _background = new Background();
+        Keyword Keyword = new Keyword();
 
         public Form1()
         {
             InitializeComponent();
 
-            Directory.CreateDirectory(file.GetLocation() + "\\bugs");
+            //Keyword = keywords.KeyLocation;
+            //Keyword.EventLocation = keywords.EventLocation;
 
             listview = new ListViewItem();
 
-            _filePath = file.CheckFileExistence("\\eventlog.txt") ? _filePath = file.GetLocation() + "\\eventlog.txt" : "";
+            #region Load files into app
+            //Keyword.EventLocation = Background.CheckFileExistence(keywords.EventLocation) ? keywords.EventLocation = Background.GetLocation() + keywords.EventLocation : "";
 
-            lblSelectedFile.Text = "Selected file: " + _filePath;
+            lblSelectedFile.Text = "Selected file: " + (Background.CheckFileExistence(Keyword.EventLocation) ? Keyword.EventLocation : "");
 
-            if(_filePath == "")
+            if((Background.CheckFileExistence(Keyword.EventLocation) ? Keyword.EventLocation : "") == "")
                 BugReportLog("No eventlog.txt found");
             else
-                BugReportLog("Load event log from " + _filePath);
+                BugReportLog("Load event log from " + Keyword.EventLocation);
 
-            string keywords = file.CheckFileExistence("\\keywords.txt") ? keywords = file.GetLocation() + "\\keywords.txt" : "";
-            tbKeywords.Text = file.GetKeywords(keywords);
+            Keyword.GetKeywords(Keyword.KeyLocation);
+            tbKeywords.Text = Keyword.Keywords;
 
-            if(keywords == "")
+            if(Keyword.Keywords == "")
                 BugReportLog("No keywords.txt found");
             else
-                BugReportLog("Load keywords to use from " + keywords);
+                BugReportLog("Load keywords from " + Background.GetLocation() + Keyword.KeyLocation);
+            #endregion
 
             SearchEventBGWorker.WorkerReportsProgress = true;
             backgroundWorker1.WorkerReportsProgress = true;
+            operatorBGWorker.WorkerReportsProgress = true;
 
             BugReportLog("Initialization completed!");
         }
@@ -99,25 +73,37 @@ namespace EventFilter
 
             _eventArray = null;
 
-            _keyword = tbKeywords.Text;
-            _keyword = _keyword.Replace(" ", "");
-            var keyWords = _keyword.Split(',');
+            string keyword = tbKeywords.Text;
+            var keyWords = keyword.Split(',');
+            keyWords = Array.TrimArray(keyWords);
+
+            Keyword.CheckKeywordsOnOperator(keyWords);
 
             lbEventResult.Items.Clear();
 
             BugReportLog("Keywords to use: " + Array.ConvertArrayToString(keyWords, ", "));
 
-            if (_filePath != "openFileDialog1")
+            if (Keyword.EventLocation != "openFileDialog1")
             {
-                lblSelectedFile.Text = "Selected file: " + _filePath;
+                lblSelectedFile.Text = "Selected file: " + Keyword.EventLocation;
 
                 BugReportLog("Selected log: " + lblSelectedFile.Text);
 
-                if(_keyword != "")
+                if (keyword != "")
                 {
-                    if (SearchEventBGWorker.IsBusy == false)
+                    if (_background.operators != null)
                     {
-                        SearchEventBGWorker.RunWorkerAsync();
+                        if (operatorBGWorker.IsBusy == false)
+                        {
+                            operatorBGWorker.RunWorkerAsync();
+                        }
+                    }
+                    if (_background.operators == null)
+                    {
+                        if (SearchEventBGWorker.IsBusy == false)
+                        {
+                            SearchEventBGWorker.RunWorkerAsync();
+                        }
                     }
                 }
                 else
@@ -133,9 +119,9 @@ namespace EventFilter
 
         private void btnSaveBugReport(object sender, EventArgs e)
         {
-            if (_filePath != "" && tbKeywords.Text != "")
+            if (Keyword.EventLocation != "" && tbKeywords.Text != "")
             {
-                Bug.CreateBugReport(_filePath, rtbBugReport.Text, tbKeywords.Text);
+                Bug.CreateBugReport(Keyword.EventLocation, rtbBugReport.Text, tbKeywords.Text);
 
                 if(Bug.exception != "")
                 {
@@ -143,7 +129,7 @@ namespace EventFilter
                     return;
                 }
 
-                string directory = file.GetLocation() + "\\bugs";
+                string directory = Background.GetLocation() + "\\bugs";
 
                 MessageBox.Show("Logs have been saved in " + directory, "Logs saved", MessageBoxButtons.OK);
             }
@@ -174,12 +160,12 @@ namespace EventFilter
 
             try
             {
-                _keyword = tbKeywords.Text;
-                var keywords = background.ValidateKeywords(_keyword);
+                string keyword = tbKeywords.Text;
+                var keywords = Keyword.ValidateKeywords(keyword);
                 var watch = System.Diagnostics.Stopwatch.StartNew();
-                _eventArray = Array.ConstructEventArray(_filePath);
+                _eventArray = Array.ConstructEventArray(Keyword.EventLocation);
                 int resultCount = 0;
-                worker.ReportProgress(1, "Log: Parameters used: \t filepath: " + _filePath + "\n\t keywords to use: " + Array.ConvertArrayToString(keywords, ", "));
+                worker.ReportProgress(1, "Log: Parameters used: \t filepath: " + Keyword.EventLocation + "\n\t keywords to use: " + Array.ConvertArrayToString(keywords, ", "));
                 worker.ReportProgress(2, "Log: Lines in eventArray: " + _eventArray.Length);
                 int i = -1;
                 var lastKeyword = keywords[0];
@@ -239,54 +225,6 @@ namespace EventFilter
                                 a--;
                             }
 
-                            // Count back from position of keyword to get the date
-                            //for (int a = -13; a < counter; a++)
-                            //{
-                            //    if (_eventArray[i + a].Contains("Date"))
-                            //    {
-                            //        _eventId.Add(i.ToString());
-
-                            //        _eventDate.Add(_eventArray[i + a]);
-
-                            //        // Id
-                            //        eventEntry[2] = i.ToString();
-
-                            //        eventEntry[0] = _eventArray[i + a].ToString();
-
-                            //        worker.ReportProgress(logProgress + progress, "Log: \t Line nr: " + (i + a) + ": " + eventEntry[0] + ": " + eventEntry[1]);
-                            //        logProgress++;
-
-                            //        break;
-                            //    }
-                            //}
-
-                            //for (int a = -12; a < counter; a++)
-                            //{
-                            //    if (_eventArray[i + a].Contains("Description"))
-                            //    {
-                            //        eventEntry[1] = _eventArray[(i + a) + 1].ToString();
-                            //        _events.Add(_eventArray[i]);
-                            //        localCounter++;
-                            //        resultCount++;
-
-                            //        break;
-                            //    }
-
-                                // Count back from position of keyword to get the first line of description
-                                //if (_eventArray[i - 1].Contains("Description"))
-                                //{
-                                //    eventEntry[1] = _eventArray[i].ToString();
-                                //    _events.Add(_eventArray[i]);
-                                //    resultCount++;
-                                //    localCounter++;
-
-                                //    break;
-                                //}
-                                //else
-                                //{
-                                //}
-                            //}
-
                             if(resultCount >= 10000)
                             {
                                 MessageWrite("There are over 5000 events matching the keywords", "Over 5000 events", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -298,10 +236,7 @@ namespace EventFilter
                         }
                     }
 
-                    if (resultCount >= 10000)
-                    {
-                        break;
-                    }
+                    if (resultCount >= 10000) break;
 
                     worker.ReportProgress(logProgress + progress, "Log: \nFound " + localCounter.ToString() + " with keyword " + key);
                     logProgress++;
@@ -336,30 +271,25 @@ namespace EventFilter
         private void SearchEventBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             if(e.UserState.ToString().Contains("Log: "))
-            {
                 BugReportLog(e.UserState.ToString().Replace("Log: ", ""));
-            }
+
             if (e.UserState.ToString().Contains("Event: ") && e.UserState.ToString().Contains("Date: "))
-            {
                 AddListItem(Array.ConvertStringToArray(e.UserState.ToString().Replace("Event: ", ""), " + "));
-            }
+
             if (e.UserState.ToString().Contains("Time: "))
-            {
                 lblTime.Text = e.UserState.ToString().Replace("Time: ", "");
-            }
+
             if (e.UserState.ToString().Contains("Counter: "))
-            {
                 lblResultCount.Text = e.UserState.ToString().Replace("Counter: ", "");
-            }
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             //string[] eventArray = _events.ToArray();
-            string[] eventArr = events.FilterDuplicates(_events, _eventId, _eventDate);
+            string[] eventArr = _event.FilterDuplicates(_events, _eventId, _eventDate);
 
-            string[] eventId = events.eventId;
-            string[] eventDate = events.eventDate;
+            string[] eventId = _event.eventId;
+            string[] eventDate = _event.eventDate;
 
             int recorder = 0;
 
@@ -395,9 +325,7 @@ namespace EventFilter
                 }
             }
             else
-            {
                 lblResultCount.Text = e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}');
-            }
         }
         #endregion
 
@@ -415,7 +343,7 @@ namespace EventFilter
             lbEventResult.Items.Add(addViewItem);
         }
 
-        public void MessageWrite(string text, string title, MessageBoxButtons button, MessageBoxIcon icon)
+        public static void MessageWrite(string text, string title, MessageBoxButtons button, MessageBoxIcon icon)
         {
             MessageBox.Show(text, title, button, icon);
         }
@@ -446,9 +374,9 @@ namespace EventFilter
                 BugReportLog("Saving keywords " + tbKeywords.Text + " to file");
                 saveKeywords.Close();
             }
-            catch
+            catch(Exception ex)
             {
-                BugReportLog("An error occured when trying to save keywords to use");
+                BugReportLog("An error occured when trying to save keywords to use: " + ex.Message);
             }
         }
 
@@ -457,11 +385,11 @@ namespace EventFilter
             BugReportLog("Loading event logs");
             openFileDialog1.ShowDialog();
 
-            _filePath = openFileDialog1.FileName;
+            Keyword.EventLocation = openFileDialog1.FileName;
 
-            BugReportLog("Event log location: " + _filePath);
+            BugReportLog("Event log location: " + Keyword.EventLocation);
 
-            lblSelectedFile.Text = "Selected file: " + _filePath;
+            lblSelectedFile.Text = "Selected file: " + Keyword.EventLocation;
         }
 
         private void miLoadKeywords_Click(object sender, EventArgs e)
@@ -473,7 +401,9 @@ namespace EventFilter
 
             BugReportLog("Keywords to use location: " + keyLoc);
 
-            tbKeywords.Text = file.GetKeywords(keyLoc);
+            Keyword.GetKeywords(keyLoc);
+
+            tbKeywords.Text = Keyword.Keywords;
         }
 
         private void miAbout_Click(object sender, EventArgs e)
@@ -501,7 +431,7 @@ namespace EventFilter
         private void lbEventResult_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             BugReportLog("\n\nCalling event with id: " + lbEventResult.SelectedItems[0].SubItems[2].Text);
-            string eventData = events.SearchEvent(lbEventResult.SelectedItems[0].SubItems[2].Text);
+            string eventData = _event.SearchEvent(lbEventResult.SelectedItems[0].SubItems[2].Text);
 
             BugReportLog("Output: \n" + eventData);
 
@@ -530,6 +460,17 @@ namespace EventFilter
 
             lbEventResult.Sort();
         }
+
+        private void operatorBGWorker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+            worker.ReportProgress(0, _background.GetCount(_background.operators));
+        }
         #endregion
+
+        private void operatorBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            MessageWrite(e.UserState.ToString(), "Result", MessageBoxButtons.OK, MessageBoxIcon.None);
+        }
     }
 }

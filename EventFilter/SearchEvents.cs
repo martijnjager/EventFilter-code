@@ -6,13 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace EventFilter
 {
     class SearchEvents
     {
         Background background = new Background();
-
+        Keyword _keyword = new Keyword();
         public string[] eventId = new string[0];
         public string[] eventDate = new string[0];
         public string[] eventDescr = new string[0];
@@ -25,6 +26,179 @@ namespace EventFilter
         public string SearchEvent(string Id)
         {
             return background.FindEventElement(Id);
+        }
+
+        public string[] SearchEvent(object sender, DoWorkEventArgs e)
+        {
+            Form1 form = new Form1();
+
+            List<string> log = new List<string>();
+
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            try
+            {
+                string keyword = Keyword.Keywords;
+                var keywords = Keyword.ValidateKeywords(keyword);
+                var watch = System.Diagnostics.Stopwatch.StartNew();
+                string[] _eventArray = Array.ConstructEventArray(Keyword.EventLocation);
+                int resultCount = 0;
+                log.Add("Log: Parameters used: \t filepath: " + Keyword.EventLocation + "\n\t keywords to use: " + Array.ConvertArrayToString(keywords, ", "));
+                log.Add("Log: Lines in eventArray: " + _eventArray.Length);
+                int i = -1;
+                var lastKeyword = keywords[0];
+                log.Add("Log: First lastKeyword: " + lastKeyword);
+                //int progress = 3;
+                int keyProgress = 0;
+                int logProgress = keyProgress;
+
+                foreach (var key in keywords)
+                {
+                    int localCounter = 0;
+
+                    keyProgress++;
+                    log.Add("Log: Overwriting lastKeyword " + lastKeyword + " with " + key + "\n\n");
+                    keyProgress++;
+                    lastKeyword = key;
+
+                    log.Add("Log: Following results have been found using keyword: " + key);
+
+                    for (i = 0; i < _eventArray.Length; i++)
+                    {
+                        string[] eventEntry = new string[3];
+
+                        if (_eventArray[i].Contains(key))
+                        {
+                            int a = 0;
+
+                            while (!_eventArray[i + a].Contains("Event["))
+                            {
+                                if (_eventArray[i + a].Contains("Description"))
+                                {
+                                    eventEntry[1] = _eventArray[(i + a) + 1].ToString();
+                                    form._events.Add(_eventArray[i]);
+
+                                    // Add the first line of description into the list.
+                                    form._eventId.Add((i + a + 1).ToString());
+
+                                    localCounter++;
+                                    resultCount++;
+                                }
+
+                                if (_eventArray[i + a].Contains("Date"))
+                                {
+
+                                    form._eventDate.Add(_eventArray[i + a]);
+
+                                    // Id
+                                    eventEntry[2] = i.ToString();
+
+                                    eventEntry[0] = _eventArray[i + a].ToString();
+
+                                    log.Add("Log: \t Line nr: " + (i + a) + ": " + eventEntry[0] + ": " + eventEntry[1]);
+                                    logProgress++;
+
+                                    break;
+                                }
+                                a--;
+                            }
+
+                            // Count back from position of keyword to get the date
+                            //for (int a = -13; a < counter; a++)
+                            //{
+                            //    if (_eventArray[i + a].Contains("Date"))
+                            //    {
+                            //        _eventId.Add(i.ToString());
+
+                            //        _eventDate.Add(_eventArray[i + a]);
+
+                            //        // Id
+                            //        eventEntry[2] = i.ToString();
+
+                            //        eventEntry[0] = _eventArray[i + a].ToString();
+
+                            //        log.Add("Log: \t Line nr: " + (i + a) + ": " + eventEntry[0] + ": " + eventEntry[1]);
+                            //        logProgress++;
+
+                            //        break;
+                            //    }
+                            //}
+
+                            //for (int a = -12; a < counter; a++)
+                            //{
+                            //    if (_eventArray[i + a].Contains("Description"))
+                            //    {
+                            //        eventEntry[1] = _eventArray[(i + a) + 1].ToString();
+                            //        _events.Add(_eventArray[i]);
+                            //        localCounter++;
+                            //        resultCount++;
+
+                            //        break;
+                            //    }
+
+                            // Count back from position of keyword to get the first line of description
+                            //if (_eventArray[i - 1].Contains("Description"))
+                            //{
+                            //    eventEntry[1] = _eventArray[i].ToString();
+                            //    _events.Add(_eventArray[i]);
+                            //    resultCount++;
+                            //    localCounter++;
+
+                            //    break;
+                            //}
+                            //else
+                            //{
+                            //}
+                            //}
+
+                            if (resultCount >= 10000)
+                            {
+                                Form1.MessageWrite("There are over 5000 events matching the keywords", "Over 5000 events", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                break;
+                            }
+
+                            log.Add("Event: " + eventEntry[0] + " + " + eventEntry[1] + " + " + eventEntry[2]);
+                            logProgress++;
+                        }
+                    }
+
+                    if (resultCount >= 10000)
+                    {
+                        break;
+                    }
+
+                    log.Add("Log: \nFound " + localCounter.ToString() + " with keyword " + key);
+                    logProgress++;
+                    log.Add("Log: ===========================================\n\n\n\n\n");
+                    logProgress++;
+                }
+
+                log.Add("Log: \n\nEvents found: " + resultCount.ToString());
+                logProgress++;
+                log.Add("Counter: Events found: " + resultCount.ToString());
+                logProgress++;
+
+                if (resultCount == 0)
+                {
+                    MessageBox.Show("No event log has the provided keywords.", "No result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
+                watch.Stop();
+                var elapsedTime = watch.Elapsed.TotalSeconds;
+
+                log.Add("Time: Found results in: " + elapsedTime.ToString());
+
+                e.Result = form._eventId;
+
+                return log.ToArray();
+            }
+            catch (Exception exc)
+            {
+                log.Add("Log: Error: " + exc.Message);
+                Form1.MessageWrite("A problem has occured.\nPlease notify the developer of this issue!", "App crashed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                return log.ToArray();
+            }
         }
 
         public string[] FilterDuplicates(List<string> description, List<string> id, List<string> date)

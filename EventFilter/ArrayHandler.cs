@@ -104,5 +104,18 @@ namespace EventFilter
 
             return array;
         }
+
+        public static string[] TrimArray(string[] array)
+        {
+            string[] newArray = new string[array.Length];
+            int c = 0;
+            foreach (string str in array)
+            {
+                newArray[c] = str.Trim();
+                c++;
+            }
+
+            return newArray;
+        }
     }
 }

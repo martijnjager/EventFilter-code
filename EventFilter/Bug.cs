@@ -1,83 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+using EventFilter.Events;
+using EventFilter.Keywords;
 
 namespace EventFilter
 {
-    public static class Bug
+    internal static class Bug
     {
-        public static string exception = "";
+        public static string exception;
 
-        static string path = Background.GetLocation() + "\\bugs\\";
+        public static string GetPath { get; } = Bootstrap.CurrentLocation + "\\bugs\\";
 
-        public static void CreateBugReport(string eventLog, string bugreport, string keywords)
+        /// <summary>
+        /// Create bug report
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <param name="eClass" />
+        /// <param name="bugreport" />
+        public static void CreateBugReport(Keyword keyword, Event eClass, string bugreport)
         {
             try
             {
-                Directory.CreateDirectory(Background.GetLocation() + "\\bugs");
+                List<dynamic> eventLog = eClass.EventArray;
+                List<string> log = new List<string>();
 
-                var eventLogs = File.ReadLines(eventLog);
-                string[] events = new string[eventLogs.Count()];
+                Filesystem.ClearFolder(new DirectoryInfo(GetPath));
+
+                Directory.CreateDirectory(Bootstrap.CurrentLocation + @"\bugs");
+
                 string bugReport = bugreport.Replace("\n", "\r\n");
 
                 int i = -1;
-                foreach (var line in eventLogs)
+                foreach (string line in eventLog)
                 {
                     i++;
-                    events[i] = line;
+                    log.Add(i + " " + line.Replace("\n", "\r\n") + "\r\n");
                 }
 
-                string[] eventOriginal = events;
-
-                for (i = 0; i < events.Length; i++)
-                {
-                    events[i] = i + " " + events[i] + "\r\n";
-                }
+                File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.Implode(log));
+                File.WriteAllText(GetPath + "eventlog.txt", Arr.Implode(eventLog));
 
                 if (bugreport != "")
                 {
-                    File.WriteAllText(path + "problemReport.txt", bugReport);
-                    //CreateFile(bugReport, path + "problemReport.txt");
+                    File.WriteAllText(GetPath + "problemReport.txt", bugReport);
                 }
 
-                string eventText = Array.ConcatArrayToString(events);
-
-                File.WriteAllText(path + "eventlogBackup.txt", eventText);
-
-                //if (File.Exists(eventLog))
-                //{
-                //    if(!File.Exists(path + "eventlog.txt"))
-                //        File.Copy(eventLog, path + "eventlog.txt");
-                //}
-                //else
-                //{
-                //    //CreateFile(events, path + "eventlog.txt");
-                //    File.WriteAllText(path + "eventlog.txt", eventLog);
-                //}
-
-                if (keywords != "")
+                if (keyword.GetAllKeywords() != "")
                 {
-                    File.WriteAllText(path + "keywordsBackup.txt", keywords);
-                    //CreateFile(new string[] { keywords }, path + "keywords.txt");
+                    File.WriteAllText(GetPath + @"Keywords.txt", keyword.GetIndexed());
+                    File.WriteAllText(GetPath + @"allkeywords.txt", keyword.GetAllKeywords());
+                    //File.WriteAllText(Path + "Keywords.txt", Keyword.keywordsAsString());
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 exception = e.Message;
             }
         }
 
-        private static void CreateFile(string[] data, string filename)
-        {
-            StreamWriter bugData = new StreamWriter(filename);
-
-            for(int i = 0; i < data.Length; i++)
-            {
-                bugData.WriteLine(data[i]);
-            }
-        }
+//        /// <summary>
+//        /// Add report to bugReport
+//        /// </summary>
+//        /// <param name="log">log</param>
+//        public static void Report(string log = "")
+//        {
+//            Filesystem.form.Report(log);
+//        }
+//
+//        public static void Exception(Exception error)
+//        {
+//            Filesystem.form.Exception(error);
+//        }
     }
 }

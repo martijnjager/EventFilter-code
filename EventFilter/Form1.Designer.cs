@@ -28,11 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.tbKeywords = new System.Windows.Forms.TextBox();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.btnSearch = new System.Windows.Forms.Button();
-            this.lblSelectedFile = new System.Windows.Forms.Label();
-            this.lblResultCount = new System.Windows.Forms.Label();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.miSelectEventLog = new System.Windows.Forms.ToolStripMenuItem();
@@ -42,8 +38,16 @@
             this.eventFilterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.miTemplate = new System.Windows.Forms.ToolStripMenuItem();
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.encodingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.Utf7 = new System.Windows.Forms.ToolStripMenuItem();
+            this.Utf8 = new System.Windows.Forms.ToolStripMenuItem();
+            this.Utf32 = new System.Windows.Forms.ToolStripMenuItem();
+            this.UtfUnicode = new System.Windows.Forms.ToolStripMenuItem();
+            this.UtfAscii = new System.Windows.Forms.ToolStripMenuItem();
+            this.UtfBigEndianUnicode = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tpEventFilter = new System.Windows.Forms.TabPage();
+            this.clbKeywords = new System.Windows.Forms.CheckedListBox();
             this.btnResultCleanup = new System.Windows.Forms.Button();
             this.lbEventResult = new System.Windows.Forms.ListView();
             this.columnDate = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -51,10 +55,12 @@
             this.columnId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.lblTime = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.tpTemplate = new System.Windows.Forms.TabPage();
-            this.rtbResults = new System.Windows.Forms.RichTextBox();
+            this.tbKeywords = new System.Windows.Forms.TextBox();
+            this.lblResultCount = new System.Windows.Forms.Label();
+            this.btnSearch = new System.Windows.Forms.Button();
+            this.lblSelectedFile = new System.Windows.Forms.Label();
             this.tpBugReport = new System.Windows.Forms.TabPage();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnSaveReport = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
@@ -62,55 +68,21 @@
             this.label4 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.rtbBugReport = new System.Windows.Forms.RichTextBox();
+            this.btnCopyClipboard = new System.Windows.Forms.Button();
+            this.rtbResults = new System.Windows.Forms.RichTextBox();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
+            this.eventFilterBGWorker = new System.ComponentModel.BackgroundWorker();
             this.SearchEventBGWorker = new System.ComponentModel.BackgroundWorker();
-            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
-            this.operatorBGWorker = new System.ComponentModel.BackgroundWorker();
+            this.EncodingDefault = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tpEventFilter.SuspendLayout();
-            this.tpTemplate.SuspendLayout();
             this.tpBugReport.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // tbKeywords
-            // 
-            this.tbKeywords.Location = new System.Drawing.Point(9, 27);
-            this.tbKeywords.Name = "tbKeywords";
-            this.tbKeywords.Size = new System.Drawing.Size(373, 20);
-            this.tbKeywords.TabIndex = 0;
             // 
             // openFileDialog1
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
-            // 
-            // btnSearch
-            // 
-            this.btnSearch.Location = new System.Drawing.Point(748, 78);
-            this.btnSearch.Name = "btnSearch";
-            this.btnSearch.Size = new System.Drawing.Size(75, 23);
-            this.btnSearch.TabIndex = 4;
-            this.btnSearch.Text = "Search";
-            this.btnSearch.UseVisualStyleBackColor = true;
-            this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
-            // 
-            // lblSelectedFile
-            // 
-            this.lblSelectedFile.AutoSize = true;
-            this.lblSelectedFile.Location = new System.Drawing.Point(6, 67);
-            this.lblSelectedFile.Name = "lblSelectedFile";
-            this.lblSelectedFile.Size = new System.Drawing.Size(71, 13);
-            this.lblSelectedFile.TabIndex = 5;
-            this.lblSelectedFile.Text = "Selected file: ";
-            // 
-            // lblResultCount
-            // 
-            this.lblResultCount.AutoSize = true;
-            this.lblResultCount.Location = new System.Drawing.Point(6, 91);
-            this.lblResultCount.Name = "lblResultCount";
-            this.lblResultCount.Size = new System.Drawing.Size(73, 13);
-            this.lblResultCount.TabIndex = 6;
-            this.lblResultCount.Text = "Events found:";
             // 
             // menuStrip1
             // 
@@ -118,7 +90,8 @@
             this.optionsToolStripMenuItem,
             this.eventFilterToolStripMenuItem,
             this.miTemplate,
-            this.reportBugToolStripMenuItem});
+            this.reportBugToolStripMenuItem,
+            this.encodingToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(863, 24);
@@ -149,7 +122,7 @@
             this.miLoadKeywords.Name = "miLoadKeywords";
             this.miLoadKeywords.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.L)));
             this.miLoadKeywords.Size = new System.Drawing.Size(200, 22);
-            this.miLoadKeywords.Text = "Load keywords";
+            this.miLoadKeywords.Text = "Load Keywords";
             this.miLoadKeywords.Click += new System.EventHandler(this.miLoadKeywords_Click);
             // 
             // saveKeywordsToolStripMenuItem
@@ -157,7 +130,7 @@
             this.saveKeywordsToolStripMenuItem.Name = "saveKeywordsToolStripMenuItem";
             this.saveKeywordsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.K)));
             this.saveKeywordsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.saveKeywordsToolStripMenuItem.Text = "Save keywords";
+            this.saveKeywordsToolStripMenuItem.Text = "Save Keywords";
             this.saveKeywordsToolStripMenuItem.Click += new System.EventHandler(this.miSaveKeywords_Click);
             // 
             // aboutToolStripMenuItem1
@@ -170,16 +143,14 @@
             // eventFilterToolStripMenuItem
             // 
             this.eventFilterToolStripMenuItem.Name = "eventFilterToolStripMenuItem";
-            this.eventFilterToolStripMenuItem.Size = new System.Drawing.Size(75, 20);
-            this.eventFilterToolStripMenuItem.Text = "Event filter";
+            this.eventFilterToolStripMenuItem.Size = new System.Drawing.Size(77, 20);
+            this.eventFilterToolStripMenuItem.Text = "Event Filter";
             this.eventFilterToolStripMenuItem.Click += new System.EventHandler(this.miEventFilter_Click);
             // 
             // miTemplate
             // 
             this.miTemplate.Name = "miTemplate";
-            this.miTemplate.Size = new System.Drawing.Size(68, 20);
-            this.miTemplate.Text = "Template";
-            this.miTemplate.Click += new System.EventHandler(this.miTemplate_Click);
+            this.miTemplate.Size = new System.Drawing.Size(12, 20);
             // 
             // reportBugToolStripMenuItem
             // 
@@ -188,10 +159,65 @@
             this.reportBugToolStripMenuItem.Text = "Report bug";
             this.reportBugToolStripMenuItem.Click += new System.EventHandler(this.miBugReport_Click);
             // 
+            // encodingToolStripMenuItem
+            // 
+            this.encodingToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.EncodingDefault,
+            this.Utf7,
+            this.Utf8,
+            this.Utf32,
+            this.UtfUnicode,
+            this.UtfAscii,
+            this.UtfBigEndianUnicode});
+            this.encodingToolStripMenuItem.Name = "encodingToolStripMenuItem";
+            this.encodingToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
+            this.encodingToolStripMenuItem.Text = "Encoding";
+            // 
+            // Utf7
+            // 
+            this.Utf7.Name = "Utf7";
+            this.Utf7.Size = new System.Drawing.Size(171, 22);
+            this.Utf7.Text = "UTF-7";
+            this.Utf7.Click += new System.EventHandler(this.Utf7_Click);
+            // 
+            // Utf8
+            // 
+            this.Utf8.Name = "Utf8";
+            this.Utf8.Size = new System.Drawing.Size(171, 22);
+            this.Utf8.Text = "UTF-8";
+            this.Utf8.Click += new System.EventHandler(this.Utf8_Click);
+            // 
+            // Utf32
+            // 
+            this.Utf32.Name = "Utf32";
+            this.Utf32.Size = new System.Drawing.Size(171, 22);
+            this.Utf32.Text = "UTF-32";
+            this.Utf32.Click += new System.EventHandler(this.Utf32_Click);
+            // 
+            // UtfUnicode
+            // 
+            this.UtfUnicode.Name = "UtfUnicode";
+            this.UtfUnicode.Size = new System.Drawing.Size(171, 22);
+            this.UtfUnicode.Text = "Unicode";
+            this.UtfUnicode.Click += new System.EventHandler(this.UtfUnicode_Click);
+            // 
+            // UtfAscii
+            // 
+            this.UtfAscii.Name = "UtfAscii";
+            this.UtfAscii.Size = new System.Drawing.Size(171, 22);
+            this.UtfAscii.Text = "ASCII";
+            this.UtfAscii.Click += new System.EventHandler(this.UtfAscii_Click);
+            // 
+            // UtfBigEndianUnicode
+            // 
+            this.UtfBigEndianUnicode.Name = "UtfBigEndianUnicode";
+            this.UtfBigEndianUnicode.Size = new System.Drawing.Size(171, 22);
+            this.UtfBigEndianUnicode.Text = "BigEndianUnicode";
+            this.UtfBigEndianUnicode.Click += new System.EventHandler(this.UtfBigEndianUnicode_Click);
+            // 
             // tabControl1
             // 
             this.tabControl1.Controls.Add(this.tpEventFilter);
-            this.tabControl1.Controls.Add(this.tpTemplate);
             this.tabControl1.Controls.Add(this.tpBugReport);
             this.tabControl1.ImeMode = System.Windows.Forms.ImeMode.On;
             this.tabControl1.ItemSize = new System.Drawing.Size(0, 1);
@@ -204,6 +230,7 @@
             // 
             // tpEventFilter
             // 
+            this.tpEventFilter.Controls.Add(this.clbKeywords);
             this.tpEventFilter.Controls.Add(this.btnResultCleanup);
             this.tpEventFilter.Controls.Add(this.lbEventResult);
             this.tpEventFilter.Controls.Add(this.lblTime);
@@ -220,14 +247,23 @@
             this.tpEventFilter.Text = "tabPage1";
             this.tpEventFilter.UseVisualStyleBackColor = true;
             // 
+            // clbKeywords
+            // 
+            this.clbKeywords.FormattingEnabled = true;
+            this.clbKeywords.Location = new System.Drawing.Point(589, 6);
+            this.clbKeywords.Name = "clbKeywords";
+            this.clbKeywords.Size = new System.Drawing.Size(120, 94);
+            this.clbKeywords.TabIndex = 12;
+            // 
             // btnResultCleanup
             // 
+            this.btnResultCleanup.BackColor = System.Drawing.Color.White;
             this.btnResultCleanup.Location = new System.Drawing.Point(727, 549);
             this.btnResultCleanup.Name = "btnResultCleanup";
             this.btnResultCleanup.Size = new System.Drawing.Size(96, 23);
             this.btnResultCleanup.TabIndex = 11;
             this.btnResultCleanup.Text = "Cleanup results";
-            this.btnResultCleanup.UseVisualStyleBackColor = true;
+            this.btnResultCleanup.UseVisualStyleBackColor = false;
             this.btnResultCleanup.Click += new System.EventHandler(this.btnResultCleanup_Click);
             // 
             // lbEventResult
@@ -258,6 +294,7 @@
             // columnId
             // 
             this.columnId.Text = "Id";
+            this.columnId.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.columnId.Width = 0;
             // 
             // lblTime
@@ -278,28 +315,45 @@
             this.label1.TabIndex = 8;
             this.label1.Text = "Keywords to use (case sensitive)";
             // 
-            // tpTemplate
+            // tbKeywords
             // 
-            this.tpTemplate.Controls.Add(this.rtbResults);
-            this.tpTemplate.Location = new System.Drawing.Point(4, 5);
-            this.tpTemplate.Name = "tpTemplate";
-            this.tpTemplate.Padding = new System.Windows.Forms.Padding(3);
-            this.tpTemplate.Size = new System.Drawing.Size(829, 572);
-            this.tpTemplate.TabIndex = 1;
-            this.tpTemplate.Text = "tabPage2";
-            this.tpTemplate.UseVisualStyleBackColor = true;
+            this.tbKeywords.Location = new System.Drawing.Point(9, 27);
+            this.tbKeywords.Name = "tbKeywords";
+            this.tbKeywords.Size = new System.Drawing.Size(373, 20);
+            this.tbKeywords.TabIndex = 0;
             // 
-            // rtbResults
+            // lblResultCount
             // 
-            this.rtbResults.Location = new System.Drawing.Point(7, 7);
-            this.rtbResults.Name = "rtbResults";
-            this.rtbResults.Size = new System.Drawing.Size(816, 520);
-            this.rtbResults.TabIndex = 0;
-            this.rtbResults.Text = "";
+            this.lblResultCount.AutoSize = true;
+            this.lblResultCount.Location = new System.Drawing.Point(6, 91);
+            this.lblResultCount.Name = "lblResultCount";
+            this.lblResultCount.Size = new System.Drawing.Size(73, 13);
+            this.lblResultCount.TabIndex = 6;
+            this.lblResultCount.Text = "Events found:";
+            // 
+            // btnSearch
+            // 
+            this.btnSearch.BackColor = System.Drawing.Color.White;
+            this.btnSearch.Location = new System.Drawing.Point(748, 78);
+            this.btnSearch.Name = "btnSearch";
+            this.btnSearch.Size = new System.Drawing.Size(75, 23);
+            this.btnSearch.TabIndex = 4;
+            this.btnSearch.Text = "Search";
+            this.btnSearch.UseVisualStyleBackColor = false;
+            this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
+            // 
+            // lblSelectedFile
+            // 
+            this.lblSelectedFile.AutoSize = true;
+            this.lblSelectedFile.Location = new System.Drawing.Point(6, 67);
+            this.lblSelectedFile.Name = "lblSelectedFile";
+            this.lblSelectedFile.Size = new System.Drawing.Size(71, 13);
+            this.lblSelectedFile.TabIndex = 5;
+            this.lblSelectedFile.Text = "Selected file: ";
             // 
             // tpBugReport
             // 
-            this.tpBugReport.Controls.Add(this.button1);
+            this.tpBugReport.Controls.Add(this.btnSaveReport);
             this.tpBugReport.Controls.Add(this.label9);
             this.tpBugReport.Controls.Add(this.label8);
             this.tpBugReport.Controls.Add(this.label7);
@@ -315,24 +369,24 @@
             this.tpBugReport.Text = "tabPage1";
             this.tpBugReport.UseVisualStyleBackColor = true;
             // 
-            // button1
+            // btnSaveReport
             // 
-            this.button1.Location = new System.Drawing.Point(6, 532);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(88, 23);
-            this.button1.TabIndex = 8;
-            this.button1.Text = "Save logs";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.btnSaveBugReport);
+            this.btnSaveReport.Location = new System.Drawing.Point(6, 532);
+            this.btnSaveReport.Name = "btnSaveReport";
+            this.btnSaveReport.Size = new System.Drawing.Size(88, 23);
+            this.btnSaveReport.TabIndex = 8;
+            this.btnSaveReport.Text = "Save logs";
+            this.btnSaveReport.UseVisualStyleBackColor = true;
+            this.btnSaveReport.Click += new System.EventHandler(this.BtnSaveBugReport);
             // 
             // label9
             // 
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(7, 53);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(325, 13);
+            this.label9.Size = new System.Drawing.Size(326, 13);
             this.label9.TabIndex = 7;
-            this.label9.Text = "- If available, provide the details of the error exception that occured.";
+            this.label9.Text = "- If Available, provide the details of the error exception that occured.";
             // 
             // label8
             // 
@@ -389,41 +443,57 @@
             this.rtbBugReport.TabIndex = 0;
             this.rtbBugReport.Text = "";
             // 
+            // btnCopyClipboard
+            // 
+            this.btnCopyClipboard.Location = new System.Drawing.Point(0, 0);
+            this.btnCopyClipboard.Name = "btnCopyClipboard";
+            this.btnCopyClipboard.Size = new System.Drawing.Size(75, 23);
+            this.btnCopyClipboard.TabIndex = 0;
+            // 
+            // rtbResults
+            // 
+            this.rtbResults.Location = new System.Drawing.Point(7, 7);
+            this.rtbResults.Name = "rtbResults";
+            this.rtbResults.Size = new System.Drawing.Size(816, 520);
+            this.rtbResults.TabIndex = 0;
+            this.rtbResults.Text = "";
+            // 
+            // eventFilterBGWorker
+            // 
+            this.eventFilterBGWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.eventFilterBGWorker_DoWork);
+            this.eventFilterBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.eventFilterBGWorker_ProgressChanged);
+            // 
             // SearchEventBGWorker
             // 
-            this.SearchEventBGWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.SearchEventBGWorker_DoWork);
             this.SearchEventBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.SearchEventBGWorker_ProgressChanged);
+            this.SearchEventBGWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.SearchEventBGWorker_RunWorkerCompleted);
             // 
-            // backgroundWorker1
+            // EncodingDefault
             // 
-            this.backgroundWorker1.DoWork += new System.ComponentModel.DoWorkEventHandler(this.backgroundWorker1_DoWork);
-            this.backgroundWorker1.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.backgroundWorker1_ProgressChanged);
-            // 
-            // operatorBGWorker
-            // 
-            this.operatorBGWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.operatorBGWorker_DoWork);
-            this.operatorBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.operatorBGWorker_ProgressChanged);
+            this.EncodingDefault.Name = "EncodingDefault";
+            this.EncodingDefault.Size = new System.Drawing.Size(171, 22);
+            this.EncodingDefault.Text = "Default";
+            this.EncodingDefault.Click += new System.EventHandler(this.EncodingDefault_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
-            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(863, 621);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MainMenuStrip = this.menuStrip1;
+            this.MinimumSize = new System.Drawing.Size(879, 660);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "EventFilter";
+            this.SizeChanged += new System.EventHandler(this.Form1_SizeChanged);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.tabControl1.ResumeLayout(false);
             this.tpEventFilter.ResumeLayout(false);
             this.tpEventFilter.PerformLayout();
-            this.tpTemplate.ResumeLayout(false);
             this.tpBugReport.ResumeLayout(false);
             this.tpBugReport.PerformLayout();
             this.ResumeLayout(false);
@@ -432,45 +502,52 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.TextBox tbKeywords;
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
-        private System.Windows.Forms.Button btnSearch;
-        private System.Windows.Forms.Label lblSelectedFile;
-        private System.Windows.Forms.Label lblResultCount;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem miSelectEventLog;
         private System.Windows.Forms.ToolStripMenuItem miLoadKeywords;
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem1;
         private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tpEventFilter;
-        private System.Windows.Forms.TabPage tpTemplate;
         private System.Windows.Forms.ToolStripMenuItem eventFilterToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem miTemplate;
         private System.Windows.Forms.ToolStripMenuItem saveKeywordsToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ToolStripMenuItem reportBugToolStripMenuItem;
         private System.Windows.Forms.TabPage tpBugReport;
-        private System.Windows.Forms.RichTextBox rtbBugReport;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label lblTime;
-        private System.Windows.Forms.ListView lbEventResult;
+        private System.Windows.Forms.Button btnSaveReport;
+        private System.ComponentModel.BackgroundWorker eventFilterBGWorker;
+        public System.Windows.Forms.RichTextBox rtbResults;
+        private System.Windows.Forms.Button btnCopyClipboard;
+        public System.ComponentModel.BackgroundWorker SearchEventBGWorker;
+        public System.Windows.Forms.RichTextBox rtbBugReport;
+        private System.Windows.Forms.TabPage tpEventFilter;
+        public System.Windows.Forms.CheckedListBox clbKeywords;
+        private System.Windows.Forms.Button btnResultCleanup;
+        public System.Windows.Forms.ListView lbEventResult;
         private System.Windows.Forms.ColumnHeader columnDate;
         private System.Windows.Forms.ColumnHeader columnEvent;
-        private System.ComponentModel.BackgroundWorker SearchEventBGWorker;
-        private System.Windows.Forms.RichTextBox rtbResults;
         private System.Windows.Forms.ColumnHeader columnId;
-        private System.ComponentModel.BackgroundWorker backgroundWorker1;
-        private System.Windows.Forms.Button btnResultCleanup;
-        private System.ComponentModel.BackgroundWorker operatorBGWorker;
+        private System.Windows.Forms.Label lblTime;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox tbKeywords;
+        private System.Windows.Forms.Label lblResultCount;
+        private System.Windows.Forms.Button btnSearch;
+        public System.Windows.Forms.Label lblSelectedFile;
+        public System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.ToolStripMenuItem encodingToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem Utf7;
+        private System.Windows.Forms.ToolStripMenuItem Utf8;
+        private System.Windows.Forms.ToolStripMenuItem Utf32;
+        private System.Windows.Forms.ToolStripMenuItem UtfUnicode;
+        private System.Windows.Forms.ToolStripMenuItem UtfAscii;
+        private System.Windows.Forms.ToolStripMenuItem UtfBigEndianUnicode;
+        private System.Windows.Forms.ToolStripMenuItem EncodingDefault;
     }
 }
 

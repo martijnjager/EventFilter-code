@@ -78,13 +78,9 @@
     <Compile Include="Events\Engine\Concerns\DateFilter.cs" />
     <Compile Include="Events\Engine\Concerns\FindKeywords.cs" />
     <Compile Include="Events\Engine\Concerns\IgnoreWords.cs" />
-    <Compile Include="Events\Engine\Contracts\IRegisterCalls.cs" />
-    <Compile Include="Events\Engine\Contracts\ISearchContainer.cs" />
     <Compile Include="Events\Engine\Contracts\IEventIndex.cs" />
     <Compile Include="Events\Engine\Contracts\IFilterEvents.cs" />
-    <Compile Include="Events\Engine\Contracts\ISearchEngine.cs" />
-    <Compile Include="Events\Engine\SearchContainer.cs" />
-    <Compile Include="Events\Engine\SearchEngine.cs" />
+    <Compile Include="Events\Engine\Contracts\ISearchEvent.cs" />
     <Compile Include="Events\FilterEvents.cs" />
     <Compile Include="Filesystem.cs" />
     <Compile Include="Bug.cs" />

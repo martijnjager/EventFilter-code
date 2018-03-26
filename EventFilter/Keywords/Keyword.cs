@@ -10,14 +10,12 @@ namespace EventFilter.Keywords
 {
     public class Keyword : ManagesKeywords, IKeywords
     {
-        private readonly List<string> _availableOperators;
+        public List<string> availableOperators { get; set; }
 
         private static Keyword _instance;
         private static readonly object Lock = new object();
 
-        private List<dynamic> Operators { get; set; }
-
-        private Event _event;
+        public List<dynamic> Operators { get; set; }
 
         public string KeywordLocation { get; }
 
@@ -25,26 +23,22 @@ namespace EventFilter.Keywords
 
         public string DateEnd { get; private set; }
 
-        public int Counter { get; private set; }
+        public int Counter { get; set; }
 
-        public string KeywordCounted { get; private set; }
+        public string KeywordCounted { get; set; }
 
-        public Keyword()
+        private Keyword()
         {
             Operators = new List<dynamic>();
             AllKeywords = new List<string>();
             KeywordsFromFile = new List<string>();
 
-            _event = Event.Instance;
-
-            _availableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
+            availableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
 
             if (string.IsNullOrEmpty(KeywordLocation))
             {
                 KeywordLocation = Bootstrap.CurrentLocation + @"\Keywords.txt";
             }
-
-            LoadKeywordsFromLocation();
         }
 
         public static Keyword Instance
@@ -123,25 +117,6 @@ namespace EventFilter.Keywords
         }
 
         /// <summary>
-        /// Check Keywords on valid Operators
-        /// </summary>
-        public void CheckCountOperator()
-       {
-            IEnumerable<dynamic> keywords = Index();
-            Operators = new List<dynamic>();
-
-            foreach(string key in keywords)
-            {
-                if(_availableOperators.Any(key.Contains))
-                {
-                    Operators.Add(key);
-                }
-            }
-
-            Count();
-        }
-
-        /// <summary>
         /// Check if event contains keyword with operator
         /// 
         /// Returns null if text contains -{keyword}
@@ -183,52 +158,6 @@ namespace EventFilter.Keywords
             {
                 events.Add("operator");
             }
-        }
-
-        /// <summary>
-        /// Count how many times the given keyword is present in the log
-        /// </summary>
-        private void Count()
-        {
-            string keyword = Operators.Find(s => s.Contains("count:"));
-
-            if (!string.IsNullOrEmpty(keyword))
-            {
-                Counter = Count(keyword.Replace("count:", ""));
-                KeywordCounted = keyword.Replace("count:", "");
-            }
-            else
-            {
-                Counter = 0;
-                KeywordCounted = "";
-            }
-        }
-
-        /// <summary>
-        /// Count how many times a value is present
-        /// </summary>
-        /// <param name="value">value to Search for</param>
-        /// <returns>string Count of value</returns>
-        private int Count(string value)
-        {
-            int count = 0;
-
-            foreach (string line in _event.Events)
-            {
-                count = CountValue(line, value, count);
-            }
-
-            return count;
-        }
-
-        private int CountValue(string line, string value, int count)
-        {
-            if (line.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1)
-            {
-                count++;
-            }
-
-            return count;
         }
     }
 }

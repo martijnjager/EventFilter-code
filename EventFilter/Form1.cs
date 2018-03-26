@@ -15,10 +15,13 @@ namespace EventFilter
 {
     public partial class Form1 : Form
     {
-        private readonly Event _eventClass = new Event();
-        private readonly Keyword _keywordClass = new Keyword();
+        private readonly Event _eventClass;
+        private readonly Keyword _keywordClass;
 
         private ListViewItem _listview;
+
+        internal Event EventClass => _eventClass;
+        internal Keyword KeywordClass => _keywordClass;
 
         public Form1()
         {
@@ -26,19 +29,21 @@ namespace EventFilter
 
             _listview = new ListViewItem();
 
+            _eventClass = Event.Instance;
+            _keywordClass = Keyword.Instance;
+            
             try
             {
                 // Instantiating
                 var bootstrap = new Bootstrap(clbKeywords);
 
-                ISearchContainer searchContainer = new SearchContainer();
                 IEventIndex eventIndex = _eventClass;
-                
+
                 bootstrap.LoadFiles();
 
                 #region Load files into app
 
-                if(string.IsNullOrEmpty(IndexEvent.EventLocation))
+                if (string.IsNullOrEmpty(IndexEvent.EventLocation))
                 {
                     Report("No eventlog.txt found");
                     lblSelectedFile.Text = "Selected file: no eventlog found";
@@ -103,47 +108,11 @@ namespace EventFilter
 
                 Report("Selected log: " + lblSelectedFile.Text);
 
-                IsInputEmpty();
+                Bootstrap.IsInputEmpty(SearchEventBGWorker, eventFilterBGWorker, clbKeywords, KeywordClass, EventClass, tbKeywords.Text);
             }
             else
             {
                 Messages.SelectFileForSearching();
-            }
-        }
-
-        /// <summary>
-        /// If input is empty return a message
-        /// </summary>
-        private void IsInputEmpty()
-        {
-            if ((string.IsNullOrEmpty(tbKeywords.Text) && clbKeywords.Items.Count == 0) || String.IsNullOrEmpty(IndexEvent.EventLocation))
-            {
-                Messages.NoInput();
-
-                return;
-            }
-
-            if (SearchEventBGWorker.IsBusy == false)
-            {
-                _keywordClass.DeleteKeywords();
-
-                _keywordClass.AddKeyword(clbKeywords);
-
-                if (tbKeywords.Text != string.Empty)
-                {
-                    _keywordClass.AddKeyword(tbKeywords.Text.Split(','));
-                }
-
-                Report("Keywords to use: " + Arr.Implode(_keywordClass.GetAllKeywords(), ", "));
-
-                #region Set worker reports of bgw to true
-                SearchEventBGWorker.WorkerReportsProgress = true;
-                SearchEventBGWorker.DoWork += _eventClass.Search;
-
-                eventFilterBGWorker.WorkerReportsProgress = true;
-                #endregion
-
-                SearchEventBGWorker.RunWorkerAsync();
             }
         }
 
@@ -198,19 +167,19 @@ namespace EventFilter
 
         private void SearchEventBGWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            _keywordClass.CheckCountOperator();
+            _eventClass.CheckCountOperator();
 
-            if (_keywordClass.Counter != 0) Messages.CountKeywords(_keywordClass.KeywordCounted, _keywordClass.Counter);
+            if (KeywordClass.Counter != 0) Messages.CountKeywords(KeywordClass.KeywordCounted, KeywordClass.Counter);
 
             lbEventResult.Sort();
         }
 
         private void eventFilterBGWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var eventDescr = _eventClass.Filter(_eventClass.FoundEvents, _eventClass.FoundIds, _eventClass.FoundDates);
+            var eventDescr = EventClass.Filter(EventClass.FoundEvents, EventClass.FoundIds, EventClass.FoundDates);
 
-            var eventId = _eventClass.FilteredEventId;
-            var eventDate = _eventClass.FilteredEventDate;
+            var eventId = EventClass.FilteredEventId;
+            var eventDate = EventClass.FilteredEventDate;
 
             var recorder = 0;
 
@@ -250,6 +219,8 @@ namespace EventFilter
 
         private void Report(string log = "") => rtbBugReport.AppendText(log + "\n");
 
+        public static void Report(dynamic log) => Report(log);
+
         private void AddListItem(string[] item)
         {
             Report("Adding: " + Arr.Implode(item, "\t")+"\n");
@@ -267,14 +238,14 @@ namespace EventFilter
 
         private void CreateReport()
         {
-            if (IndexEvent.EventLocation == "" && _keywordClass.GetAllKeywords() == "")
+            if (IndexEvent.EventLocation == "" && KeywordClass.GetAllKeywords() == "")
             {
                 Messages.NoLogSaved();
 
                 return;
             }
 
-            Bug.CreateBugReport(_keywordClass, _eventClass, rtbBugReport.Text);
+            Bug.CreateBugReport(KeywordClass, EventClass, rtbBugReport.Text);
 
             if (Bug.exception != null)
             {
@@ -352,7 +323,7 @@ namespace EventFilter
 
             Report("Keywords to use location: " + keyLoc);
 
-            _keywordClass.LoadKeywordsFromLocation(keyLoc);
+            KeywordClass.LoadKeywordsFromLocation(keyLoc);
 
             // Load keywords
             //tbKeywords.Text = Keyword.Keywords;
@@ -371,13 +342,13 @@ namespace EventFilter
         #region Listview actions
         private void lbEventResult_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            string text = _eventClass.FindEvent(_eventClass.Events, int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text));
+            string text = EventClass.FindEvent(EventClass.Events, int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text));
             Message mes = new Message(text)
             {
                 Id = int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text)
             };
 
-            Report("\n\nCalling event id: " + _eventClass.Id[int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text)]);
+            Report("\n\nCalling event id: " + EventClass.Id[int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text)]);
             Report("Output: \n" + text);
             mes.ShowDialog();
         }

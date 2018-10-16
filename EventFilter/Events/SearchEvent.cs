@@ -1,78 +1,55 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using EventFilter.Events.Engine;
-using EventFilter.Events.Engine.Contracts;
-using EventFilter.Keywords.Contracts;
-using EventFilter.Keywords;
+using EventFilter.Contracts;
+using System.Linq;
 
 namespace EventFilter.Events
 {
-    public class SearchEvent : IndexEvent, ISearchEvent
+    public static class SearchEvent
     {
-        public List<dynamic> FoundIds { get; protected set; }
+        private static BackgroundWorker worker;
 
-        public List<dynamic> FoundEvents { get; protected set; }
-
-        public List<dynamic> FoundDates { get; protected set; }
-
-        public SearchEvent()
+        public static void Search(object sender, DoWorkEventArgs e)
         {
-            FoundDates = new List<dynamic>();
-            FoundEvents = new List<dynamic>();
-            FoundIds = new List<dynamic>();
-        }
-        
-        public void Search(object sender, DoWorkEventArgs e)
-        {
-            var worker = sender as BackgroundWorker;
-
-            var eventCounter = 0; // Counter for total found events
-            var actionCounter = 0;
-
-            IndexEvents();
+            worker = sender as BackgroundWorker;
 
             //try
             //{
-                
-                var keyword = _keywords.Index(); // Keywords into array
+                Event.Instance.IndexEvents();
 
-                if (Description.Count == 0 || Id.Count == 0 || Dates.Count == 0 || keyword.Count == 0) return;
-                
-                worker.ReportProgress(actionCounter, "Log: Parameters used: \t filepath: " + Event.EventLocation + "\n\t Keywords to use: " + Arr.Implode(_keywords.GetAllKeywords(), ", "));
-                worker.ReportProgress(actionCounter++, "Log: Lines in eventArray: " + Description.Count);
+            List<string> keyword = Event.Instance.Keywords.Index(); // Keywords into array
 
-                var lastKeyword = keyword[0]; // lastKeyword logging, starting with first keyword
+                if (Event.Instance.Events.Count == 0 || keyword.Count == 0) return;
 
-                worker.ReportProgress(actionCounter++, "Log: First lastKeyword: " + lastKeyword);
+                /**
+                * We're good to search
+                */
+                System.Diagnostics.Stopwatch watch = System.Diagnostics.Stopwatch.StartNew(); // Time
 
-                var watch = System.Diagnostics.Stopwatch.StartNew(); // Time counters
-                
-                var tmpDescription = Description;
-                var tmpDate = Dates;
+                int eventCounter = 0; // Counter for total found events
+                int actionCounter = 0; // how many actions have been reported
 
-                if (keyword.Any(s => s.Contains("datestart")) && keyword.Any(s => s.Contains("dateend")))
-                {
-                    FilterDate(keyword, ref tmpDescription, ref tmpDate);
-                }
+                List<string> foundIds = new List<string>();
 
-                ForEachDescription(worker, ref eventCounter, ref actionCounter, tmpDescription, tmpDate, keyword);
+                Report(0, Arr.ToString(keyword, ", "), ref actionCounter);
+                Report(1, Event.Instance.Events.Count, ref actionCounter);
 
-                worker.ReportProgress(actionCounter++, "Log: \n\nEvents found: " + eventCounter);
-                worker.ReportProgress(actionCounter++, "Counter: Events found: " + eventCounter);
+                PerformSearch(ref eventCounter, ref actionCounter, foundIds);
+
+                Report(2, eventCounter, ref actionCounter);
+                Report(3, eventCounter, ref actionCounter);
 
                 if (eventCounter == 0)
                 {
                     Messages.NoEventLogHasKeyword();
                 }
 
-                // Register time
                 watch.Stop();
-                var elapsedTime = watch.Elapsed.TotalSeconds;
-                worker.ReportProgress(actionCounter, "Time: Found results in: " + elapsedTime);
+                double elapsedTime = watch.Elapsed.TotalSeconds;
 
-                e.Result = FoundIds;
+                Report(4, elapsedTime, ref actionCounter);
+
+                e.Result = foundIds;
             //}
             //catch (Exception error)
             //{
@@ -80,113 +57,99 @@ namespace EventFilter.Events
             //    Messages.ProblemOccured("searching events for keywords");
             //}
         }
-
-        /// <summary>
-        /// For each event description, check if it has any given keywords
-        /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="eventCounter"></param>
-        /// <param name="actionCounter"></param>
-        /// <param name="tmpDescription"></param>
-        /// <param name="tmpDate"></param>
-        private void ForEachDescription(BackgroundWorker worker, ref int eventCounter, ref int actionCounter, List<dynamic> tmpDescription, List<dynamic> tmpDate, dynamic keywords)
+        public static void SearchEventBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            for (var i = 0; i < tmpDescription.Count; i++)
-            {
-                HasKeyword(worker, ref eventCounter, ref actionCounter, tmpDescription, tmpDate, keywords, i);
-            }
+            if (e.UserState.ToString().Contains("Log: "))
+                Actions.Report(e.UserState.ToString().Replace("Log: ", ""));
+
+            if (e.UserState.ToString().Contains("Event: "))
+                Event.Instance.Entries.Add(Arr.Explode(e.UserState.ToString().Replace("Event: ", ""), " + "));
+
+            if (e.UserState.ToString().Contains("Time: "))
+                Actions.form.lblTime.Text = e.UserState.ToString().Replace("Time: ", "");
+
+            if (e.UserState.ToString().Contains("Counter: "))
+                Actions.SetResultCount(e.UserState.ToString().Replace("Counter: ", ""));
         }
 
-        /// <summary>
-        /// Check if description has keyword
-        /// </summary>
-        /// <param name="worker"></param>
-        /// <param name="eventCounter"></param>
-        /// <param name="actionCounter"></param>
-        /// <param name="tmpDescription"></param>
-        /// <param name="tmpDate"></param>
-        /// <param name="i"></param>
-        private void HasKeyword(BackgroundWorker worker, ref int eventCounter, ref int actionCounter, IReadOnlyList<dynamic> tmpDescription, IReadOnlyList<dynamic> tmpDate, dynamic keywords, int i)
+        public static void SearchEventBGWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            var findKeyword = new Engine.Concerns.FindKeywords();
+            Actions.form.lbEventResult.Items.Clear();
 
-            var eventEntry = new string[3];
+            foreach (string[] item in Event.Instance.Entries)
+                if (Event.Instance.ListItems.Add(item))
+                    Actions.AddListItem(item);
 
-            /**
-             * If description has keyword but NOT ignore keywords
-             */
-            if (findKeyword.HasKeyword(keywords, tmpDescription[i]) && findKeyword.HasIgnoreWord(keywords, tmpDescription[i]) == false)
+            Event events = Event.Instance;
+
+            events.CheckCountOperator();
+
+            if (events.Keywords.Counter != 0) Messages.CountKeywords(events.Keywords.KeywordCounted, events.Keywords.Counter);
+
+            Actions.form.lbEventResult.Sort();
+        }
+
+        private static void PerformSearch(ref int eventCounter, ref int actionCounter, List<string> foundIds)
+        {
+            FilterEventsOnDateKeywords(Event.Instance, Event.Instance.Eventlogs);
+
+            LoopThroughEvents(Event.Instance, ref eventCounter, ref actionCounter, foundIds, Event.Instance.Eventlogs);
+        }
+
+        private static void LoopThroughEvents(IEvent events, ref int eventCounter, ref int actionCounter, List<string> foundIds, EventLogs[] eventlogs)
+        {
+            IKeywords keywords = events.Keywords;
+
+            foreach(EventLogs eventlog in eventlogs)
             {
+                string[] eventEntry = new string[3];
+
+                /**
+                 * If description has ignorable keywords or no keywords at all
+                 */
+                if (events.with(eventlog.Description).HasNot(keywords.Items) || events.with(eventlog.Description).Has(keywords.Ignorable))
+                    continue;
+
                 eventCounter++;
 
-                eventEntry[0] = tmpDate[i];
-                eventEntry[1] = tmpDescription[i];
-                eventEntry[2] = i.ToString();
+                eventEntry[0] = eventlog.Date;
+                eventEntry[1] = eventlog.Description;
+                eventEntry[2] = eventlog.Id;
 
-                FoundDates.Add(eventEntry[0]);
-                FoundEvents.Add(eventEntry[1]);
-                FoundIds.Add(eventEntry[2]);
+                foundIds.Add(eventlog.Id);
 
-                worker.ReportProgress(actionCounter++, "Event: " + eventEntry[0] + " + " + eventEntry[1] + " + " + eventEntry[2]);
+                worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " + " + eventlog.Description + " + " + eventlog.Id);
             }
         }
 
-        /// <summary>
-        /// If date keywords present, filter eventlog
-        /// </summary>
-        /// <param name="keyword"></param>
-        /// <param name="tmpDescription"></param>
-        /// <param name="tmpDate"></param>
-        private void FilterDate(List<dynamic> keyword, ref List<dynamic> tmpDescription, ref List<dynamic> tmpDate)
+        private static void FilterEventsOnDateKeywords(IEvent events, EventLogs[] eventlogs)
         {
-            if (!keyword.Any(s => s.Contains("datestart")) && !keyword.Any(s => s.Contains("dateend"))) return;
+            List<string> keywords = events.Keywords.Items;
 
-            var id = FilterOnDate();
-            var description = new List<dynamic>();
-            var date = new List<dynamic>();
-
-            for (var i = 0; i < description.Count; i++)
+            if (keywords.Any(s => s.Contains("datestart")) || keywords.Any(s => s.Contains("dateend")))
             {
-                if (id.All(s => s != i.ToString())) continue;
-                description.Add(description[i]);
-                date.Add(Dates[i]);
+                events.FilterDate(keywords, eventlogs);
             }
-
-            tmpDescription = description;
-            tmpDate = date;
         }
 
-        /// <summary>
-        /// Filter events on date
-        /// </summary>
-        /// <returns>List of non-duplicate events</returns>
-        private List<dynamic> FilterOnDate()
+        private static string GetMessage(int index, dynamic data)
         {
-            var results = new List<dynamic>();
+            string[] events = new string[]
+           {
+            "Log: Parameters used: \t filepath: " + Event.Instance.EventLocation.FullName + "\n\t Keywords to use: ",
+            "Log: Lines in eventArray: " + Event.Instance.Events.Count,
+            "Log: \n\nEvents found: ",
+            "Counter: ",
+            "Time: Found results in: ",
+            "Log: Error: "
+           };
 
-            for (var i = 0; i < Dates.Count; i++)
-            {
-                if (_keywords.DateStart != null && (Dates[i].Contains(_keywords.DateStart) || DateTime.Parse(Dates[i]) > DateTime.Parse(_keywords.DateStart)))
-                {
-                    if (_keywords.DateEnd != null)
-                    {
-                        if (Dates[i].Contains(_keywords.DateEnd) != true || DateTime.Parse(Dates[i]) < DateTime.Parse(_keywords.DateEnd))
-                        {
-                            results.Add(i.ToString());
-                        }
-                    }
+            return events[index] + data;
+        }
 
-                    results.Add(i.ToString());
-                }
-
-                if (_keywords.DateEnd == null) continue;
-                if (Dates[i].Contains(_keywords.DateEnd) != true || DateTime.Parse(Dates[i]) < DateTime.Parse(_keywords.DateEnd))
-                {
-                    results.Add(i.ToString());
-                }
-            }
-
-            return results;
+        private static void Report(int index, dynamic data, ref int ActionCounter)
+        {
+            worker.ReportProgress(ActionCounter++, GetMessage(index, data));
         }
     }
 }

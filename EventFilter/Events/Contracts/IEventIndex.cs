@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace EventFilter.Events.Engine.Contracts
+namespace EventFilter.Events.Contracts
 {
-    internal interface IEventIndex
+    public interface IEventIndex
     {
         int _eventIdentifier { get; set; }
         

@@ -1,2 +1,8 @@
 Bugfixes:
-- Minor bugfixes
+
+
+Feature:
+
+
+Improvements:
+- Added message if the file is corrupt

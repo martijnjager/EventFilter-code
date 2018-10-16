@@ -39,6 +39,7 @@
             this.miTemplate = new System.Windows.Forms.ToolStripMenuItem();
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.encodingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.EncodingDefault = new System.Windows.Forms.ToolStripMenuItem();
             this.Utf7 = new System.Windows.Forms.ToolStripMenuItem();
             this.Utf8 = new System.Windows.Forms.ToolStripMenuItem();
             this.Utf32 = new System.Windows.Forms.ToolStripMenuItem();
@@ -73,7 +74,6 @@
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.eventFilterBGWorker = new System.ComponentModel.BackgroundWorker();
             this.SearchEventBGWorker = new System.ComponentModel.BackgroundWorker();
-            this.EncodingDefault = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tpEventFilter.SuspendLayout();
@@ -172,6 +172,13 @@
             this.encodingToolStripMenuItem.Name = "encodingToolStripMenuItem";
             this.encodingToolStripMenuItem.Size = new System.Drawing.Size(69, 20);
             this.encodingToolStripMenuItem.Text = "Encoding";
+            // 
+            // EncodingDefault
+            // 
+            this.EncodingDefault.Name = "EncodingDefault";
+            this.EncodingDefault.Size = new System.Drawing.Size(171, 22);
+            this.EncodingDefault.Text = "Default";
+            this.EncodingDefault.Click += new System.EventHandler(this.EncodingDefault_Click);
             // 
             // Utf7
             // 
@@ -458,23 +465,6 @@
             this.rtbResults.TabIndex = 0;
             this.rtbResults.Text = "";
             // 
-            // eventFilterBGWorker
-            // 
-            this.eventFilterBGWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.eventFilterBGWorker_DoWork);
-            this.eventFilterBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.eventFilterBGWorker_ProgressChanged);
-            // 
-            // SearchEventBGWorker
-            // 
-            this.SearchEventBGWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.SearchEventBGWorker_ProgressChanged);
-            this.SearchEventBGWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.SearchEventBGWorker_RunWorkerCompleted);
-            // 
-            // EncodingDefault
-            // 
-            this.EncodingDefault.Name = "EncodingDefault";
-            this.EncodingDefault.Size = new System.Drawing.Size(171, 22);
-            this.EncodingDefault.Text = "Default";
-            this.EncodingDefault.Click += new System.EventHandler(this.EncodingDefault_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -488,6 +478,8 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "EventFilter";
             this.SizeChanged += new System.EventHandler(this.Form1_SizeChanged);
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form1_DragDrop);
+            this.DragEnter += new System.Windows.Forms.DragEventHandler(this.Form1_DragEnter);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -521,7 +513,7 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Button btnSaveReport;
-        private System.ComponentModel.BackgroundWorker eventFilterBGWorker;
+        public System.ComponentModel.BackgroundWorker eventFilterBGWorker;
         public System.Windows.Forms.RichTextBox rtbResults;
         private System.Windows.Forms.Button btnCopyClipboard;
         public System.ComponentModel.BackgroundWorker SearchEventBGWorker;
@@ -533,21 +525,21 @@
         private System.Windows.Forms.ColumnHeader columnDate;
         private System.Windows.Forms.ColumnHeader columnEvent;
         private System.Windows.Forms.ColumnHeader columnId;
-        private System.Windows.Forms.Label lblTime;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox tbKeywords;
-        private System.Windows.Forms.Label lblResultCount;
         private System.Windows.Forms.Button btnSearch;
         public System.Windows.Forms.Label lblSelectedFile;
         public System.Windows.Forms.OpenFileDialog openFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem encodingToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem Utf7;
-        private System.Windows.Forms.ToolStripMenuItem Utf8;
+        public System.Windows.Forms.ToolStripMenuItem Utf8;
         private System.Windows.Forms.ToolStripMenuItem Utf32;
         private System.Windows.Forms.ToolStripMenuItem UtfUnicode;
         private System.Windows.Forms.ToolStripMenuItem UtfAscii;
         private System.Windows.Forms.ToolStripMenuItem UtfBigEndianUnicode;
-        private System.Windows.Forms.ToolStripMenuItem EncodingDefault;
+        public System.Windows.Forms.ToolStripMenuItem EncodingDefault;
+        public System.Windows.Forms.Label lblResultCount;
+        public System.Windows.Forms.Label lblTime;
     }
 }
 

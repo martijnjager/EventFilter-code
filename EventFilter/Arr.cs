@@ -3,15 +3,15 @@ using System.Collections.Generic;
 
 namespace EventFilter
 {
-    static class Arr
+    internal static class Arr
     {
         /// <summary>
         /// Glue an array together
         /// </summary>
         /// <param name="array"></param>
         /// <param name="delimater"></param>
-        /// <returns></returns>
-        public static string Implode(dynamic array, string delimater = "") => CollectionToString(array, delimater);
+        /// <returns>Array converted to string</returns>
+        public static string ToString(dynamic array, string delimater = "") => CollectionToString(array, delimater);
 
         /// <summary>
         /// Convert string to array
@@ -19,23 +19,14 @@ namespace EventFilter
         /// <param name="text" />
         /// <param name="delimater" />
         /// <returns></returns>
-        public static dynamic Explode(string text, string delimater) => text.Replace("\t", "").Split(new [] { delimater }, StringSplitOptions.RemoveEmptyEntries);
+        public static string[] Explode(string text, string delimater) => text.Replace("\t", "").Split(new[] { delimater }, StringSplitOptions.RemoveEmptyEntries);
 
         /// <summary>
-        /// Convert dynamic value to array
+        /// Convert string array value to list array
         /// </summary>
         /// <param name="value"></param>
-        /// <param name="uselessOptional"></param>
         /// <returns></returns>
-        public static dynamic Explode(string[] value, string uselessOptional = "") => new List<string>(value);
-
-        /// <summary>
-        /// Convert a string to list
-        /// </summary>
-        /// <param name="text">text to convert</param>
-        /// <param name="delimater">character to split with, optional</param>
-        /// <returns></returns>
-        public static List<string> StringToList(string text, string delimater = " ") => Explode(Explode(text, delimater));
+        private static List<string> Explode(string[] value) => new List<string>(value);
 
         /// <summary>
         /// Convert dynamic to list
@@ -43,7 +34,7 @@ namespace EventFilter
         /// <param name="value"></param>
         /// <param name="delimater"></param>
         /// <returns></returns>
-        public static List<string> DynamicToList(dynamic value, string delimater = " ") => Explode(value, delimater);
+        public static List<string> ToList(dynamic value, string delimater = " ") => Explode(value is string ? Explode(value, delimater) : value);
 
         /// <summary>
         /// Convert colection to string by joining each element to each other
@@ -58,27 +49,12 @@ namespace EventFilter
         /// </summary>
         /// <param name="array"></param>
         /// <returns></returns>
-        public static string[] Trim(string[] array)
+        public static string[] Trim(ref string[] array)
         {
-            string[] newArray = new string[array.Length];
-            int c = 0;
-            foreach (string str in array)
-            {
-                newArray[c] = str.Trim();
-                c++;
-            }
+            for(int i = 0; i < array.Length; i++)
+                array[i] = array[i].Trim();
             
-            return newArray;
-        }
-
-        /// <summary>
-        /// Check if collection has anything
-        /// </summary>
-        /// <param name="dynamicList"></param>
-        /// <returns></returns>
-        public static bool IsNullOrEmpty(List<dynamic> dynamicList)
-        {
-            return dynamicList == null || dynamicList.Count < 1;
+            return array;
         }
     }
 }

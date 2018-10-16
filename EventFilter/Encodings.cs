@@ -1,22 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using EventFilter.Events;
 
 namespace EventFilter
 {
-    class Encodings
+    public static class Encodings
     {
         // Stores list of encoding options
-        public static List<ToolStripMenuItem> EncodingOptions = new List<ToolStripMenuItem>();
+        public static readonly List<ToolStripMenuItem> EncodingOptions = new List<ToolStripMenuItem>();
 
         // Stores currently used encoding
-        public static Encoding CurrentEncoding;
-
-        private static readonly Event _eventClass = Event.Instance;
+        public static Encoding CurrentEncoding = new UTF8Encoding();
 
         /// <summary>
         /// Updates the current encoding
@@ -24,7 +18,7 @@ namespace EventFilter
         /// <param name="item"></param>
         public static void CheckState(ToolStripMenuItem item)
         {
-            foreach (var encoding in EncodingOptions)
+            foreach (ToolStripMenuItem encoding in EncodingOptions)
             {
                 if (encoding.Name == item.Name && encoding.Checked)
                     encoding.Checked = false;
@@ -37,9 +31,9 @@ namespace EventFilter
             UpdateCurrentEncoding();
         }
 
-        public static void UpdateCurrentEncoding()
+        private static void UpdateCurrentEncoding()
         {
-            foreach (var encoding in EncodingOptions)
+            foreach (ToolStripMenuItem encoding in EncodingOptions)
             {
                 if (encoding.Checked)
                 {
@@ -76,18 +70,5 @@ namespace EventFilter
 
             return currentEncoding;
         }
-
-        //private static byte[] Converter(dynamic encoding, dynamic text) => encoding.GetBytes(text);
-
-        //private static dynamic UpdatePropertyEncoding(ref List<dynamic> propertyList)
-        //{
-        //    int counter = 0;
-        //    foreach (string date in propertyList)
-        //    {
-        //        propertyList[counter++] = Converter(CurrentEncoding, date);
-        //    }
-
-        //    return propertyList;
-        //}
     }
 }

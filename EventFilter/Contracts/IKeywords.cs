@@ -1,20 +1,27 @@
 ﻿using System.Collections.Generic;
-using System.Windows.Forms;
 
-namespace EventFilter.Keywords.Contracts
+namespace EventFilter.Contracts
 {
-    public interface IKeywords : IManagesKeywords
+    public interface IKeywords : IManagesKeywords, IRefresh
     {
         string DateStart { get; }
         string DateEnd { get; }
+
+        bool KeywordsLoaded { get; set; }
 
         List<dynamic> Operators { get; set; }
 
         int Counter { get; set; }
 
         string KeywordCounted { get; set; }
+
+        string KeywordLocation { get; set; }
+
+        List<string> Ignorable { get; }
         
-        List<string> availableOperators { get; set; }
+        List<string> AvailableOperators { get; set; }
+
+        IKeywords Instance { get; }
 
         //string GetIndexed();
 
@@ -30,6 +37,6 @@ namespace EventFilter.Keywords.Contracts
 
         void LoadKeywordsFromLocation(string path = "");
 
-        List<dynamic> Index();
+        List<string> Index();
     }
 }

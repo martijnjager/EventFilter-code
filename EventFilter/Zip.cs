@@ -1,31 +1,48 @@
 ﻿using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using EventFilter.Filesystem;
 
 namespace EventFilter
 {
-    internal static class Zip
+    public static class Zip
     {
-        public static List<dynamic> Logs { get; } = new List<dynamic> { "eventlog.txt", "EvtxSysDump.txt", "system-events.txt" , "eventlog.evtx"};
-        public static string Location { get; } = Bootstrap.CurrentLocation + "\\extract";
+        public static List<string> Logs { get; } = new List<string> { "eventlog.txt", "EvtxSysDump.txt", "system-events.txt" , "eventlog.evtx"};
+        public static string ExtractLocation { get; } = Bootstrap.CurrentLocation + "\\extract";
 
         public static void ExtractZip(string zipfile, ref string eventLocation)
         {
-            if(!File.Exists(Location))
+            Extract(zipfile);
+
+            if (Directory.GetDirectories(ExtractLocation) != null)
             {
-                Directory.CreateDirectory(Location);
+                eventLocation = Remover.ScanDirectories(ExtractLocation);
+            }
+        }
+
+        private static void Extract(string zipfile)
+        {
+            EmptyExtractLocation();
+
+            ZipFile.ExtractToDirectory(zipfile, ExtractLocation);
+        }
+
+        private static void EmptyExtractLocation()
+        {
+            if(ExtractLocationIsAvailable())
+                Remover.Delete(new DirectoryInfo(ExtractLocation));
+        }
+
+        private static bool ExtractLocationIsAvailable()
+        {
+            if (!Directory.Exists(ExtractLocation))
+            {
+                Directory.CreateDirectory(ExtractLocation);
+
+                return false;
             }
 
-            // Empty extraction folders
-            Filesystem.Delete(new DirectoryInfo(Location));
-
-
-            ZipFile.ExtractToDirectory(zipfile, Location);
-
-            if(Directory.GetDirectories(Location) != null)
-            {
-                eventLocation = Filesystem.ScanDirectories(Location);
-            }
+            return true;
         }
     }
 }

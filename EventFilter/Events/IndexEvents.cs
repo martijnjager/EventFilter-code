@@ -1,39 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using EventFilter.Events.Engine;
-using EventFilter.Events.Engine.Contracts;
-using EventFilter.Keywords.Contracts;
-using EventFilter.Keywords;
-using System.Diagnostics.Eventing.Reader;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using EventFilter.Contracts;
+using System.Diagnostics.Eventing.Reader;
 
 namespace EventFilter.Events
 {
-    public class IndexEvent : IEventIndex
+    public partial class Event
     {
-        public IKeywords _keywords { get; }
+        public IKeywords Keywords { get; set; }
 
-        public int _eventIdentifier { get; set; }
+        public int EventIdentifier { get; set; }
 
-        public static string EventLocation { get; set; }
+        public FileInfo EventLocation { get; private set; }
 
-        public List<dynamic> Dates { get; set; }
-        public List<dynamic> Description { get; set; }
-        public List<dynamic> Id { get; set; }
-        public List<dynamic> Events { get; set; }
-        public List<dynamic> EventArray { get; set; }
-
-        protected internal IndexEvent()
-        {
-            Dates = new List<dynamic>();
-            Description = new List<dynamic>();
-            Id = new List<dynamic>();
-            Events = new List<dynamic>();
-            EventArray = new List<dynamic>();
-
-            _keywords = Keyword.Instance;
-        }
+        //public string[] Dates { get; set; }
+        //public string[] Description { get; set; }
+        //public string[] Id { get; set; }
+        public List<string> Events { get; set; }
+        private string[] EventArray { get; set; }
+        public EventLogs[] Eventlogs { get; private set; }
 
         /// <summary>
         /// Skip current event and get Next event
@@ -42,10 +28,10 @@ namespace EventFilter.Events
         /// <returns></returns>
         public string Next(int curId)
         {
-            if (!(curId < Events.Count)) return Events[curId];
+            if (!(curId < Eventlogs.Length)) return Eventlogs[curId].Log;
             
-            _eventIdentifier = curId + 1;
-            return Events[curId + 1];
+            EventIdentifier = curId + 1;
+            return Eventlogs[curId + 1].Log;
         }
 
         /// <summary>
@@ -55,10 +41,10 @@ namespace EventFilter.Events
         /// <returns>string</returns>
         public string Previous(int curId)
         {
-            if (!(curId > 0)) return Events[curId];
+            if (!(curId > 0)) return Eventlogs[curId].Log;
 
-            _eventIdentifier = curId - 1;             
-            return Events[curId - 1];
+            EventIdentifier = curId - 1;
+            return Eventlogs[curId - 1].Log;
         }
 
         /// <summary>
@@ -66,105 +52,79 @@ namespace EventFilter.Events
         /// </summary>
         public void IndexEvents()
         {
-            Event.ResetProperties();
-
-            if(EventLocation.Contains(".evtx"))
-            {
-                CreateFromEvtx(EventLocation);
-            }
+            if (EventLocation.Extension == ".evtx")
+                CreateEvents();
             else
+                CreateEventList();
+        }
+
+        /// <summary>
+        /// Under development
+        /// </summary>
+        private void CreateEvents()
+        {
+            using (EventLogReader reader = new EventLogReader(EventLocation.FullName, PathType.FilePath))
             {
-                CreateEventList(EventLocation);
+                EventRecord record;
+                int counter = 0;
+
+                while ((record = reader.ReadEvent()) != null)
+                {
+                    string task = record.TaskDisplayName != string.Empty ? record.TaskDisplayName : "N/A";
+                    string user = record.UserId != null ? record.UserId.ToString() : "N/A";
+                    string opcode = record.OpcodeDisplayName != string.Empty ? record.OpcodeDisplayName : "N/A";
+                    string desc = record.FormatDescription();
+
+                    string text = "Event[" + counter++ +
+                        "]:\n  Log Name: " + record.LogName +
+                        "\n  Source: " + record.ProviderName +
+                        "\n  Date: " + record.TimeCreated +
+                        "\n  Event ID: " + record.Id +
+                        "\n  Task: " + task +
+                        "\n  Level: " + record.LevelDisplayName +
+                        "\n  Opcode: " + opcode +
+                        "\n  Keyword: " + Arr.ToString(record.Keywords, ", ") +
+                        "\n  User: " + user +
+                        "\n  User Name: " + user +
+                        "\n  Computer: " + record.MachineName +
+                        "\n  Description: " + desc + "\n\n";
+
+                    Events.Add(text);
+                }
             }
+        }
+
+        private void InitProp()
+        {
+            Eventlogs = new EventLogs[Events.Count];
         }
 
         /// <summary>
         /// Create eventlog from location
         /// </summary>
-        /// <param name="location"></param>
         /// <returns></returns>
-        private void CreateEventList(string location)
+        private void CreateEventList()
         {
-            var lines = File.ReadAllLines(location, Encodings.CurrentEncoding);
+            string[] lines = File.ReadAllLines(EventLocation.FullName, Encodings.CurrentEncoding);
 
-            EventArray = lines.Cast<dynamic>().ToList();
+            EventArray = new string[lines.Length];
 
-            for (int i = 0; i < EventArray.Count; i++)
-            {
-                IndexDates(i);
-
-                IndexDescription(i);
-            }
+            EventArray = lines.ToArray();
+            Events = new List<string>();
+            Eventlogs = new EventLogs[0];
 
             MakeEvents();
 
-            EventArray = new List<dynamic>();
-        }
-
-        private void CreateFromEvtx(string location)
-        {
-            using (var reader = new EventLogReader(location, PathType.FilePath))
-            {
-                EventRecord record;
-
-                int counter = 0;
-                while ((record = reader.ReadEvent()) != null)
-                {
-                    counter++;
-                    using (record)
-                    {
-                        Id.Add(counter);
-                        Dates.Add(DateTime.Parse(record.TimeCreated.ToString()).ToString("yyyy-MM-ddTHH:mm:ss"));
-                        Description.Add(record.FormatDescription());
-
-                        if (counter == 500)
-                        {
-                            
-                        }
-                    }
-                }
-            }
-        }
-
-        private void IndexDates(int i)
-        {
-            if (EventArray[i].Contains("Date:"))
-            {
-                Dates.Add(EventArray[i].Substring(EventArray[i].IndexOf(':') + 1));
-            }
-        }
-
-        private void IndexDescription(int i)
-        {
-            if (EventArray[i].Contains("Description:"))
-            {
-                int counter = 1;
-                Id.Add((i + counter).ToString());
-
-                Description.Add(IndexDescription(i, counter));
-            }
-        }
-
-        private string IndexDescription(int count, int counter)
-        {
-            string text = "";
-
-            while ((count + counter) < EventArray.Count && EventArray[count + counter].Contains("Event[") != true)
-            {
-                text += EventArray[count + counter];
-                counter++;
-            }
-
-            return text;
+            EventArray = new string[0];
         }
 
         private void MakeEvents()
         {
-            for (int i = 0; i < EventArray.Count; i++)
+            for (int i = 0; i < EventArray.Length; i++)
             {
                 int count = 0;
                 string text = "";
-                while ((i + count + 1) < EventArray.Count && EventArray[i + count + 1].Contains("Event[") != true)
+                while (i + count + 1 < EventArray.Length && EventArray[i + count + 1].Contains("Event[") != true)
                 {
                     text += EventArray[i + count] + "\n";
                     count++;
@@ -174,6 +134,31 @@ namespace EventFilter.Events
 
                 Events.Add(text);
             }
+
+            /**
+             * The properties can be initialized now that Events array is ready
+             */
+            InitProp();
+
+            SetIndex();
         }
+
+        //private void Index(string text, int idCounter)
+        //{
+        //    var data = new HashSet<string>();
+
+        //    var date = GetDate(text);
+        //    var desc = GetDescription(text);
+        //    var dat = date + ", " + desc;
+
+        //    // Check if the date and description can be added to ensure the events are unique
+        //    if (!data.Add(dat))
+        //        return;
+
+        //    Eventlogs[idCounter].Date = date;
+        //    Eventlogs[idCounter].Description = desc;
+        //    Eventlogs[idCounter].Id = (idCounter + 13).ToString();
+        //    Eventlogs[idCounter].Log = text;
+        //}
     }
 }

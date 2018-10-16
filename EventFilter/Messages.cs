@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace EventFilter
 {
-    class Messages
+    internal static class Messages
     {
         //public static void AnErrorOccuredLoadingFiles() =>
         //    MessageWrite("An error occured loading the necessary files, try to load them manually.", "Error loading files", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -56,7 +51,8 @@ namespace EventFilter
         public static void NoInput() =>
             MessageWrite("Please provide keywords and/or select an eventlog", "No input", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
-
+        public static void IncorrectLogSize() =>
+            MessageWrite("Please select a log that is not of size 0KB", "No valid log size", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         private static void MessageWrite(string text, string title = "", MessageBoxButtons button = MessageBoxButtons.OK, MessageBoxIcon icon = MessageBoxIcon.None) => MessageBox.Show(text, title, button, icon);
     }

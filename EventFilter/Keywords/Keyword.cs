@@ -1,39 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using EventFilter.Events;
-using EventFilter.Keywords.Concerns;
-using EventFilter.Keywords.Contracts;
+using EventFilter.Contracts;
 
 namespace EventFilter.Keywords
 {
-    public class Keyword : ManagesKeywords, IKeywords
+    public sealed partial class Keyword : IKeywords
     {
-        public List<string> availableOperators { get; set; }
+        /**
+         * Indexes all operators, both used and unused operators
+         */
+        public List<string> AvailableOperators { get; set; }
 
-        private static Keyword _instance;
-        private static readonly object Lock = new object();
+        public bool KeywordsLoaded { get; set; }
 
+        private Keyword _keywords;
+        private readonly object _lock = new object();
+
+        /**
+         * Indexes the used operators
+         */
         public List<dynamic> Operators { get; set; }
 
-        public string KeywordLocation { get; }
+        public string KeywordLocation { get; set; }
 
         public string DateStart { get; private set; }
 
         public string DateEnd { get; private set; }
 
+        public List<string> Ignorable { get; }
+
         public int Counter { get; set; }
 
         public string KeywordCounted { get; set; }
 
-        private Keyword()
+        public Keyword()
         {
             Operators = new List<dynamic>();
-            AllKeywords = new List<string>();
+            Ignorable = new List<string>();
+            DeleteKeywords();
             KeywordsFromFile = new List<string>();
 
-            availableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
+            AvailableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
 
             if (string.IsNullOrEmpty(KeywordLocation))
             {
@@ -41,15 +49,26 @@ namespace EventFilter.Keywords
             }
         }
 
-        public static Keyword Instance
+        public IKeywords Instance
         {
             get
             {
-                lock (Lock)
-                {
-                    return _instance ?? (_instance = new Keyword());
-                }
+                NewInstance();
+
+                return _keywords;
             }
+        }
+
+        private void NewInstance()
+        {
+            if (_keywords is null) lock(_lock){_keywords = new Keyword();}
+        }
+
+        public dynamic Refresh()
+        {
+            NewInstance();
+
+            return _keywords;
         }
 
         /// <summary>
@@ -61,10 +80,12 @@ namespace EventFilter.Keywords
         /// <param name="path">Path of Keywords file</param>
         public void LoadKeywordsFromLocation(string path = "")
         {
-            var keywords = LoadFrom(!string.IsNullOrEmpty(path) ? path : KeywordLocation);
+            string keywords = LoadFrom(!string.IsNullOrEmpty(path) ? path : KeywordLocation);
 
             SetKeyword(keywords);
-            KeywordsFromFile = Arr.StringToList(keywords, ", ");
+            KeywordsFromFile = Arr.ToList(keywords, ", ");
+
+            KeywordsLoaded = true;
         }
 
         /// <summary>
@@ -75,8 +96,8 @@ namespace EventFilter.Keywords
         private static string LoadFrom(string path)
         {
             if (!File.Exists(path)) return "";
-            var getKeywords = new StreamReader(path);
-            var line = getKeywords.ReadLine();
+            StreamReader getKeywords = new StreamReader(path);
+            string line = getKeywords.ReadLine();
 
             return line;
         }
@@ -85,79 +106,56 @@ namespace EventFilter.Keywords
         /// Prepare Keywords for usage
         /// </summary>
         /// <returns></returns>
-        public List<dynamic> Index()
+        public List<string> Index()
         {
-            var key = ToList();
+            if (!KeywordsLoaded)
+                LoadKeywordsFromLocation();
+
+            string[] key = ToArray();
 
             DateStart = null;
             DateEnd = null;
 
-            for (var i = 0; i < key.Count; i++)
+            // ReSharper disable ForCanBeConvertedToForeach
+            for (int i = 0; i < key.Length; i++)
             {
-                AddDate(key, i);
+                AddDate(key[i]);
+                AddIgnoreable(key[i]);
             }
 
             // Convert keywords to usable string
-            SetKeyword(Arr.Implode(ToList()));
+            SetKeyword(key);
 
-            return new List<dynamic>(key);
+            return new List<string>(key);
         }
 
-        private void AddDate(dynamic key, int i)
+        private void AddIgnoreable(string key)
         {
-            if (key[i].Contains("dateend:"))
+            if (key.Contains("-"))
+                Ignorable.Add(key.Trim('-'));
+        }
+
+        private void AddDate(dynamic key)
+        {
+            if (key.Contains("dateend:"))
             {
-                DateEnd = key[i].Substring(key[i].IndexOf(':') + 1);
+                DateEnd = key.Substring(key.IndexOf(':') + 1);
             }
 
-            if (key[i].Contains("datestart:"))
+            if (key.Contains("datestart:"))
             {
-                DateStart = key[i].Substring(key[i].IndexOf(':') + 1);
+                DateStart = key.Substring(key.IndexOf(':') + 1);
             }
         }
 
-        /// <summary>
-        /// Check if event contains keyword with operator
-        /// 
-        /// Returns null if text contains -{keyword}
-        /// </summary>
-        /// <param name="text">event</param>
-//        private string HasIgnoreWord(string text)
+//        private static void HasTextIgnoreOperator(string text, string key, ICollection<dynamic> events)
 //        {
-//            //string id = text.Substring(text.LastIndexOf('+') + 2);
-//            var eventToAdd = new List<dynamic>();
-//            //string full_text = Property.background.GetDescription(id);
-//            
-//            foreach (var key in ToList())
+//            key = key.Trim('-');
+//
+//            if(text.Contains(key))
 //            {
-//                HasIgnoreOperator(text, key, eventToAdd);
+//                events.Add("operator");
 //            }
-//
-//            return eventToAdd.Contains("operator") == false ? text : null;
-//
-//            // ignore parameter is present in the text, can't return text but must return something...
 //        }
-
-        private static void HasIgnoreOperator(string text, string key, ICollection<dynamic> events)
-        {
-            if(!key.Contains('-'))
-            {
-                events.Add("");
-
-                return;
-            }
-
-            HasTextIgnoreOperator(text, key, events);
-        }
-
-        private static void HasTextIgnoreOperator(string text, string key, ICollection<dynamic> events)
-        {
-            key = key.Trim('-');
-
-            if(text.Contains(key))
-            {
-                events.Add("operator");
-            }
-        }
     }
 }

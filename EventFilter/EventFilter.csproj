@@ -68,27 +68,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Actions.cs" />
     <Compile Include="Arr.cs" />
-    <Compile Include="BgWorker.cs">
-      <SubType>Component</SubType>
-    </Compile>
+    <Compile Include="Contracts\IEvent.cs" />
+    <Compile Include="Contracts\IEventIndex.cs" />
+    <Compile Include="Contracts\IFilterEvents.cs" />
+    <Compile Include="Contracts\IRefresh.cs" />
+    <Compile Include="Contracts\IKeywords.cs" />
+    <Compile Include="Contracts\IManagesKeywords.cs" />
     <Compile Include="Bootstrap.cs" />
-    <Compile Include="Container.cs" />
     <Compile Include="Encodings.cs" />
-    <Compile Include="Events\Engine\Concerns\DateFilter.cs" />
-    <Compile Include="Events\Engine\Concerns\FindKeywords.cs" />
-    <Compile Include="Events\Engine\Concerns\IgnoreWords.cs" />
-    <Compile Include="Events\Engine\Contracts\IEventIndex.cs" />
-    <Compile Include="Events\Engine\Contracts\IFilterEvents.cs" />
-    <Compile Include="Events\Engine\Contracts\ISearchEvent.cs" />
+    <Compile Include="Events\Events.cs" />
+    <Compile Include="Events\FindKeywords.cs" />
     <Compile Include="Events\FilterEvents.cs" />
-    <Compile Include="Filesystem.cs" />
+    <Compile Include="Filesystem\RemoveWithExceptions.cs" />
     <Compile Include="Bug.cs" />
     <Compile Include="Events\IndexEvents.cs" />
-    <Compile Include="Keywords\Concerns\ManagesKeywords.cs" />
-    <Compile Include="Keywords\Contracts\IKeywords.cs" />
-    <Compile Include="Keywords\Contracts\IManagesKeywords.cs" />
+    <Compile Include="Filesystem\Remover.cs" />
     <Compile Include="Keywords\Keyword.cs" />
+    <Compile Include="Keywords\ManagesKeywords.cs" />
     <Compile Include="Message.cs">
       <SubType>Form</SubType>
     </Compile>

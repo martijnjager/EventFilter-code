@@ -2,13 +2,14 @@
 using System.Drawing;
 using System.Windows.Forms;
 using EventFilter.Events;
+using EventFilter.Contracts;
 
 namespace EventFilter
 {
     public partial class Message : Form
     {
         public int Id;
-        private readonly Event _eventClass;
+        private readonly IEvent events;
 
         /// <inheritdoc />
         public Message(string text)
@@ -18,42 +19,39 @@ namespace EventFilter
             ChangeSize(text);
             lblEvent.Text = text;
 
-            _eventClass = Event.Instance;
+            events = Event.Instance;
         }
 
         private void btnPrevious_Click(object sender, EventArgs e)
         {
-            string text = _eventClass.Previous(Id);
-            if(text == "")
-            {
-                Close();
-            }
+            string text = events.Previous(Id);
 
-            Id = _eventClass._eventIdentifier;
+            Id = events.EventIdentifier;
+
+            if (string.IsNullOrEmpty(text))
+                Close();
+
             lblEvent.Text = text;
             ChangeSize(text);
 
-            if (Id == 1)
+            if (events.EventIdentifier == 1)
                 btnPrevious.Visible = false;
 
-            if (Id == _eventClass.Events.Count)
+            if (events.EventIdentifier == events.Eventlogs.Length)
                 btnNext.Visible = false;
         }
 
         private void btnNext_Click(object sender, EventArgs e)
         {
-            string text = _eventClass.Next(Id);
+            string text = events.Next(Id);
 
-            if (text == "")
-            {
-                Close();
-            }
+            if (text == "") Close();
 
-            Id = _eventClass._eventIdentifier;
+            Id = events.EventIdentifier;
             lblEvent.Text = text;
             ChangeSize(text);
 
-            if (Id == _eventClass.Events.Count)
+            if (Id == events.Eventlogs.Length)
                 btnNext.Visible = false;
 
             if (Id == 1)
@@ -65,12 +63,17 @@ namespace EventFilter
             int height = TextRenderer.MeasureText(text, SystemFonts.CaptionFont).Height + 75;
             int width = TextRenderer.MeasureText(text, SystemFonts.CaptionFont).Width + 5;
 
-            if(height >= 240)
+            if (height >= 240)
                 Height = height;
 
             if (width >= 300)
                 Width = width;
 
+            SetButtonLocations(text);
+        }
+
+        private void SetButtonLocations(string text)
+        {
             btnNext.Location = new Point(173, TextRenderer.MeasureText(text, SystemFonts.CaptionFont).Height);
             btnPrevious.Location = new Point(13, TextRenderer.MeasureText(text, SystemFonts.CaptionFont).Height);
         }

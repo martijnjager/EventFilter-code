@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace EventFilter.Keywords.Contracts
+namespace EventFilter.Contracts
 {
     public interface IManagesKeywords
     {
+        List<string> Items { get; }
         string GetAllKeywords();
 
-        string GetIndexed();
+        string GetIndexedKeywords();
 
-        List<string> ToList();
+        string[] ToArray();
 
-        IEnumerable<string> GetKeywordsFromFile();
+        List<string> GetKeywordsFromFile();
 
         void DeleteKeywords();
 

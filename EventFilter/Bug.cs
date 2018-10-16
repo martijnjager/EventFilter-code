@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using EventFilter.Events;
-using EventFilter.Keywords;
+using EventFilter.Filesystem;
 
 namespace EventFilter
 {
@@ -15,17 +15,15 @@ namespace EventFilter
         /// <summary>
         /// Create bug report
         /// </summary>
-        /// <param name="keyword"></param>
-        /// <param name="eClass" />
-        /// <param name="bugreport" />
-        public static void CreateBugReport(Keyword keyword, Event eClass, string bugreport)
+        /// <param name="bugreport" />  
+        private static void CreateBugReport(string bugreport)
         {
             try
             {
-                List<dynamic> eventLog = eClass.EventArray;
+                string[] eventLog = Event.Instance.Events.ToArray();
                 List<string> log = new List<string>();
 
-                Filesystem.ClearFolder(new DirectoryInfo(GetPath));
+                Remover.ClearFolder(new DirectoryInfo(GetPath));
 
                 Directory.CreateDirectory(Bootstrap.CurrentLocation + @"\bugs");
 
@@ -38,20 +36,19 @@ namespace EventFilter
                     log.Add(i + " " + line.Replace("\n", "\r\n") + "\r\n");
                 }
 
-                File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.Implode(log));
-                File.WriteAllText(GetPath + "eventlog.txt", Arr.Implode(eventLog));
+                File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.ToString(log));
+                File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(eventLog));
 
                 if (bugreport != "")
                 {
                     File.WriteAllText(GetPath + "problemReport.txt", bugReport);
                 }
 
-                if (keyword.GetAllKeywords() != "")
-                {
-                    File.WriteAllText(GetPath + @"Keywords.txt", keyword.GetIndexed());
-                    File.WriteAllText(GetPath + @"allkeywords.txt", keyword.GetAllKeywords());
-                    //File.WriteAllText(Path + "Keywords.txt", Keyword.keywordsAsString());
-                }
+                if (string.IsNullOrEmpty(Event.Instance.Keywords.GetAllKeywords())) return;
+                
+                File.WriteAllText(GetPath + @"Keywords.txt", Event.Instance.Keywords.GetIndexedKeywords());
+                File.WriteAllText(GetPath + @"allkeywords.txt", Event.Instance.Keywords.GetAllKeywords());
+                //File.WriteAllText(Path + "Keywords.txt", Keyword.keywordsAsString());
             }
             catch (Exception e)
             {
@@ -59,13 +56,33 @@ namespace EventFilter
             }
         }
 
+        public static void CreateReport(string bugText)
+        {
+            if (Event.Instance.EventLocation.Exists && Event.Instance.Keywords.GetAllKeywords() == "")
+            {
+                Messages.NoLogSaved();
+
+                return;
+            }
+
+            CreateBugReport(bugText);
+
+            if (exception != null)
+            {
+                Messages.ErrorLogCollection();
+                return;
+            }
+
+            Messages.LogSaved();
+        }
+
 //        /// <summary>
 //        /// Add report to bugReport
 //        /// </summary>
 //        /// <param name="log">log</param>
-//        public static void Report(string log = "")
+//        public static void Actions.Report(this, (string log = "")
 //        {
-//            Filesystem.form.Report(log);
+//            Filesystem.form.Actions.Report(this, (log);
 //        }
 //
 //        public static void Exception(Exception error)

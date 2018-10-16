@@ -1,67 +1,117 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using EventFilter.Keywords;
+using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
-    public class Event : FilterEvents
+    public sealed partial class Event : IEvent
     {
-        private static Event _instance;
-        private static readonly object Lock = new object();
+        private static Event _event;
+
+        public List<string[]> Entries { get; private set; }
+
+        /**
+         * Property ensures that the list items are unique
+         * No duplicate entries can be added
+         */
+        public HashSet<string[]> ListItems { get; private set;}
 
         private Event()
         {
-            //IndexEvents();
+            Entries = new List<string[]>();
+            ListItems = new HashSet<string[]>();
+            FilteredEventDate = new List<string>();
+            FilteredEventId = new List<string>();
+            FilteredEventDesc = new List<string>();
+
+            Eventlogs = new EventLogs[0];
+
+            //Dates = new string[0];
+            //Description = new string[0];
+            //Id = new string[0];
+            //EventArray = new string[0];
         }
 
         public static Event Instance
         {
             get
             {
-                lock (Lock)
-                {
-                    return _instance ?? (_instance = new Event());
-                }
+                if (_event is null)
+                    NewInstance();
+
+                return _event;
             }
         }
-
-        public static void ResetProperties()
+        
+        private static void InitProps()
         {
-            //            FilteredEventDate = new List<dynamic>();
-            //            FilteredEventDescription = new List<dynamic>();
-            //            FilteredEventId = new List<dynamic>();
+            _event.Eventlogs = new EventLogs[0];
+            _event.FilteredEventDate = new List<string>();
+            _event.FilteredEventId = new List<string>();
+            _event.EventIdentifier = 0;
+            _event.Entries = new List<string[]>();
+            _event.ListItems = new HashSet<string[]>();
+        }
 
-            var _event = new Event
+        private static void NewInstance()
+        {
+            if (_event is null)
             {
-                FoundDates = new List<dynamic>(),
-                FoundEvents = new List<dynamic>(),
-                FoundIds = new List<dynamic>(),
-                Dates = new List<dynamic>(),
-                Description = new List<dynamic>(),
-                Id = new List<dynamic>(),
-                EventArray = new List<dynamic>(),
-                Events = new List<dynamic>()
-            };
+                _event = new Event {Keywords = new Keyword()};
 
+                return;
+            }
+
+            InitProps();
+        }
+
+        public dynamic Refresh()
+        {
+            NewInstance();
+
+            return _event;
+        }
+
+        public void SetEventLocation(string location)
+        {
+            var fileInfo = new System.IO.FileInfo(location);
+            if (fileInfo.Length == 0)
+            {
+                Messages.IncorrectLogSize();
+                return;
+            }
+
+            EventLocation = fileInfo;
+        }
+
+        public Event SetKeywordObj(IKeywords keyword)
+        {
+            Keywords = keyword;
+
+            return this;
         }
 
         /// <summary>
         /// Check Keywords on valid Operators
         /// </summary>
-        public void CheckCountOperator()
+        public Event CheckCountOperator()
         {
-            IEnumerable<dynamic> keywords = _keywords.Index();
-            _keywords.Operators = new List<dynamic>();
+            List<string> keywords = Keywords.Index();
+            Keywords.Operators = new List<dynamic>();
 
             foreach(string key in keywords)
             {
-                if(_keywords.availableOperators.Any(key.Contains))
+                if(Keywords.AvailableOperators.Any(key.Contains))
                 {
-                    _keywords.Operators.Add(key);
+                    Keywords.Operators.Add(key);
                 }
             }
 
             Count();
+
+            return this;
         }
 
         /// <summary>
@@ -69,17 +119,17 @@ namespace EventFilter.Events
         /// </summary>
         private void Count()
         {
-            string keyword = _keywords.Operators.Find(s => s.Contains("count:"));
+            string keyword = Keywords.Operators.Find(s => s.Contains("count:"));
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                _keywords.Counter = Count(keyword.Replace("count:", ""));
-                _keywords.KeywordCounted = keyword.Replace("count:", "");
+                Keywords.Counter = Count(keyword.Replace("count:", ""));
+                Keywords.KeywordCounted = keyword.Replace("count:", "");
             }
             else
             {
-                _keywords.Counter = 0;
-                _keywords.KeywordCounted = "";
+                Keywords.Counter = 0;
+                Keywords.KeywordCounted = "";
             }
         }
 
@@ -92,9 +142,9 @@ namespace EventFilter.Events
         {
             int count = 0;
 
-            foreach (string line in Events)
+            foreach (EventLogs e in Eventlogs)
             {
-                count = CountValue(line, value, count);
+                count = CountValue(e.Log, value, count);
             }
 
             return count;

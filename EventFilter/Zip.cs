@@ -7,16 +7,23 @@ namespace EventFilter
 {
     public static class Zip
     {
-        public static List<string> Logs { get; } = new List<string> { "eventlog.txt", "EvtxSysDump.txt", "system-events.txt" , "eventlog.evtx"};
+        public static List<string> Logs { get; } = new List<string> { "eventlog.txt", "EvtxSysDump.txt", "EvtAppDump.txt", "system-events.txt" , "eventlog.evtx", "application-events.txt", "pnp-events.txt"};
         public static string ExtractLocation { get; } = Bootstrap.CurrentLocation + "\\extract";
 
         public static void ExtractZip(string zipfile, ref string eventLocation)
         {
-            Extract(zipfile);
-
-            if (Directory.GetDirectories(ExtractLocation) != null)
+            try
             {
-                eventLocation = Remover.ScanDirectories(ExtractLocation);
+                Extract(zipfile);
+
+                if (Directory.GetDirectories(ExtractLocation) != null)
+                {
+                    eventLocation = Remover.ScanDirectories(ExtractLocation);
+                }
+            }
+            catch (System.Exception exception)
+            {
+                Actions.Report("An error occured during zip extraction: " + exception.Message + "\n" + exception.StackTrace);
             }
         }
 

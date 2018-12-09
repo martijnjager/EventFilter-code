@@ -1,15 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace EventFilter.Events
 {
-    public struct EventLogs
-    {
-        public string Id;
-        public string Date;
-        public string Description;
-        public string Log;
-    }
-
     public partial class Event
     {
         private void SetIndex()
@@ -25,16 +18,32 @@ namespace EventFilter.Events
             List<string> Event = SplitText(eventlog);
             HashSet<string> tmpDat = new HashSet<string>();
 
-            string description = Event[13];
-            string date = Event[3].Replace("Date", "");
+            string description = GetDescription(Event);
+            
+            string date = Event[3].Replace("Date: ", "");
 
             if(tmpDat.Add(date + ", " + description))
             {
                 Eventlogs[index].Id = index.ToString();
-                Eventlogs[index].Date = Event[3].Replace("Date:", "");
-                Eventlogs[index].Description = Event[13];
+                Eventlogs[index].Date = date;
+                Eventlogs[index].Description = description;
                 Eventlogs[index].Log = eventlog;
             }
+        }
+
+        private string GetDescription(List<string> Event)
+        {
+            string description = "";
+
+            if (Event.Count - 1 > 12)
+            {
+                int range = Event.Count - 12;
+                description = Arr.ToString(Event.GetRange(12, range), "\r").Replace("Description: ", "").Trim();
+            }
+            else
+                description = Event[12].Replace("Description: ", "").Trim();
+
+            return description;
         }
 
         private List<string> SplitText(string text)

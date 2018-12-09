@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
-    public partial class Event
+    public partial class Event : IFindKeywords
     {
         private string @event;
 
@@ -12,7 +13,7 @@ namespace EventFilter.Events
         /// </summary>
         /// <param name="action"></param>
         /// <returns></returns>
-        public Event with(string action)
+        public IEvent With(string action)
         {
             @event = action;
 

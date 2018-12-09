@@ -21,7 +21,6 @@ namespace EventFilter.Filesystem
             }
         }
 
-        // Checked > DeleteKeywords
         /// <summary>
         /// DeleteKeywords all files in directory
         /// </summary>
@@ -30,12 +29,15 @@ namespace EventFilter.Filesystem
         {
             foreach (string file in Directory.GetFiles(dir.ToString(), "*", SearchOption.AllDirectories))
             {
-                FileInfo item = new FileInfo(file);
-                item.Delete();
+                (new FileInfo(file)).Delete();
             }
         }
 
-        // Checked > DeleteKeywords
+        /// <summary>
+        /// DeleteKeywords files in folder
+        /// </summary>
+        public static void ClearFolder(DirectoryInfo dir) => DeleteFiles(dir);
+
         /// <summary>
         /// If directory contains files, DeleteKeywords them
         /// </summary>

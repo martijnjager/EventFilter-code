@@ -7,16 +7,18 @@ namespace EventFilter.Contracts
     {
         IKeywords Keywords { get; }
 
-        List<string> FilteredEventId { get; }
-        
-        List<string> FilteredEventDate { get; }
+        List<EventLogs> FilteredEvents { get; }
 
-        List<string> FilteredEventDesc { get; }
-        
-        void Filter();
+        //List<string> FilteredEventId { get; }
+
+        //List<string> FilteredEventDate { get; }
+
+        //List<string> FilteredEventDesc { get; }
+
+        IEvent Filter();
 
         string FindEvent(int id);
 
-        void FilterDate(List<string> keyword, EventLogs[] eventlogs);
+        IEvent FilterDate();
     }
 }

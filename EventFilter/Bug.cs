@@ -12,50 +12,6 @@ namespace EventFilter
 
         public static string GetPath { get; } = Bootstrap.CurrentLocation + "\\bugs\\";
 
-        /// <summary>
-        /// Create bug report
-        /// </summary>
-        /// <param name="bugreport" />  
-        private static void CreateBugReport(string bugreport)
-        {
-            try
-            {
-                string[] eventLog = Event.Instance.Events.ToArray();
-                List<string> log = new List<string>();
-
-                Remover.ClearFolder(new DirectoryInfo(GetPath));
-
-                Directory.CreateDirectory(Bootstrap.CurrentLocation + @"\bugs");
-
-                string bugReport = bugreport.Replace("\n", "\r\n");
-
-                int i = -1;
-                foreach (string line in eventLog)
-                {
-                    i++;
-                    log.Add(i + " " + line.Replace("\n", "\r\n") + "\r\n");
-                }
-
-                File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.ToString(log));
-                File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(eventLog));
-
-                if (bugreport != "")
-                {
-                    File.WriteAllText(GetPath + "problemReport.txt", bugReport);
-                }
-
-                if (string.IsNullOrEmpty(Event.Instance.Keywords.GetAllKeywords())) return;
-                
-                File.WriteAllText(GetPath + @"Keywords.txt", Event.Instance.Keywords.GetIndexedKeywords());
-                File.WriteAllText(GetPath + @"allkeywords.txt", Event.Instance.Keywords.GetAllKeywords());
-                //File.WriteAllText(Path + "Keywords.txt", Keyword.keywordsAsString());
-            }
-            catch (Exception e)
-            {
-                exception = e.Message;
-            }
-        }
-
         public static void CreateReport(string bugText)
         {
             if (Event.Instance.EventLocation.Exists && Event.Instance.Keywords.GetAllKeywords() == "")
@@ -76,18 +32,65 @@ namespace EventFilter
             Messages.LogSaved();
         }
 
-//        /// <summary>
-//        /// Add report to bugReport
-//        /// </summary>
-//        /// <param name="log">log</param>
-//        public static void Actions.Report(this, (string log = "")
-//        {
-//            Filesystem.form.Actions.Report(this, (log);
-//        }
-//
-//        public static void Exception(Exception error)
-//        {
-//            Filesystem.form.Exception(error);
-//        }
+        /// <summary>
+        /// Create bug report
+        /// </summary>
+        /// <param name="bugreport" />  
+        private static void CreateBugReport(string bugreport)
+        {
+            try
+            {
+                ClearDebugFolder();
+
+                int createdFiles = 0;
+
+                if (Event.Instance.Events is List<string> && Event.Instance.Events.Count > 0)
+                {
+                    List<string> log = new List<string>();
+
+                    for (int i = 0; i < Event.Instance.Events.Count; i++)
+                    {
+                        log.Add(i + " " + Event.Instance.Events[i].Replace("\n", "\r\n") + "\r\n");
+                    }
+
+                    File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.ToString(log));
+                    File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(Event.Instance.Events));
+                    createdFiles++;
+                }
+
+                if (bugreport != "")
+                {
+                    string bugReport = bugreport.Replace("\n", "\r\n");
+
+                    File.WriteAllText(GetPath + "problemReport.txt", bugReport);
+                    createdFiles++;
+                }
+
+                if (!string.IsNullOrEmpty(Event.Instance.Keywords.GetAllKeywords()))
+                {
+                    File.WriteAllText(GetPath + @"Keywords.txt", Event.Instance.Keywords.GetIndexedKeywords());
+                    File.WriteAllText(GetPath + @"allkeywords.txt", Event.Instance.Keywords.GetAllKeywords());
+                    createdFiles++;
+                }
+
+                if (createdFiles == 0)
+                    Messages.ErrorLogCollection();
+            }
+            catch (Exception e)
+            {
+                exception = e.Message;
+            }
+        }
+
+        /**
+         * Check existence of debug folder: create if non-existence and clear if it has anything
+         */
+        private static void ClearDebugFolder()
+        {
+            if (Directory.Exists(GetPath))
+                Remover.ClearFolder(new DirectoryInfo(GetPath));
+            else
+                Directory.CreateDirectory(GetPath);
+        }
     }
 }

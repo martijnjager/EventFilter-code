@@ -8,39 +8,28 @@ namespace EventFilter.Keywords
         // File and user input keywords
         public List<string> Items { get; private set; }
 
-        // keywords loaded from file
-        private List<string> KeywordsFromFile;
+        private List<string> _fileKeywords;
 
         public string[] ToArray() => Items.ToArray();
 
-//        protected List<string> ToList(string value = "") => string.IsNullOrEmpty(value) ? Arr.DynamicToList(items, ",") : Arr.DynamicToList(value, ",");
-
-        public string GetIndexedKeywords() => Arr.ToString(KeywordsFromFile, ", ");
+        public string GetIndexedKeywords() => Arr.ToString(_fileKeywords, ", ");
 
         public string GetAllKeywords() => Arr.ToString(Items, ",");
         
-        public List<string> GetKeywordsFromFile() => KeywordsFromFile;
-
-        public void SetKeyword(string val)
+        public void Set(string val)
         {
-            // Assume the argument is a string
             string[] value = Arr.Explode(val, ", ");
             Arr.Trim(ref value);
             Items = Arr.ToList(value);
         }
 
-        public void SetKeyword(string[] val)
-        {
-            Items = Arr.ToList(val);
-        }
-
-        public void DeleteKeywords() => Items = new List<string>();
+        public void Delete() => Items = new List<string>();
 
         /// <summary>
         /// Add multiple values to the collection
         /// </summary>
         /// <param name="values">values</param>
-        public void AddKeyword(params string[] values)
+        public void Add(params string[] values)
         {
             /**
              * Used by the global app
@@ -55,7 +44,7 @@ namespace EventFilter.Keywords
         /// Add multiple values to the collection
         /// </summary>
         /// <param name="clb"></param>
-        public void AddKeyword(CheckedListBox clb)
+        public void Add(CheckedListBox clb)
         {
             /**
              * Used by the keywords loading function
@@ -65,14 +54,6 @@ namespace EventFilter.Keywords
             {
                 Add(clbItem);
             }
-
-            //for (var i = 0; i < clb.Items.Count; i++)
-            //{
-            //    if (clb.GetItemCheckState(i) == CheckState.Checked)
-            //    {
-            //        Add(clb.Items[i].ToString());
-            //    }
-            //}
         }
         
         private void Add(string keyword)

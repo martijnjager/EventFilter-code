@@ -4,21 +4,19 @@ using System.IO;
 
 namespace EventFilter.Contracts
 {
-    public interface IEvent : IFilterEvents, IEventIndex, IRefresh
+    public interface IEvent : IFilterEvents, IEventIndex, IFindKeywords
     {
         EventLogs[] Eventlogs { get; }
 
-        Event CheckCountOperator();
-
-        Event with(string @event);
+        IEvent IsCountOperatorUsed();
 
         List<string[]> Entries { get; }
-        HashSet<string[]> ListItems { get; }
+        bool CanAddListItem(string[] item);
 
         FileInfo EventLocation { get; }
 
-        Event SetKeywordObj(IKeywords keyword);
+        IEvent SetKeywordInstance(IKeywords keyword);
 
-        void SetEventLocation(string location);
+        IEvent SetLocation(FileInfo location);
     }
 }

@@ -66,7 +66,7 @@ namespace EventFilter
         {
             Actions.Report("Start searching events");
 
-            if (Event.Instance.EventLocation.FullName != "openFileDialog1")
+            if (Event.Instance.EventLocation is FileInfo && Event.Instance.EventLocation.FullName != "openFileDialog1")
             {
                 lblSelectedFile.Text = "Selected file: " + Event.Instance.EventLocation.FullName;
 
@@ -109,18 +109,7 @@ namespace EventFilter
         {
             Actions.Report("Start saving Keywords");
             saveFileDialog1.ShowDialog();
-            string fileName = saveFileDialog1.FileName;
-            try
-            {
-                StreamWriter streamWriter = new StreamWriter(fileName);
-                streamWriter.WriteLine(tbKeywords.Text);
-                Actions.Report("Saving Keywords " + tbKeywords.Text + " to file");
-                streamWriter.Close();
-            }
-            catch(Exception error)
-            {
-                Actions.Report("An error occured when trying to save Keywords: " + error.Message);
-            }
+            Event.Instance.Keywords.SaveToFile(saveFileDialog1.FileName, tbKeywords.Text);
         }
 
         private void miSelectEventlog_Click(object sender, EventArgs e)
@@ -132,11 +121,12 @@ namespace EventFilter
             {
                 string eventLocation = "";
                 Zip.ExtractZip(openFileDialog1.FileName, ref eventLocation);
-                Event.Instance.SetEventLocation(eventLocation);
+                Event.Instance.SetLocation(new FileInfo(eventLocation));
             }
             else
             {
-                Event.Instance.SetEventLocation(openFileDialog1.FileName);
+                if(openFileDialog1.FileName != "openFileDialog1")
+                    Event.Instance.SetLocation(new FileInfo(openFileDialog1.FileName));
             }
 
             if(string.IsNullOrEmpty(Event.Instance.EventLocation.FullName))
@@ -158,12 +148,12 @@ namespace EventFilter
 
             Actions.Report("Keywords to use location: " + keyLoc);
 
-            Event.Instance.Keywords.LoadKeywordsFromLocation(keyLoc);
+            Event.Instance.Keywords.LoadFromLocation(keyLoc);
         }
 
         private void miAbout_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Name: \t\t EventFilter\nDeveloper: \t Martijn (axe0)\nVersion: \t\t BETA\nDate: \t\t 07-18-2018", "About app", MessageBoxButtons.OK);
+            MessageBox.Show("Name: \t\t EventFilter\nDeveloper: \t Martijn (axe0)\nVersion: \t\t BETA\nDate: \t\t 12-02-2018", "About app", MessageBoxButtons.OK);
         }
 
         private void miEventFilter_Click(object sender, EventArgs e) => tabControl1.SelectedTab = tpEventFilter;
@@ -186,11 +176,6 @@ namespace EventFilter
         }
         private void lbEventResult_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            if(e.Column.ToString() == "Description")
-            {
-//                _eventClassSortOnDescription();
-            }
-
             lbEventResult.Sorting = lbEventResult.Sorting == SortOrder.Descending ? SortOrder.Ascending : SortOrder.Descending;
 
             lbEventResult.Sort();
@@ -245,10 +230,10 @@ namespace EventFilter
             if (d.Contains(".zip"))
             {
                 Zip.ExtractZip(d, ref eventLocation);
-                Event.Instance.SetEventLocation(eventLocation);
+                Event.Instance.SetLocation(new FileInfo(eventLocation));
             }
             else
-                Event.Instance.SetEventLocation(eventLocation);
+                Event.Instance.SetLocation(new FileInfo(eventLocation));
 
             Actions.Report("Extracted eventlog from " + d);
 

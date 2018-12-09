@@ -4,19 +4,13 @@ namespace EventFilter
 {
     internal static class Messages
     {
-        //public static void AnErrorOccuredLoadingFiles() =>
-        //    MessageWrite("An error occured loading the necessary files, try to load them manually.", "Error loading files", MessageBoxButtons.OK, MessageBoxIcon.Error);
-
-        //public static void ProvideKeywords() =>
-        //    MessageWrite("Please provide Keywords to Search for.", "No Keywords provided", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
         public static void SelectFileForSearching() =>
             MessageWrite("Please select a file to Search through.", "No file selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void Filtering() =>
             MessageWrite("We're filtering...", "Busy");
 
-        public static void CountKeywords(string keywordCounted, int counter) =>
+        public static void KeywordCounted(string keywordCounted, int counter) =>
             MessageWrite(keywordCounted + " appears " + counter + " times", "Keyword Counter");
 
         public static void ProblemOccured(string action = "")
@@ -49,7 +43,7 @@ namespace EventFilter
             MessageWrite("No event log has the provided Keywords.", "No result", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void NoInput() =>
-            MessageWrite("Please provide keywords and/or select an eventlog", "No input", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            MessageWrite("Please provide keywords", "No input", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
         public static void IncorrectLogSize() =>
             MessageWrite("Please select a log that is not of size 0KB", "No valid log size", MessageBoxButtons.OK, MessageBoxIcon.Information);

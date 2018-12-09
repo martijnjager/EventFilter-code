@@ -23,20 +23,10 @@ namespace EventFilter.Contracts
 
         IKeywords Instance { get; }
 
-        //string GetIndexed();
+        void LoadFromLocation(string path = "");
 
-        //string GetAllKeywords();
+        void SaveToFile(string fileName, string keywords);
 
-        //List<string> ToList();
-
-        //void DeleteKeywords();
-
-        //void AddKeyword(params string[] values);
-
-        //void AddKeyword(CheckedListBox clb);
-
-        void LoadKeywordsFromLocation(string path = "");
-
-        List<string> Index();
+        IKeywords Map();
     }
 }

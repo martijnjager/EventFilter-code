@@ -14,10 +14,12 @@ namespace EventFilter.Contracts
 
         List<string> Events { get; set; }
 
-        void IndexEvents();
+        void MapEvents();
         
         string Next(int curId);
 
         string Previous(int curId);
+
+        string[] PrepareForMultipleLogs(List<string> files);
     }
 }

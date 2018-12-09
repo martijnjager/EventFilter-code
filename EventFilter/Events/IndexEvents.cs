@@ -14,84 +14,64 @@ namespace EventFilter.Events
 
         public FileInfo EventLocation { get; private set; }
 
-        //public string[] Dates { get; set; }
-        //public string[] Description { get; set; }
-        //public string[] Id { get; set; }
         public List<string> Events { get; set; }
         private string[] EventArray { get; set; }
         public EventLogs[] Eventlogs { get; private set; }
 
         /// <summary>
-        /// Skip current event and get Next event
-        /// </summary>
-        /// <param name="curId">ID of first line of description of current event</param>
-        /// <returns></returns>
-        public string Next(int curId)
-        {
-            if (!(curId < Eventlogs.Length)) return Eventlogs[curId].Log;
-            
-            EventIdentifier = curId + 1;
-            return Eventlogs[curId + 1].Log;
-        }
-
-        /// <summary>
-        /// Skip current event and get Previous event
-        /// </summary>
-        /// <param name="curId">ID of first line of description of current event</param>
-        /// <returns>string</returns>
-        public string Previous(int curId)
-        {
-            if (!(curId > 0)) return Eventlogs[curId].Log;
-
-            EventIdentifier = curId - 1;
-            return Eventlogs[curId - 1].Log;
-        }
-
-        /// <summary>
         /// Index log so we know what it contains
         /// </summary>
-        public void IndexEvents()
+        public void MapEvents()
         {
             if (EventLocation.Extension == ".evtx")
-                CreateEvents();
+                CreateFromEventViewer();
             else
-                CreateEventList();
+                CreateFromText();
         }
 
         /// <summary>
         /// Under development
         /// </summary>
-        private void CreateEvents()
+        private void CreateFromEventViewer()
         {
             using (EventLogReader reader = new EventLogReader(EventLocation.FullName, PathType.FilePath))
             {
                 EventRecord record;
                 int counter = 0;
+                Events = new List<string>();
 
                 while ((record = reader.ReadEvent()) != null)
                 {
-                    string task = record.TaskDisplayName != string.Empty ? record.TaskDisplayName : "N/A";
-                    string user = record.UserId != null ? record.UserId.ToString() : "N/A";
-                    string opcode = record.OpcodeDisplayName != string.Empty ? record.OpcodeDisplayName : "N/A";
-                    string desc = record.FormatDescription();
+                    string @event = CreateEventText(record, ref counter);
 
-                    string text = "Event[" + counter++ +
-                        "]:\n  Log Name: " + record.LogName +
-                        "\n  Source: " + record.ProviderName +
-                        "\n  Date: " + record.TimeCreated +
-                        "\n  Event ID: " + record.Id +
-                        "\n  Task: " + task +
-                        "\n  Level: " + record.LevelDisplayName +
-                        "\n  Opcode: " + opcode +
-                        "\n  Keyword: " + Arr.ToString(record.Keywords, ", ") +
-                        "\n  User: " + user +
-                        "\n  User Name: " + user +
-                        "\n  Computer: " + record.MachineName +
-                        "\n  Description: " + desc + "\n\n";
-
-                    Events.Add(text);
+                    AddEvent(@event);
                 }
             }
+
+            InitiateIndex();
+        }
+
+        private static string CreateEventText(EventRecord record, ref int counter)
+        {
+            string task = record.TaskDisplayName != string.Empty ? record.TaskDisplayName : "N/A";
+            string user = record.UserId != null ? record.UserId.ToString() : "N/A";
+            string opcode = record.OpcodeDisplayName != string.Empty ? record.OpcodeDisplayName : "N/A";
+            string desc = record.FormatDescription();
+
+            string text = "Event[" + counter++ +
+                "]:\n  Log Name: " + record.LogName +
+                "\n  Source: " + record.ProviderName +
+                "\n  Date: " + record.TimeCreated +
+                "\n  Event ID: " + record.Id +
+                "\n  Task: " + task +
+                "\n  Level: " + record.LevelDisplayName +
+                "\n  Opcode: " + opcode +
+                "\n  Keyword: " + Arr.ToString(record.Keywords, ", ") +
+                "\n  User: " + user +
+                "\n  User Name: " + user +
+                "\n  Computer: " + record.MachineName +
+                "\n  Description: " + desc + "\n\n";
+            return text;
         }
 
         private void InitProp()
@@ -103,7 +83,7 @@ namespace EventFilter.Events
         /// Create eventlog from location
         /// </summary>
         /// <returns></returns>
-        private void CreateEventList()
+        private void CreateFromText()
         {
             string[] lines = File.ReadAllLines(EventLocation.FullName, Encodings.CurrentEncoding);
 
@@ -122,19 +102,32 @@ namespace EventFilter.Events
         {
             for (int i = 0; i < EventArray.Length; i++)
             {
-                int count = 0;
-                string text = "";
-                while (i + count + 1 < EventArray.Length && EventArray[i + count + 1].Contains("Event[") != true)
+                if (EventArray[0].Contains("Event["))
                 {
-                    text += EventArray[i + count] + "\n";
-                    count++;
+                    int count = 0;
+                    string text = "";
+                    while (i + count + 1 < EventArray.Length && EventArray[i + count + 1].Contains("Event[") != true)
+                    {
+                        text += EventArray[i + count] + "\n";
+                        count++;
+                    }
+
+                    i += count;
+
+                    AddEvent(text);
                 }
-
-                i += count;
-
-                Events.Add(text);
             }
 
+            InitiateIndex();
+        }
+
+        private void AddEvent(string text)
+        {
+            Events.Add(text);
+        }
+
+        private void InitiateIndex()
+        {
             /**
              * The properties can be initialized now that Events array is ready
              */
@@ -143,22 +136,37 @@ namespace EventFilter.Events
             SetIndex();
         }
 
-        //private void Index(string text, int idCounter)
-        //{
-        //    var data = new HashSet<string>();
+        public string[] PrepareForMultipleLogs(List<string> files)
+        {
+            int eventCounter = 0;
 
-        //    var date = GetDate(text);
-        //    var desc = GetDescription(text);
-        //    var dat = date + ", " + desc;
+            // stores content of all files
+            List<string> eventlog = new List<string>();
 
-        //    // Check if the date and description can be added to ensure the events are unique
-        //    if (!data.Add(dat))
-        //        return;
+            files.ForEach(file => 
+            {
+                string[] text = File.ReadAllLines(file, Encodings.CurrentEncoding);
 
-        //    Eventlogs[idCounter].Date = date;
-        //    Eventlogs[idCounter].Description = desc;
-        //    Eventlogs[idCounter].Id = (idCounter + 13).ToString();
-        //    Eventlogs[idCounter].Log = text;
-        //}
+                List<string[]> content = new List<string[]>() { text };
+
+                CorrectEventLogCounter(ref content, ref eventCounter, ref eventlog);
+            });
+
+            return eventlog.ToArray();
+        }
+
+        private void CorrectEventLogCounter(ref List<string[]> logs, ref int eventCounter, ref List<string> eventlog)
+        {
+            for (int i = 0; i < logs[0].Count(); i++)
+            {
+                if (logs[0][i].Contains("Event["))
+                {
+                    logs[0][i] = "Event[" + eventCounter + "]:";
+                    ++eventCounter;
+                }
+
+               eventlog.Add(logs[0][i]);
+            }
+        }
     }
 }

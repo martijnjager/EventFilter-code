@@ -19,25 +19,28 @@ namespace EventFilter
 
         public bool IsBooted;
 
+        public static List<string> FoundLogs = new List<string>();
+
         private static readonly object Lock = new object();
         private static Bootstrap Instance;
 
         private readonly CheckedListBox _clbKeywords;
 
-        private readonly IEvent Events;
+        private static IEvent Events;
 
-        public Bootstrap(IEvent EventClass, CheckedListBox clbkeywords)
+        private Bootstrap(IEvent EventClass, CheckedListBox clbkeywords)
         {
             _alternatives = new List<dynamic>
             {
                 "eventlog.txt",
                 "EvtxSysDump.txt",
                 "system-events.txt",
-                "eventlogSystem.txt"
+                "application-events.txt",
+                "pnp-events.txt"
             };
 
             _clbKeywords = clbkeywords;
-            
+
             Events = EventClass;
 
             LoadFiles();
@@ -74,7 +77,7 @@ namespace EventFilter
         {
             if (!File.Exists(Events.Keywords.KeywordLocation)) return;
             
-            Events.Keywords.LoadKeywordsFromLocation();
+            Events.Keywords.LoadFromLocation();
 
             LoadKeywordsInClb();
         }
@@ -82,19 +85,25 @@ namespace EventFilter
         private void LoadEventlocation()
         {
             if (!File.Exists(CurrentLocation + EventLocation))
-                Events.SetEventLocation(CheckEventLogAlternatives());
-
-            Events.SetEventLocation(CurrentLocation + EventLocation);
+            {
+                if (!string.IsNullOrEmpty(CheckEventLogAlternatives()))
+                    Events.SetLocation(new FileInfo(CheckEventLogAlternatives()));
+                else
+                    if (Directory.Exists(Zip.ExtractLocation))
+                        if (Directory.GetFiles(Zip.ExtractLocation).Length > 0)
+                            Events.SetLocation(new FileInfo(Directory.GetFiles(Zip.ExtractLocation)[0]));
+            }
+                
+            if(File.Exists(CurrentLocation + EventLocation))
+                Events.SetLocation(new FileInfo(CurrentLocation + EventLocation));
         }
 
         private string CheckEventLogAlternatives()
         {
             foreach(string alternative in _alternatives)
-            {
                 if (File.Exists(CurrentLocation + alternative)) return alternative;
-            }
 
-            return null;
+            return string.Empty;
         }
 
         private void LoadKeywordsInClb()
@@ -110,9 +119,9 @@ namespace EventFilter
         /// </summary>
         public static void IsInputEmpty(BackgroundWorker searchEventBgWorker, CheckedListBox clbKeywords, string tbKeywords)
         {
-            Event.Instance.Keywords.Refresh();
+            Events.Keywords.Refresh();
 
-            if ((string.IsNullOrEmpty(tbKeywords) && clbKeywords.Items.Count == 0) || string.IsNullOrEmpty(Event.Instance.EventLocation.FullName))
+            if (Actions.IsEmpty(tbKeywords) && clbKeywords.Items.Count == 0)
             {
                 Messages.NoInput();
 
@@ -122,42 +131,37 @@ namespace EventFilter
             if (searchEventBgWorker.IsBusy)
                 return;
 
-            Event.Instance.Keywords.DeleteKeywords();
-            Event.Instance.Keywords.AddKeyword(clbKeywords);
+            Events.Keywords.Delete();
+            Events.Keywords.Add(clbKeywords);
 
             if (!string.IsNullOrEmpty(tbKeywords))
             {
-                Event.Instance.Keywords.AddKeyword(tbKeywords.Split(','));
+                Events.Keywords.Add(tbKeywords.Split(','));
             }
 
-            Event.Instance.SetKeywordObj(Event.Instance.Keywords);
+            Events.SetKeywordInstance(Events.Keywords);
             searchEventBgWorker.RunWorkerAsync();
         }
 
         public static bool FilesFound()
         {
-            bool status = false;
-            if (string.IsNullOrEmpty(Event.Instance.EventLocation.FullName))
-            {
-                Actions.Report("No eventlog.txt found");
-                Actions.form.lblSelectedFile.Text = "Selected file: no eventlog found";
+            SetDefaultEncoding();
 
-                status = false;
-            }
-            else
+            if (Events.Keywords.GetAllKeywords() == "") Actions.Report("No Keywords.txt found");
+            else Actions.Report("Load Keywords from " + Event.Instance.Keywords.KeywordLocation);
+
+            if (Events.EventLocation is FileInfo)
             {
                 Actions.Report("Load event log from " + Event.Instance.EventLocation.FullName);
                 Actions.form.lblSelectedFile.Text = "Selected file: " + Event.Instance.EventLocation.FullName;
 
-                status = true;
+                return true;
             }
 
-            if (Event.Instance.Keywords.GetAllKeywords() == "") Actions.Report("No Keywords.txt found");
-            else Actions.Report("Load Keywords from " + Event.Instance.Keywords.KeywordLocation);
+            Actions.Report("No eventlog.txt found");
+            Actions.form.lblSelectedFile.Text = "Selected file: no eventlog found";
 
-            SetDefaultEncoding();
-
-            return status;
+            return false;
         }
 
         private static void SetDefaultEncoding()

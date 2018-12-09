@@ -7,9 +7,7 @@ namespace EventFilter.Filesystem
 {
     public static partial class Remover
     {
-//        public static Form1 form = new Form1();
-
-        private static readonly List<dynamic> Items = new List<dynamic>();
+        private static readonly List<string> Items = new List<string>();
 
         // TODO: improve deleting
 
@@ -31,26 +29,64 @@ namespace EventFilter.Filesystem
 
             foreach (string log in Zip.Logs)
             {
-                files.Add(FilePresent(Items, log));
+                FilePresent(ref files, Items, log);
             }
 
-            string fileName = files.Find(s => s != null);
+            if (files.Count >= 2)
+            {
+                string filename = files.First();
+                string[] fileContent = Events.Event.Instance.PrepareForMultipleLogs(files);
+
+                //List<string[]> contents = new List<string[]>();
+                //string[] fileContent = new string[0];
+
+                //string filename = files.First();
+
+                //for (int i = 0; i < files.Count; i++)
+                //{
+                //    string[] text = File.ReadAllLines(files[i], Encodings.CurrentEncoding);
+                //    contents.Add(text);
+
+                //    fileContent = Events.Event.Instance.PrepareForMultipleLogs(ref contents);
+                //}
+
+                Move(ref filename, fileContent);
+
+                return filename;
+            }
+
+            string fileName = files.First();
             string[] content = File.ReadAllLines(fileName, Encodings.CurrentEncoding);
 
             Move(ref fileName, content);
 
-            //ClearFolder(new DirectoryInfo(path), new List<dynamic> { fileName });
-
             return fileName;
         }
 
-        // Checked > scanDirectories
-        private static string FilePresent(List<dynamic> files, string file)
+        /// <summary>
+        /// Checks if the given file is present in the items list, if so it adds the file to list
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="items"></param>
+        /// <param name="file"></param>
+        private static void FilePresent(ref List<string> list, List<string> items, string file)
         {
-            return files.Find(s => s.Contains(file));
+            string filePath = items.Find(s => s.Contains(file));
+
+            AddToList(ref list, filePath);
         }
 
-        // Checked > scanDirectories
+        /// <summary>
+        /// Adds a file present in the items list to the list.
+        /// </summary>
+        /// <param name="list"></param>
+        /// <param name="filePath"></param>
+        private static void AddToList(ref List<string> list, string filePath)
+        {
+            if (!string.IsNullOrEmpty(filePath))
+                list.Add(filePath);
+        }
+
         /// <summary>
         /// Scan everything relatively from a directory
         /// </summary>
@@ -64,21 +100,6 @@ namespace EventFilter.Filesystem
             }
         }
 
-        // Checked > hasFile (2 params)
-        /// <summary>
-        /// Empty folder, keep selected files
-        /// </summary>
-        /// <param name="path">path to empty</param>
-        /// <param name="files">list of files to keep</param>
-//        private static void EmptyFolderKeepFiles(string path, List<dynamic> files)
-//        {
-//            if (Directory.Exists(path))
-//            {
-//                ClearFolders(new DirectoryInfo(path), files);
-//            }
-//        }
-
-        // Checked > ClearFolder, 
         /// <summary>
         /// Clear a folder and keep exceptions
         /// </summary>
@@ -89,21 +110,19 @@ namespace EventFilter.Filesystem
             ClearFolderExcept(dir, exceptions);
         }
 
-        // Checked > emptyFolderKeepFiles
         /// <summary>
-        /// Clear folder of files
+        /// Empty folder of files
         /// </summary>
-        /// <param name="path"></param>
-        /// <param name="fileExceptions"></param>
-        /*private static void ClearFolders(DirectoryInfo path, dynamic fileExceptions)
+        /// <param name="dir"></param>
+        /// <param name="exceptions"></param>
+        private static void ClearFolderExcept(DirectoryInfo dir, List<dynamic> exceptions)
         {
-            foreach (DirectoryInfo dir in path.GetDirectories())
+            foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
             {
-                DeleteFiles(dir, fileExceptions);
+                DeleteAllButExceptions(file, exceptions);
             }
-        }*/
+        }
 
-        // Checked
         /// <summary>
         /// DeleteKeywords file if not present in list
         /// </summary>
@@ -114,20 +133,6 @@ namespace EventFilter.Filesystem
             if(!exceptions.Any(s => file.FullName.Contains(s)))
             {
                 file.Delete();
-            }
-        }
-
-        // Checked
-        /// <summary>
-        /// Empty folder of files
-        /// </summary>
-        /// <param name="dir"></param>
-        /// <param name="exceptions"></param>
-        private static void ClearFolderExcept(DirectoryInfo dir, List<dynamic> exceptions)
-        {
-            foreach(FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
-            {
-                DeleteAllButExceptions(file, exceptions);
             }
         }
 

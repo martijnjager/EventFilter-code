@@ -8,7 +8,6 @@ G:\Documents\Visual Studio 2015\Projects\EventFilter\EventFilter\bin\Debug\Event
 G:\Documents\Visual Studio 2015\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.pdb
 G:\Documents\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.exe
 G:\Documents\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.pdb
-G:\Documents\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csprojAssemblyReference.cache
 E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.exe.config
 E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.exe
 E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.pdb
@@ -20,3 +19,15 @@ E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\Even
 E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csproj.CoreCompileInputs.cache
 E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.exe
 E:\Documenten\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.pdb
+G:\Documents\Visual Studio 2015\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csprojAssemblyReference.cache
+G:\Onedrive\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.exe.config
+G:\Onedrive\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.exe
+G:\Onedrive\Projects\EventFilter\EventFilter\bin\Debug\EventFilter.pdb
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csprojAssemblyReference.cache
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.Form1.resources
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.Message.resources
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.Properties.Resources.resources
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csproj.GenerateResource.cache
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csproj.CoreCompileInputs.cache
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.exe
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.pdb

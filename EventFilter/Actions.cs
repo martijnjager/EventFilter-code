@@ -32,5 +32,10 @@ namespace EventFilter
 
             Clipboard.SetText("[code]" + Arr.ToString(data, "\n") + "[/code]");
         }
+
+        public static bool IsEmpty(string text)
+        {
+            return string.IsNullOrEmpty(text);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using System.Linq;
 using System.IO;
 using EventFilter.Contracts;
@@ -38,12 +39,12 @@ namespace EventFilter.Keywords
         {
             Operators = new List<dynamic>();
             Ignorable = new List<string>();
-            DeleteKeywords();
-            KeywordsFromFile = new List<string>();
+            Delete();
+            _fileKeywords = new List<string>();
 
             AvailableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
 
-            if (string.IsNullOrEmpty(KeywordLocation))
+            if (Actions.IsEmpty(KeywordLocation))
             {
                 KeywordLocation = Bootstrap.CurrentLocation + @"\Keywords.txt";
             }
@@ -78,12 +79,12 @@ namespace EventFilter.Keywords
         /// - Make Keywords publicly visible
         /// </summary>
         /// <param name="path">Path of Keywords file</param>
-        public void LoadKeywordsFromLocation(string path = "")
+        public void LoadFromLocation(string path = "")
         {
             string keywords = LoadFrom(!string.IsNullOrEmpty(path) ? path : KeywordLocation);
 
-            SetKeyword(keywords);
-            KeywordsFromFile = Arr.ToList(keywords, ", ");
+            Set(keywords);
+            _fileKeywords = Arr.ToList(keywords, ", ");
 
             KeywordsLoaded = true;
         }
@@ -102,32 +103,49 @@ namespace EventFilter.Keywords
             return line;
         }
 
-        /// <summary>
-        /// Prepare Keywords for usage
-        /// </summary>
-        /// <returns></returns>
-        public List<string> Index()
+        public IKeywords Map()
         {
             if (!KeywordsLoaded)
-                LoadKeywordsFromLocation();
-
-            string[] key = ToArray();
+                LoadFromLocation();
 
             DateStart = null;
             DateEnd = null;
 
-            // ReSharper disable ForCanBeConvertedToForeach
-            for (int i = 0; i < key.Length; i++)
+            foreach (string item in ToArray())
             {
-                AddDate(key[i]);
-                AddIgnoreable(key[i]);
+                AddDate(item);
+                AddIgnoreable(item);
             }
 
-            // Convert keywords to usable string
-            SetKeyword(key);
-
-            return new List<string>(key);
+            return this;
         }
+
+
+        /// <summary>
+        /// Prepare Keywords for usage
+        /// </summary>
+        /// <returns></returns>
+        //public List<string> Index()
+        //{
+        //    if (!KeywordsLoaded)
+        //        LoadFromLocation();
+
+        //    string[] key = ToArray();
+
+        //    DateStart = null;
+        //    DateEnd = null;
+
+        //    for (int i = 0; i < key.Length; i++)
+        //    {
+        //        AddDate(key[i]);
+        //        AddIgnoreable(key[i]);
+        //    }
+
+        //    // Convert keywords to usable string
+        //    Set(key);
+
+        //    return new List<string>(key);
+        //}
 
         private void AddIgnoreable(string key)
         {
@@ -148,14 +166,20 @@ namespace EventFilter.Keywords
             }
         }
 
-//        private static void HasTextIgnoreOperator(string text, string key, ICollection<dynamic> events)
-//        {
-//            key = key.Trim('-');
-//
-//            if(text.Contains(key))
-//            {
-//                events.Add("operator");
-//            }
-//        }
+        public void SaveToFile(string fileName, string keywords)
+        {
+            try
+            {
+                StreamWriter streamWriter = new StreamWriter(fileName);
+                streamWriter.WriteLine(keywords);
+                Actions.Report("Saving Keywords " + keywords + " to file");
+                streamWriter.Close();
+            }
+            catch(Exception error)
+            {
+                Actions.Report("An error occured when trying to save Keywords: " + error.Message);
+                Messages.ProblemOccured("saving keywords");
+            }
+        }
     }
 }

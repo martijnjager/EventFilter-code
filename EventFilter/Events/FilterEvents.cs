@@ -3,42 +3,31 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using System.ComponentModel;
+using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
     public partial class Event
     {
-        public List<string> FilteredEventId { get; private set; }
+        public List<EventLogs> FilteredEvents { get; private set; }
 
-        public List<string> FilteredEventDesc { get; private set; }
-
-        public List<string> FilteredEventDate { get; private set; }
+        private List<EventLogs> FilteredEventsOnDate { get; set; }
         
         /// <summary>
         /// Filter duplicate events 
         /// </summary>
         /// <returns>List of non-duplicate events</returns>
-        public void Filter()
+        public IEvent Filter()
         {
-            HashSet<string> tags = new HashSet<string>();
+            HashSet<EventLogs> tags = new HashSet<EventLogs>();
 
-            List<string> localId = new List<string>();
-            List<string> localDate = new List<string>();
+            foreach (EventLogs entry in FilteredEventsOnDate)
+                if (!tags.Add(entry)) continue;
 
-            foreach (var entry in Entries)
-            {
-                if (!tags.Add(entry[1])) continue;
+            FilteredEvents = tags.ToList();
 
-                localId.Add(entry[2]);
-                localDate.Add(entry[0]);
-            }
-
-            FilteredEventId = localId;
-            FilteredEventDate = localDate;
-            FilteredEventDesc = tags.ToList();
+            return this;
         }
-
-
 
         /// <summary>
         /// If date keywords present, filter eventlog
@@ -46,34 +35,11 @@ namespace EventFilter.Events
         /// <param name="keyword"></param>
         /// <param name="tmpDescription"></param>
         /// <param name="tmpDate"></param>
-        public void FilterDate(List<string> keyword, EventLogs[] eventlogs)
+        public IEvent FilterDate()
         {
-            if (!Keywords.Items.Any(s => s.Contains("datestart")) && !keyword.Any(s => s.Contains("dateend"))) return;
+            FilteredEventsOnDate = FilterOnDate();
 
-            List<string> id = FilterOnDate();
-            List<string> description = new List<string>();
-            List<string> date = new List<string>();
-
-            foreach(EventLogs eventlog in eventlogs)
-            {
-                if(id.Any(s => s == eventlog.Id))
-                {
-                    description.Add(eventlog.Description);
-                    date.Add(eventlog.Date);
-                }
-            }
-
-            //for (var i = 0; i < eventlogs.Length; i++)
-            //{
-            //    if(id.Any(s => s == i.ToString()))
-            //    {
-            //        description.Add(eventlogs[i].Description);
-            //        date.Add(eventlogs[i].Date);
-            //    }
-            //}
-
-            //tmpDescription = description.ToArray();
-            //tmpDate = date.ToArray();
+            return this;
         }
 
         /// <summary>
@@ -87,62 +53,39 @@ namespace EventFilter.Events
         /// Filter events on date
         /// </summary>
         /// <returns>List of non-duplicate events</returns>
-        private List<string> FilterOnDate()
+        private List<EventLogs> FilterOnDate()
         {
-            List<string> results = new List<string>();
+            List<EventLogs> results = new List<EventLogs>();
+            EventLogs start = new EventLogs();
+            EventLogs end = new EventLogs();
 
-            foreach(EventLogs eventlog in Eventlogs)
+            // Get the first match with DateStart
+            if (Keywords.DateStart != null)
+                start = Eventlogs.FirstOrDefault(s => s.Date.Contains(Keywords.DateStart));
+            // Get the first match with DateEnd
+            if (Keywords.DateEnd != null)
+                end = Eventlogs.FirstOrDefault(s => s.Date.Contains(Keywords.DateEnd));
+
+            if(start.Id == null && end.Id != null)
             {
-                if (string.IsNullOrEmpty(Keywords.DateEnd))
-                    continue;
-
-                if(!string.IsNullOrEmpty(Keywords.DateStart) && (eventlog.Date.Contains(Keywords.DateStart) 
-                    || DateTime.Parse(eventlog.Date) > DateTime.Parse(Keywords.DateStart)))
-                {
-                    HasEndDateOrNotPassedStartDate(eventlog, results);
-
-                    results.Add(eventlog.Id);
-                }
-
-                if(!eventlog.Date.Contains(Keywords.DateEnd) || DateTime.Parse(eventlog.Date) < DateTime.Parse(Keywords.DateEnd)){
-                    results.Add(eventlog.Id);
-                }
+                // Get the range
+                results = Eventlogs.ToList().GetRange(0, (int.Parse(end.Id) - 1));
             }
 
-            //for (var i = 0; i < Dates.Length; i++)
-            //{
-            //    if (Keywords.DateStart != null && (Dates[i].Contains(Keywords.DateStart) || DateTime.Parse(Dates[i]) > DateTime.Parse(Keywords.DateStart)))
-            //    {
-            //        HasEndDateOrNotPassedStartDate(i, results);
-
-            //        results.Add(i.ToString());
-            //    }
-
-            //    if (Keywords.DateEnd == null) continue;
-
-            //    if (Dates[i].Contains(Keywords.DateEnd) != true || DateTime.Parse(Dates[i]) < DateTime.Parse(Keywords.DateEnd))
-            //    {
-            //        results.Add(i.ToString());
-            //    }
-            //}
-
-            return results;
-        }
-
-        private bool EndDateNotNull()
-        {
-            return Keywords.DateEnd != null;
-        }
-
-        private void HasEndDateOrNotPassedStartDate(EventLogs eventlogs, ICollection<string> results)
-        {
-            if (!EndDateNotNull())
-                return;
-
-            if (eventlogs.Date.Contains(Keywords.DateEnd) != true || DateTime.Parse(eventlogs.Date) < DateTime.Parse(Keywords.DateEnd))
+            if(start.Id != null && end.Id == null)
             {
-                results.Add(eventlogs.Id);
+                // Get the range
+                results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((Eventlogs.Length - 1) - int.Parse(start.Id)));
             }
+
+            if(start.Id != null && end.Id != null)
+            {
+                // Get the range
+                if (int.Parse(start.Id) < int.Parse(end.Id))
+                    results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((int.Parse(end.Id) - 1) - int.Parse(start.Id)));
+            }
+
+            return results.Distinct().ToList();
         }
 
         public static void eventFilterBGWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -153,19 +96,19 @@ namespace EventFilter.Events
 
             int progress;
 
-            for (progress = 0; progress < Instance.FilteredEventDesc.Count; progress++)
+            for (progress = 0; progress < Instance.FilteredEvents.Count; progress++)
             {
                 string[] data =
                 {
-                    "Data: " + Instance.FilteredEventDate[progress],
-                    "Data: " + Instance.FilteredEventDesc[progress],
-                    "Data: " + Instance.FilteredEventId[progress]
+                    "Data: " + Instance.FilteredEvents[progress].Date,
+                    "Data: " + Instance.FilteredEvents[progress].Description,
+                    "Data: " + Instance.FilteredEvents[progress].Id
                 };
 
                 worker.ReportProgress(progress, data);
             }
 
-            worker.ReportProgress(++progress, "Resultcount: Events found: " + Actions.form.lblResultCount.Text.Substring(Actions.form.lblResultCount.Text.Length - 1, 1) + "\t, After filtering: " + Instance.FilteredEventId.Count);
+            worker.ReportProgress(++progress, "Resultcount: Events found: " + Actions.form.lblResultCount.Text.Substring(Actions.form.lblResultCount.Text.Length - 1, 1) + "\t, After filtering: " + Instance.FilteredEvents.Count);
         }
 
         public static void eventFilterBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -187,15 +130,5 @@ namespace EventFilter.Events
             else
                 Actions.SetResultCount(e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}'));
         }
-
-        //        public void SortOnDescription(ListView lbEvent)
-        //        {
-        //            var index = new List<dynamic>();
-        //
-        //            for(int i = 0; i < lbEvent.Columns.Count; i++)
-        //            {
-        //
-        //            }
-        //        }
     }
 }

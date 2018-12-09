@@ -1,8 +1,10 @@
 Bugfixes:
-
+- Various minor fixes that came along with the improvements
 
 Feature:
-
+- Added support for evtx files
 
 Improvements:
-- Added message if the file is corrupt
+- Added message if the eventfile is corrupt
+- Changed the way how the app handles events
+- Improved description handling with large events like chkdsk logs

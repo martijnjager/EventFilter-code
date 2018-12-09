@@ -12,12 +12,12 @@ namespace EventFilter.Contracts
 
         string[] ToArray();
 
-        List<string> GetKeywordsFromFile();
+        //List<string> GetKeywordsFromFile();
 
-        void DeleteKeywords();
+        void Delete();
 
-        void AddKeyword(params string[] values);
+        void Add(params string[] values);
 
-        void AddKeyword(CheckedListBox clb);
+        void Add(CheckedListBox clb);
     }
 }

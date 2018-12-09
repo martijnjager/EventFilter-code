@@ -16,25 +16,16 @@ namespace EventFilter.Events
          * Property ensures that the list items are unique
          * No duplicate entries can be added
          */
-        public HashSet<string[]> ListItems { get; private set;}
+        private HashSet<string[]> _listItem { get; set;}
 
         private Event()
         {
             Entries = new List<string[]>();
-            ListItems = new HashSet<string[]>();
-            FilteredEventDate = new List<string>();
-            FilteredEventId = new List<string>();
-            FilteredEventDesc = new List<string>();
-
+            _listItem = new HashSet<string[]>();
             Eventlogs = new EventLogs[0];
-
-            //Dates = new string[0];
-            //Description = new string[0];
-            //Id = new string[0];
-            //EventArray = new string[0];
         }
 
-        public static Event Instance
+        public static IEvent Instance
         {
             get
             {
@@ -45,48 +36,27 @@ namespace EventFilter.Events
             }
         }
         
-        private static void InitProps()
-        {
-            _event.Eventlogs = new EventLogs[0];
-            _event.FilteredEventDate = new List<string>();
-            _event.FilteredEventId = new List<string>();
-            _event.EventIdentifier = 0;
-            _event.Entries = new List<string[]>();
-            _event.ListItems = new HashSet<string[]>();
-        }
-
         private static void NewInstance()
         {
-            if (_event is null)
-            {
-                _event = new Event {Keywords = new Keyword()};
+            _event = new Event { Keywords = new Keyword() };
 
-                return;
-            }
-
-            InitProps();
+            return;
         }
 
-        public dynamic Refresh()
+        public IEvent SetLocation(System.IO.FileInfo location)
         {
-            NewInstance();
-
-            return _event;
-        }
-
-        public void SetEventLocation(string location)
-        {
-            var fileInfo = new System.IO.FileInfo(location);
-            if (fileInfo.Length == 0)
+            if (location.Length == 0)
             {
                 Messages.IncorrectLogSize();
-                return;
+                return this;
             }
 
-            EventLocation = fileInfo;
+            EventLocation = location;
+
+            return this;
         }
 
-        public Event SetKeywordObj(IKeywords keyword)
+        public IEvent SetKeywordInstance(IKeywords keyword)
         {
             Keywords = keyword;
 
@@ -96,12 +66,12 @@ namespace EventFilter.Events
         /// <summary>
         /// Check Keywords on valid Operators
         /// </summary>
-        public Event CheckCountOperator()
+        public IEvent IsCountOperatorUsed()
         {
-            List<string> keywords = Keywords.Index();
+            List<string> keywords = Keywords.Map().Items;
             Keywords.Operators = new List<dynamic>();
 
-            foreach(string key in keywords)
+            foreach(string key in Keywords.Map().Items)
             {
                 if(Keywords.AvailableOperators.Any(key.Contains))
                 {
@@ -144,20 +114,44 @@ namespace EventFilter.Events
 
             foreach (EventLogs e in Eventlogs)
             {
-                count = CountValue(e.Log, value, count);
+                if (e.Log.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1)
+                {
+                    count++;
+                }
             }
 
             return count;
         }
 
-        private static int CountValue(string line, string value, int count)
+        /// <summary>
+        /// Skip current event and get Next event
+        /// </summary>
+        /// <param name="curId">ID of first line of description of current event</param>
+        /// <returns></returns>
+        public string Next(int curId)
         {
-            if (line.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1)
-            {
-                count++;
-            }
+            if (!(curId < Eventlogs.Length)) return Eventlogs[curId].Log;
 
-            return count;
+            EventIdentifier = curId + 1;
+            return Eventlogs[EventIdentifier].Log;
+        }
+
+        /// <summary>
+        /// Skip current event and get Previous event
+        /// </summary>
+        /// <param name="curId">ID of first line of description of current event</param>
+        /// <returns>string</returns>
+        public string Previous(int curId)
+        {
+            if (!(curId > 0)) return Eventlogs[curId].Log;
+
+            EventIdentifier = curId - 1;
+            return Eventlogs[EventIdentifier].Log;
+        }
+
+        public bool CanAddListItem(string[] item)
+        {
+            return _listItem.Add(item);
         }
     }
 }

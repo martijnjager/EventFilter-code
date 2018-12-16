@@ -21,39 +21,19 @@ namespace EventFilter
                 // Instantiating
                 Bootstrap.Boot(Event.Instance, clbKeywords);
 
-                #region Load files into app
                 Actions.form = this;
 
                 Bootstrap.FilesFound();
-                #endregion
 
-                #region Set worker reports of bgw to true
-                SearchEventBGWorker.WorkerReportsProgress = true;
-                SearchEventBGWorker.DoWork += SearchEvent.Search;
-                SearchEventBGWorker.ProgressChanged += SearchEvent.SearchEventBGWorker_ProgressChanged;
-                SearchEventBGWorker.RunWorkerCompleted += SearchEvent.SearchEventBGWorker_RunWorkerCompleted;
-
-                eventFilterBGWorker.WorkerReportsProgress = true;
-                eventFilterBGWorker.DoWork += Event.eventFilterBGWorker_DoWork;
-                eventFilterBGWorker.ProgressChanged += Event.eventFilterBGWorker_ProgressChanged;
-                #endregion
+                SetBackgroundWorkerProperties();
             }
             catch (Exception error)
             {
                 Actions.Report("ERROR LOADING FILES: " + error.Message + error.StackTrace);
             }
 
-            #region btn design
-            btnSearch.FlatStyle = FlatStyle.Popup;
-            btnSearch.FlatAppearance.BorderColor = Color.Wheat;
-            btnResultCleanup.FlatStyle = FlatStyle.Popup;
-            btnResultCleanup.FlatAppearance.BorderColor = Color.Wheat;
-            btnCopyClipboard.FlatStyle = FlatStyle.Popup;
-            btnCopyClipboard.FlatAppearance.BorderColor = Color.Wheat;
-            btnSaveReport.FlatStyle = FlatStyle.Popup;
-            btnSaveReport.FlatAppearance.BorderColor = Color.Wheat;
-            #endregion
-            
+            UpdateButtonStyles();
+
             // Enables key events
             KeyPreview = true;
             AllowDrop = true;
@@ -103,6 +83,30 @@ namespace EventFilter
             }
         }
         #endregion
+
+        private void UpdateButtonStyles()
+        {
+            btnSearch.FlatStyle = FlatStyle.Popup;
+            btnSearch.FlatAppearance.BorderColor = Color.Wheat;
+            btnResultCleanup.FlatStyle = FlatStyle.Popup;
+            btnResultCleanup.FlatAppearance.BorderColor = Color.Wheat;
+            btnCopyClipboard.FlatStyle = FlatStyle.Popup;
+            btnCopyClipboard.FlatAppearance.BorderColor = Color.Wheat;
+            btnSaveReport.FlatStyle = FlatStyle.Popup;
+            btnSaveReport.FlatAppearance.BorderColor = Color.Wheat;
+        }
+
+        private void SetBackgroundWorkerProperties()
+        {
+            SearchEventBGWorker.WorkerReportsProgress = true;
+            SearchEventBGWorker.DoWork += SearchEvent.Search;
+            SearchEventBGWorker.ProgressChanged += SearchEvent.SearchEventBGWorker_ProgressChanged;
+            SearchEventBGWorker.RunWorkerCompleted += SearchEvent.SearchEventBGWorker_RunWorkerCompleted;
+
+            eventFilterBGWorker.WorkerReportsProgress = true;
+            eventFilterBGWorker.DoWork += Event.eventFilterBGWorker_DoWork;
+            eventFilterBGWorker.ProgressChanged += Event.eventFilterBGWorker_ProgressChanged;
+        }
 
         #region MenuItems
         private void miSaveKeywords_Click(object sender, EventArgs e)

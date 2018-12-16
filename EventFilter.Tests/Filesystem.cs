@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using EventFilter;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using EventFilter.Contracts;
 using EventFilter.Events;
 using System.Windows.Forms;
@@ -8,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EventFilter.Test.ScanDirectories
+namespace EventFilter.Test
 {
     [TestClass()]
     public class Filesystem

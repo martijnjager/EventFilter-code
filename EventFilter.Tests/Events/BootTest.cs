@@ -1,15 +1,14 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using EventFilter.Events;
 using System.Windows.Forms;
-using System.Text;
 
 // ReSharper disable CheckNamespace
 namespace EventFilter.Test
 {
-    [TestClass]
+    [TestClass()]
     public class BootstrapTest
     {
-        [TestMethod]
+        [TestMethod()]
         public void LoadFilesTest()
         {
             var events = Event.Instance;

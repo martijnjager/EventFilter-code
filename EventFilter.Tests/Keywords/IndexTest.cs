@@ -20,7 +20,7 @@ namespace EventFilter.Test
 
             Bootstrap.Boot(events, new CheckedListBox());
 
-            events.Keywords.Index();
+            events.Keywords.Map();
 
             Assert.IsTrue(events.Keywords.KeywordsLoaded);
         }

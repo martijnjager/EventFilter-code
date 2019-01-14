@@ -24,8 +24,8 @@ namespace EventFilter
             MessageWrite("A problem has occured.\nPlease notify the developer of this issue!", "App crashed", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-        public static void ReportCreated() =>
-            MessageWrite("A report has been created and is saved in " + Bug.GetPath, "Bug report created", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        //public static void ReportCreated() =>
+            //MessageWrite("A report has been created and is saved in " + Bug.GetPath, "Bug report created", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void ErrorLogCollection() =>
             MessageWrite(Bug.exception, "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);

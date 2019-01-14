@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using EventFilter.Keywords;
 using EventFilter.Contracts;
 
@@ -8,23 +9,73 @@ namespace EventFilter.Events
 {
     public sealed partial class Event : IEvent
     {
+        /// <summary>
+        /// Instance of the class
+        /// </summary>
         private static Event _event;
 
+        internal bool NewFile;
+
+        /// <summary>
+        /// Stores all events to display
+        /// </summary>
         public List<string[]> Entries { get; private set; }
 
-        /**
-         * Property ensures that the list items are unique
-         * No duplicate entries can be added
-         */
+        /// <summary>
+        /// Stores all events filtered on duplicates
+        /// </summary>
+        public List<EventLogs> FilteredEvents { get; private set; }
+
+        /// <summary>
+        /// Stores all events filtered on date 
+        /// May still contain duplicates with description and is therefore used as some sort of a temp location to filter further
+        /// </summary>
+        private List<EventLogs> FilteredEventsOnDate { get; set; }
+
+        /// <summary>
+        /// Instance of the Keywords class
+        /// </summary>
+        public IKeywords Keywords { get; set; }
+        
+        /// <summary>
+        /// ID for message form
+        /// </summary>
+        public int EventIdentifier { get; set; }
+
+        /// <summary>
+        /// Stores information about the file being used
+        /// </summary>
+        public FileInfo EventLocation { get; private set; }
+
+        /// <summary>
+        /// Stores all events
+        /// </summary>
+        public List<string> Events { get; set; }
+
+        /// <summary>
+        /// Stores all events, using the EventLogs struct allows the app to search/filter easier
+        /// </summary>
+        public List<EventLogs> Eventlogs { get; private set; }
+
+        /// <summary>
+        /// Property ensures that the list items are unique 
+        /// No duplicate entries can be added
+        /// </summary>
         private HashSet<string[]> _listItem { get; set;}
 
+        /// <summary>
+        /// Private access point
+        /// </summary>
         private Event()
         {
             Entries = new List<string[]>();
             _listItem = new HashSet<string[]>();
-            Eventlogs = new EventLogs[0];
+            Eventlogs = new List<EventLogs>();
         }
 
+        /// <summary>
+        /// Global access point
+        /// </summary>
         public static IEvent Instance
         {
             get
@@ -36,6 +87,9 @@ namespace EventFilter.Events
             }
         }
         
+        /// <summary>
+        /// Create new instance of the class
+        /// </summary>
         private static void NewInstance()
         {
             _event = new Event { Keywords = new Keyword() };
@@ -43,7 +97,12 @@ namespace EventFilter.Events
             return;
         }
 
-        public IEvent SetLocation(System.IO.FileInfo location)
+        /// <summary>
+        /// Validates the file and assigns the property
+        /// </summary>
+        /// <param name="location"></param>
+        /// <returns></returns>
+        public IEvent SetLocation(FileInfo location)
         {
             if (location.Length == 0)
             {
@@ -52,10 +111,16 @@ namespace EventFilter.Events
             }
 
             EventLocation = location;
+            NewFile = true;
 
             return this;
         }
 
+        /// <summary>
+        /// Assigns the keywords instance
+        /// </summary>
+        /// <param name="keyword"></param>
+        /// <returns></returns>
         public IEvent SetKeywordInstance(IKeywords keyword)
         {
             Keywords = keyword;
@@ -91,16 +156,24 @@ namespace EventFilter.Events
         {
             string keyword = Keywords.Operators.Find(s => s.Contains("count:"));
 
+            Keywords.Counter = 0;
+            Keywords.KeywordCounted = "";
+
             if (!string.IsNullOrEmpty(keyword))
             {
                 Keywords.Counter = Count(keyword.Replace("count:", ""));
                 Keywords.KeywordCounted = keyword.Replace("count:", "");
             }
-            else
+        }
+
+        private bool NewFileUsed()
+        {
+            if (NewFile)
             {
-                Keywords.Counter = 0;
-                Keywords.KeywordCounted = "";
+                return true;
             }
+
+            return false;
         }
 
         /// <summary>
@@ -130,7 +203,7 @@ namespace EventFilter.Events
         /// <returns></returns>
         public string Next(int curId)
         {
-            if (!(curId < Eventlogs.Length)) return Eventlogs[curId].Log;
+            if (!(curId < Eventlogs.Count)) return Eventlogs[curId].Log;
 
             EventIdentifier = curId + 1;
             return Eventlogs[EventIdentifier].Log;
@@ -149,6 +222,11 @@ namespace EventFilter.Events
             return Eventlogs[EventIdentifier].Log;
         }
 
+        /// <summary>
+        /// Checks if an item can be added to the property's list
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public bool CanAddListItem(string[] item)
         {
             return _listItem.Add(item);

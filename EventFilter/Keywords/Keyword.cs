@@ -6,30 +6,13 @@ using EventFilter.Contracts;
 
 namespace EventFilter.Keywords
 {
-    public sealed partial class Keyword : IKeywords
+    public sealed partial class Keyword : IKeywords, IRefresh
     {
-        /**
-         * Indexes all operators, both used and unused operators
-         */
-        public List<string> AvailableOperators { get; set; }
 
         public bool KeywordsLoaded { get; set; }
 
         private Keyword _keywords;
         private readonly object _lock = new object();
-
-        /**
-         * Indexes the used operators
-         */
-        public List<dynamic> Operators { get; set; }
-
-        public string KeywordLocation { get; set; }
-
-        public string DateStart { get; private set; }
-
-        public string DateEnd { get; private set; }
-
-        public List<string> Ignorable { get; }
 
         public int Counter { get; set; }
 
@@ -44,10 +27,7 @@ namespace EventFilter.Keywords
 
             AvailableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
 
-            if (Actions.IsEmpty(KeywordLocation))
-            {
-                KeywordLocation = Bootstrap.CurrentLocation + @"\Keywords.txt";
-            }
+            SetLocation();
         }
 
         public IKeywords Instance
@@ -79,7 +59,7 @@ namespace EventFilter.Keywords
         /// - Make Keywords publicly visible
         /// </summary>
         /// <param name="path">Path of Keywords file</param>
-        public void LoadFromLocation(string path = "")
+        public IKeywords LoadFromLocation(string path = "")
         {
             string keywords = LoadFrom(!string.IsNullOrEmpty(path) ? path : KeywordLocation);
 
@@ -87,6 +67,16 @@ namespace EventFilter.Keywords
             _fileKeywords = Arr.ToList(keywords, ", ");
 
             KeywordsLoaded = true;
+
+            return this;
+        }
+
+        public void LoadIntoCLB()
+        {
+            foreach (string str in Items)
+            {
+                Actions.form.clbKeywords.Items.Add(str.Trim(), true);
+            }
         }
 
         /// <summary>
@@ -120,40 +110,13 @@ namespace EventFilter.Keywords
             return this;
         }
 
-
-        /// <summary>
-        /// Prepare Keywords for usage
-        /// </summary>
-        /// <returns></returns>
-        //public List<string> Index()
-        //{
-        //    if (!KeywordsLoaded)
-        //        LoadFromLocation();
-
-        //    string[] key = ToArray();
-
-        //    DateStart = null;
-        //    DateEnd = null;
-
-        //    for (int i = 0; i < key.Length; i++)
-        //    {
-        //        AddDate(key[i]);
-        //        AddIgnoreable(key[i]);
-        //    }
-
-        //    // Convert keywords to usable string
-        //    Set(key);
-
-        //    return new List<string>(key);
-        //}
-
         private void AddIgnoreable(string key)
         {
             if (key.Contains("-"))
                 Ignorable.Add(key.Trim('-'));
         }
 
-        private void AddDate(dynamic key)
+        private void AddDate(string key)
         {
             if (key.Contains("dateend:"))
             {

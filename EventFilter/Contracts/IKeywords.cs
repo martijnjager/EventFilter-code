@@ -2,7 +2,7 @@
 
 namespace EventFilter.Contracts
 {
-    public interface IKeywords : IManagesKeywords, IRefresh
+    public interface IKeywords : IManagesKeywords
     {
         string DateStart { get; }
         string DateEnd { get; }
@@ -23,7 +23,9 @@ namespace EventFilter.Contracts
 
         IKeywords Instance { get; }
 
-        void LoadFromLocation(string path = "");
+        IKeywords LoadFromLocation(string path = "");
+
+        void LoadIntoCLB();
 
         void SaveToFile(string fileName, string keywords);
 

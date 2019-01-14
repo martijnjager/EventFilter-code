@@ -12,11 +12,6 @@ namespace EventFilter.Filesystem
         // TODO: improve deleting
 
         /// <summary>
-        /// DeleteKeywords files in folder
-        /// </summary>
-        public static void ClearFolder(DirectoryInfo dir, dynamic exceptions = null) => DeleteFiles(dir, exceptions);
-
-        /// <summary>
         /// Scan all directories relative to the path for a file
         /// </summary>
         /// <param name="path"></param>
@@ -36,19 +31,6 @@ namespace EventFilter.Filesystem
             {
                 string filename = files.First();
                 string[] fileContent = Events.Event.Instance.PrepareForMultipleLogs(files);
-
-                //List<string[]> contents = new List<string[]>();
-                //string[] fileContent = new string[0];
-
-                //string filename = files.First();
-
-                //for (int i = 0; i < files.Count; i++)
-                //{
-                //    string[] text = File.ReadAllLines(files[i], Encodings.CurrentEncoding);
-                //    contents.Add(text);
-
-                //    fileContent = Events.Event.Instance.PrepareForMultipleLogs(ref contents);
-                //}
 
                 Move(ref filename, fileContent);
 

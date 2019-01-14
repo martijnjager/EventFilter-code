@@ -6,6 +6,7 @@ using System.ComponentModel;
 using EventFilter.Contracts;
 using EventFilter.Events;
 using System.Text;
+using System;
 
 namespace EventFilter
 {
@@ -13,7 +14,7 @@ namespace EventFilter
     {
         private const string EventLocation = @"\eventlog.txt";
 
-        private readonly List<dynamic> _alternatives;
+        private readonly List<string> _alternatives;
 
         public static readonly string CurrentLocation = Directory.GetCurrentDirectory();
 
@@ -28,9 +29,9 @@ namespace EventFilter
 
         private static IEvent Events;
 
-        private Bootstrap(IEvent EventClass, CheckedListBox clbkeywords)
+        private Bootstrap(IEvent EventClass)
         {
-            _alternatives = new List<dynamic>
+            _alternatives = new List<string>
             {
                 "eventlog.txt",
                 "EvtxSysDump.txt",
@@ -39,18 +40,18 @@ namespace EventFilter
                 "pnp-events.txt"
             };
 
-            _clbKeywords = clbkeywords;
+            _clbKeywords = Actions.form.clbKeywords;
 
             Events = EventClass;
 
             LoadFiles();
         }
 
-        public static Bootstrap Boot(IEvent EventClass, CheckedListBox clbkeywords)
+        public static Bootstrap Boot(IEvent EventClass)
         {
             lock (Lock)
             {
-                return Instance ?? (Instance = new Bootstrap(EventClass, clbkeywords));
+                return Instance ?? (Instance = new Bootstrap(EventClass));
             }
         }
 
@@ -78,8 +79,7 @@ namespace EventFilter
             if (!File.Exists(Events.Keywords.KeywordLocation)) return;
             
             Events.Keywords.LoadFromLocation();
-
-            LoadKeywordsInClb();
+            Events.Keywords.LoadIntoCLB();
         }
 
         private void LoadEventlocation()
@@ -89,9 +89,26 @@ namespace EventFilter
                 if (!string.IsNullOrEmpty(CheckEventLogAlternatives()))
                     Events.SetLocation(new FileInfo(CheckEventLogAlternatives()));
                 else
+                {
                     if (Directory.Exists(Zip.ExtractLocation))
+                    {
                         if (Directory.GetFiles(Zip.ExtractLocation).Length > 0)
                             Events.SetLocation(new FileInfo(Directory.GetFiles(Zip.ExtractLocation)[0]));
+                    }
+                    //else
+                    //{
+                    //    string[] dirs = Directory.GetDirectories(CurrentLocation);
+                    //    foreach(string dir in dirs)
+                    //    {
+                    //        string[] files = Directory.GetFiles(dir);
+                    //        string[] results = Array.FindAll(files, x => x.Contains(_alternatives));
+                    //        if(results.Length > 0)
+                    //        {
+                    //            Events.SetLocation(new FileInfo(results[0]));
+                    //        }
+                    //    }
+                    //}
+                }
             }
                 
             if(File.Exists(CurrentLocation + EventLocation))
@@ -104,14 +121,6 @@ namespace EventFilter
                 if (File.Exists(CurrentLocation + alternative)) return alternative;
 
             return string.Empty;
-        }
-
-        private void LoadKeywordsInClb()
-        {
-            foreach (string str in Events.Keywords.Items)
-            {
-               _clbKeywords.Items.Add(str.Trim(), true);
-            }
         }
 
         /// <summary>
@@ -131,6 +140,9 @@ namespace EventFilter
             if (searchEventBgWorker.IsBusy)
                 return;
 
+            /**
+             * Clear the keywords and add new onces
+             */
             Events.Keywords.Delete();
             Events.Keywords.Add(clbKeywords);
 

@@ -57,6 +57,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="BugsTest.cs" />
     <Compile Include="Events\IndexTest.cs" />
     <Compile Include="Events\BootTest.cs" />
     <Compile Include="Filesystem.cs" />

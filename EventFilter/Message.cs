@@ -37,7 +37,7 @@ namespace EventFilter
             if (events.EventIdentifier == 1)
                 btnPrevious.Visible = false;
 
-            if (events.EventIdentifier == events.Eventlogs.Length)
+            if (events.EventIdentifier == events.Eventlogs.Count)
                 btnNext.Visible = false;
         }
 
@@ -51,7 +51,7 @@ namespace EventFilter
             lblEvent.Text = text;
             ChangeSize(text);
 
-            if (Id == events.Eventlogs.Length)
+            if (Id == events.Eventlogs.Count)
                 btnNext.Visible = false;
 
             if (Id == 1)

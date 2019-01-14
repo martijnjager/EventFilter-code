@@ -21,6 +21,11 @@ namespace EventFilter
             form.lblResultCount.Text = "Events found: " + text;
         }
 
+
+        /// <summary>
+        /// Copies selected items to clipboard
+        /// </summary>
+        /// <param name="dates">Is dynamic to automatically convert to ListView.ListViewItemCollection or ListView.SelectedListViewItemCollection</param>
         public static void CopyToClipboard(dynamic dates)
         {
             List<dynamic> data = new List<dynamic>();

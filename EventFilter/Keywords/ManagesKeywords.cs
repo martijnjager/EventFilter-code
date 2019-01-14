@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Windows.Forms;
+using EventFilter.Contracts;
+using System.Linq;
 
 namespace EventFilter.Keywords
 {
@@ -10,11 +12,37 @@ namespace EventFilter.Keywords
 
         private List<string> _fileKeywords;
 
+        public string DateStart { get; private set; }
+
+        public string DateEnd { get; private set; }
+
+        /**
+         * Indexes the used operators
+         */
+        public List<dynamic> Operators { get; set; }
+        
+        /**
+         * Indexes all operators, both used and unused operators
+         */
+        public List<string> AvailableOperators { get; set; }
+
+        public string KeywordLocation { get; set; }
+
+        public List<string> Ignorable { get; }
+
         public string[] ToArray() => Items.ToArray();
 
         public string GetIndexedKeywords() => Arr.ToString(_fileKeywords, ", ");
 
         public string GetAllKeywords() => Arr.ToString(Items, ",");
+
+        public void SetLocation()
+        {
+            if (Actions.IsEmpty(KeywordLocation))
+            {
+                KeywordLocation = Bootstrap.CurrentLocation + @"\keywords.txt";
+            }
+        }
         
         public void Set(string val)
         {
@@ -59,6 +87,22 @@ namespace EventFilter.Keywords
         private void Add(string keyword)
         {
             Items.Add(keyword);
+        }
+
+        public bool NoItems()
+        {
+            if (Items.Count > 0)
+                return false;
+
+            return true;
+        }
+
+        public bool IsPresent(string keyword)
+        {
+            if (Items.Any(s => s.Contains(keyword)))
+                return true;
+
+            return false;
         }
     }
 }

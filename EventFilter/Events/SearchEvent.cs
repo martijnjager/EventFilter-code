@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;   
 using System.ComponentModel;
 using EventFilter.Contracts;
-using System.Linq;
 using System;
 using System.Diagnostics;
 
@@ -11,6 +10,7 @@ namespace EventFilter.Events
     {
         private static BackgroundWorker worker;
 
+        private static IEvent _event = Event.Instance;
 
         public static void Search(object sender, DoWorkEventArgs e)
         {
@@ -25,20 +25,20 @@ namespace EventFilter.Events
                 int eventCounter = 0; // Counter for total found events
                 int actionCounter = 0; // how many actions have been reported
 
-                Event.Instance.MapEvents();
-                Event.Instance.Keywords.Map();
+                _event.MapEvents();
+                _event.Keywords.Map();
 
-                if (Event.Instance.Events.Count == 0 || Event.Instance.Keywords.Items.Count == 0) return;
+                if (_event.NoEvents() || _event.Keywords.NoItems()) return;
 
                 /**
                 * We're good to search
                 */
                 Stopwatch watch = Stopwatch.StartNew();
 
-                Report(0, Arr.ToString(Event.Instance.Keywords.Items, ", "), ref actionCounter);
-                Report(1, Event.Instance.Events.Count, ref actionCounter);
+                Report(0, Arr.ToString(_event.Keywords.Items, ", "), ref actionCounter);
+                Report(1, _event.Events.Count, ref actionCounter);
 
-                PerformSearch(Event.Instance, ref eventCounter, ref actionCounter, foundIds);
+                PerformSearch(_event, ref eventCounter, ref actionCounter, foundIds);
 
                 Report(2, eventCounter, ref actionCounter);
                 Report(3, eventCounter, ref actionCounter);
@@ -64,7 +64,7 @@ namespace EventFilter.Events
 
         private static void PerformSearch(IEvent instance, ref int eventCounter, ref int actionCounter, List<string> foundIds)
         {
-            if (instance.Keywords.Items.Any(s => s.Contains("datestart")) || instance.Keywords.Items.Any(s => s.Contains("dateend")))
+            if (instance.Keywords.IsPresent("datestart") || instance.Keywords.IsPresent("dateend") )
                 instance.FilterDate();
 
             LoopThroughEvents(instance, ref eventCounter, ref actionCounter, foundIds);
@@ -92,8 +92,8 @@ namespace EventFilter.Events
         {
             string[] events = new string[]
             {
-                "Log: Parameters used: \t filepath: " + Event.Instance.EventLocation.FullName + "\n\t Keywords to use: ",
-                "Log: Lines in eventArray: " + Event.Instance.Events.Count,
+                "Log: Parameters used: \t filepath: " + _event.EventLocation.FullName + "\n\t Keywords to use: ",
+                "Log: Lines in eventArray: " + _event.Events.Count,
                 "Log: \n\nEvents found: ",
                 "Counter: ",
                 "Time: Found results in: ",
@@ -119,7 +119,7 @@ namespace EventFilter.Events
                     break;
 
                 case "Event":
-                    Event.Instance.Entries.Add(Arr.Explode(text.Replace("Event: ", ""), " + "));
+                    _event.Entries.Add(Arr.Explode(text.Replace("Event: ", ""), " + "));
                     break;
 
                 case "Time":
@@ -136,15 +136,13 @@ namespace EventFilter.Events
         {
             Actions.form.lbEventResult.Items.Clear();
 
-            IEvent events = Event.Instance;
-
-            foreach (string[] item in Event.Instance.Entries)
-                if (Event.Instance.CanAddListItem(item))
+            foreach (string[] item in _event.Entries)
+                if (_event.CanAddListItem(item))
                     Actions.AddListItem(item);
 
-            events.IsCountOperatorUsed();
+            _event.IsCountOperatorUsed();
 
-            if (events.Keywords.Counter != 0) Messages.KeywordCounted(events.Keywords.KeywordCounted, events.Keywords.Counter);
+            if (_event.Keywords.Counter != 0) Messages.KeywordCounted(_event.Keywords.KeywordCounted, _event.Keywords.Counter);
 
             Actions.form.lbEventResult.Sort();
         }

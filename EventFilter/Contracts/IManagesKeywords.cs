@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace EventFilter.Contracts
 {
-    public interface IManagesKeywords
+    public interface IManagesKeywords : IRefresh
     {
         List<string> Items { get; }
         string GetAllKeywords();
@@ -12,12 +12,14 @@ namespace EventFilter.Contracts
 
         string[] ToArray();
 
-        //List<string> GetKeywordsFromFile();
-
         void Delete();
 
         void Add(params string[] values);
 
         void Add(CheckedListBox clb);
+
+        bool NoItems();
+
+        bool IsPresent(string keyword);
     }
 }

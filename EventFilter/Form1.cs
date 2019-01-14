@@ -18,10 +18,10 @@ namespace EventFilter
 
             try
             {
-                // Instantiating
-                Bootstrap.Boot(Event.Instance, clbKeywords);
-
                 Actions.form = this;
+
+                // Instantiating
+                Bootstrap.Boot(Event.Instance);
 
                 Bootstrap.FilesFound();
 
@@ -38,6 +38,8 @@ namespace EventFilter
             KeyPreview = true;
             AllowDrop = true;
 
+            openFileDialog1.InitialDirectory = Bootstrap.CurrentLocation;
+
             Actions.Report("Initialization completed!");
         }
 
@@ -48,7 +50,7 @@ namespace EventFilter
 
             if (Event.Instance.EventLocation is FileInfo && Event.Instance.EventLocation.FullName != "openFileDialog1")
             {
-                lblSelectedFile.Text = "Selected file: " + Event.Instance.EventLocation.FullName;
+                lblSelectedFile.Text = @"Selected file: " + Event.Instance.EventLocation.FullName;
 
                 Actions.Report("Selected log: " + lblSelectedFile.Text);
 
@@ -152,7 +154,7 @@ namespace EventFilter
 
             Actions.Report("Keywords to use location: " + keyLoc);
 
-            Event.Instance.Keywords.LoadFromLocation(keyLoc);
+            Event.Instance.Keywords.LoadFromLocation(keyLoc).LoadIntoCLB();
         }
 
         private void miAbout_Click(object sender, EventArgs e)

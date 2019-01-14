@@ -17,8 +17,8 @@ namespace EventFilter.Test
         public void IndexKeywordsTest()
         {
             var events = Event.Instance;
-
-            Bootstrap.Boot(events, new CheckedListBox());
+            Actions.form = new Form1();
+            Bootstrap.Boot(events);
 
             events.Keywords.Map();
 

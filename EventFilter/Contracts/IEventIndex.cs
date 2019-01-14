@@ -6,12 +6,6 @@ namespace EventFilter.Contracts
     {
         int EventIdentifier { get; set; }
 
-        //string[] Dates { get; set; }
-
-        //string[] Description { get; set; }
-
-        //string[] Id { get; set; }
-
         List<string> Events { get; set; }
 
         void MapEvents();
@@ -21,5 +15,7 @@ namespace EventFilter.Contracts
         string Previous(int curId);
 
         string[] PrepareForMultipleLogs(List<string> files);
+
+        bool NoEvents();
     }
 }

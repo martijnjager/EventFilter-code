@@ -7,12 +7,8 @@ using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
-    public partial class Event
+    public partial class Event : IFilterEvents
     {
-        public List<EventLogs> FilteredEvents { get; private set; }
-
-        private List<EventLogs> FilteredEventsOnDate { get; set; }
-        
         /// <summary>
         /// Filter duplicate events 
         /// </summary>
@@ -75,7 +71,7 @@ namespace EventFilter.Events
             if(start.Id != null && end.Id == null)
             {
                 // Get the range
-                results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((Eventlogs.Length - 1) - int.Parse(start.Id)));
+                results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((Eventlogs.Count - 1) - int.Parse(start.Id)));
             }
 
             if(start.Id != null && end.Id != null)
@@ -116,6 +112,7 @@ namespace EventFilter.Events
             if (e.UserState.ToString().Contains("Resultcount: ") == false)
             {
                 // Cast the e.userstate as an IEnumerable to be able to cast it as an object where we can select what we need and convert it to an array
+
                 string[] items = ((IEnumerable)e.UserState).Cast<object>().Select(x => x.ToString()).ToArray();
 
                 if (items.Length <= 1) return;

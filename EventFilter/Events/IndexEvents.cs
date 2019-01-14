@@ -3,30 +3,24 @@ using System.IO;
 using System.Linq;
 using EventFilter.Contracts;
 using System.Diagnostics.Eventing.Reader;
+using System;
 
 namespace EventFilter.Events
 {
-    public partial class Event
+    public partial class Event :  IEventIndex
     {
-        public IKeywords Keywords { get; set; }
-
-        public int EventIdentifier { get; set; }
-
-        public FileInfo EventLocation { get; private set; }
-
-        public List<string> Events { get; set; }
-        private string[] EventArray { get; set; }
-        public EventLogs[] Eventlogs { get; private set; }
-
         /// <summary>
         /// Index log so we know what it contains
         /// </summary>
         public void MapEvents()
         {
-            if (EventLocation.Extension == ".evtx")
-                CreateFromEventViewer();
-            else
-                CreateFromText();
+            //if (NewFileUsed())
+            //{
+                if (EventLocation.Extension == ".evtx")
+                    CreateFromEventViewer();
+                else
+                    CreateFromText();
+            //}
         }
 
         /// <summary>
@@ -39,16 +33,15 @@ namespace EventFilter.Events
                 EventRecord record;
                 int counter = 0;
                 Events = new List<string>();
+                HashSet<string> array = new HashSet<string>();
 
                 while ((record = reader.ReadEvent()) != null)
                 {
                     string @event = CreateEventText(record, ref counter);
 
-                    AddEvent(@event);
+                    AddToIndex(array, @event);
                 }
             }
-
-            InitiateIndex();
         }
 
         private static string CreateEventText(EventRecord record, ref int counter)
@@ -76,7 +69,7 @@ namespace EventFilter.Events
 
         private void InitProp()
         {
-            Eventlogs = new EventLogs[Events.Count];
+            Eventlogs = new List<EventLogs>();
         }
 
         /// <summary>
@@ -87,25 +80,28 @@ namespace EventFilter.Events
         {
             string[] lines = File.ReadAllLines(EventLocation.FullName, Encodings.CurrentEncoding);
 
-            EventArray = new string[lines.Length];
-
-            EventArray = lines.ToArray();
             Events = new List<string>();
-            Eventlogs = new EventLogs[0];
+            Eventlogs = new List<EventLogs>();
 
-            MakeEvents();
-
-            EventArray = new string[0];
+            MakeEvents(lines.ToArray());
         }
 
-        private void MakeEvents()
+        private void MakeEvents(string[] EventArray)
         {
+            InitProp();
+
             for (int i = 0; i < EventArray.Length; i++)
             {
                 if (EventArray[0].Contains("Event["))
                 {
+                    /**
+                     * The event index needs to be set immediately to ensure the eventlogs are proper
+                     * By setting the event index it's also possible to get rid of eventlogs that are for some reason unusuable
+                     */
                     int count = 0;
                     string text = "";
+                    HashSet<string> array = new HashSet<string>();
+
                     while (i + count + 1 < EventArray.Length && EventArray[i + count + 1].Contains("Event[") != true)
                     {
                         text += EventArray[i + count] + "\n";
@@ -114,26 +110,10 @@ namespace EventFilter.Events
 
                     i += count;
 
-                    AddEvent(text);
+                    AddToIndex(array, text);
                 }
             }
 
-            InitiateIndex();
-        }
-
-        private void AddEvent(string text)
-        {
-            Events.Add(text);
-        }
-
-        private void InitiateIndex()
-        {
-            /**
-             * The properties can be initialized now that Events array is ready
-             */
-            InitProp();
-
-            SetIndex();
         }
 
         public string[] PrepareForMultipleLogs(List<string> files)
@@ -145,28 +125,34 @@ namespace EventFilter.Events
 
             files.ForEach(file => 
             {
-                string[] text = File.ReadAllLines(file, Encodings.CurrentEncoding);
+                List<string> text = File.ReadAllLines(file, Encodings.CurrentEncoding).ToList();
 
-                List<string[]> content = new List<string[]>() { text };
-
-                CorrectEventLogCounter(ref content, ref eventCounter, ref eventlog);
+                AddContentToIndex(ref text, ref eventCounter, ref eventlog);
             });
 
             return eventlog.ToArray();
         }
 
-        private void CorrectEventLogCounter(ref List<string[]> logs, ref int eventCounter, ref List<string> eventlog)
+        private void AddContentToIndex(ref List<string> logs, ref int eventCounter, ref List<string> eventlog)
         {
-            for (int i = 0; i < logs[0].Count(); i++)
+            for (int i = 0; i < logs.Count(); i++)
             {
-                if (logs[0][i].Contains("Event["))
+                if (logs[i].Contains("Event["))
                 {
-                    logs[0][i] = "Event[" + eventCounter + "]:";
+                    logs[i] = "Event[" + eventCounter + "]:";
                     ++eventCounter;
                 }
 
-               eventlog.Add(logs[0][i]);
+               eventlog.Add(logs[i]);
             }
+        }
+
+        public bool NoEvents()
+        {
+            if (Eventlogs.Count > 0)
+                return false;
+
+            return true;
         }
     }
 }

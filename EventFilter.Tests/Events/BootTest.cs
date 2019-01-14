@@ -12,8 +12,9 @@ namespace EventFilter.Test
         public void LoadFilesTest()
         {
             var events = Event.Instance;
+            Actions.form = new Form1();
 
-            var boot = Bootstrap.Boot(events, new CheckedListBox());
+            var boot = Bootstrap.Boot(events);
 
             Assert.IsTrue(boot.IsBooted);
         }
@@ -21,7 +22,8 @@ namespace EventFilter.Test
         [TestMethod()]
         public void FilesFoundTest()
         {
-            Bootstrap.Boot(Event.Instance, new CheckedListBox());
+            Actions.form = new Form1();
+            Bootstrap.Boot(Event.Instance);
             Form1 form = new Form1();
             Assert.IsTrue(Bootstrap.FilesFound());
         }

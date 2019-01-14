@@ -18,7 +18,8 @@ namespace EventFilter.Test
         public void ScanTest()
         {
             IEvent events = Event.Instance;
-            Bootstrap.Boot(events, new CheckedListBox());
+            Actions.form = new Form1();
+            Bootstrap.Boot(events);
             string eventLocation = null;
             Zip.ExtractZip("C:\\Users\\marti\\Desktop\\DESKTOP-NPASAR7 (2018-06-26 10 11).zip", ref eventLocation);
 

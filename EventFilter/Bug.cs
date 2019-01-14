@@ -6,7 +6,7 @@ using EventFilter.Filesystem;
 
 namespace EventFilter
 {
-    internal static class Bug
+    public static class Bug
     {
         public static string exception;
 

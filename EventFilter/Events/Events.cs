@@ -5,29 +5,31 @@ namespace EventFilter.Events
 {
     public partial class Event
     {
-        private void SetIndex()
+        private void AddToIndex(HashSet<string> array, string text)
         {
-            for (int i = 0; i < Events.Count; i++)
+            List<string> Event = SplitText(text);
+
+            if(Event.Count >= 13)
             {
-                AddEvent(Events[i], i);
-            }
-        }
+                int index = int.Parse(Event[0].Replace("Event[", "").Replace("]:", ""));
 
-        private void AddEvent(string eventlog, int index)
-        {
-            List<string> Event = SplitText(eventlog);
-            HashSet<string> tmpDat = new HashSet<string>();
+                string description = GetDescription(Event);
 
-            string description = GetDescription(Event);
-            
-            string date = Event[3].Replace("Date: ", "");
+                string date = Event[3].Replace("Date: ", "");
 
-            if(tmpDat.Add(date + ", " + description))
-            {
-                Eventlogs[index].Id = index.ToString();
-                Eventlogs[index].Date = date;
-                Eventlogs[index].Description = description;
-                Eventlogs[index].Log = eventlog;
+                if (array.Add(date + ", " + description))
+                {
+                    EventLogs @event = new EventLogs
+                    {
+                        Id = index.ToString(),
+                        Date = date,
+                        Description = description,
+                        Log = text
+                    };
+                    Eventlogs.Add(@event);
+                }
+
+                Events.Add(text);
             }
         }
 

@@ -35,7 +35,7 @@ namespace EventFilter.Events
 
         private string GetDescription(List<string> Event)
         {
-            string description = "";
+            string description;
 
             if (Event.Count - 1 > 12)
             {

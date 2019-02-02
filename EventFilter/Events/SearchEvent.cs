@@ -3,6 +3,7 @@ using System.ComponentModel;
 using EventFilter.Contracts;
 using System;
 using System.Diagnostics;
+using EventFilter.Keywords;
 
 namespace EventFilter.Events
 {
@@ -10,14 +11,16 @@ namespace EventFilter.Events
     {
         private static BackgroundWorker worker;
 
-        private static IEvent _event = Event.Instance;
+        private static readonly IEvent _event = Event.Instance;
+
+        private static readonly IKeywords _keywords = Keyword.Instance;
 
         public static void Search(object sender, DoWorkEventArgs e)
         {
             worker = sender as BackgroundWorker;
 
-            try
-            {
+            //try
+            //{
                 /**
                  * Preparations before searching
                  */
@@ -26,19 +29,19 @@ namespace EventFilter.Events
                 int actionCounter = 0; // how many actions have been reported
 
                 _event.MapEvents();
-                _event.Keywords.Map();
+                _keywords.Map();
 
-                if (_event.NoEvents() || _event.Keywords.NoItems()) return;
+                if (_event.NoEvents() || _keywords.NoItems()) return;
 
                 /**
                 * We're good to search
                 */
                 Stopwatch watch = Stopwatch.StartNew();
 
-                Report(0, Arr.ToString(_event.Keywords.Items, ", "), ref actionCounter);
+                Report(0, Arr.ToString(_keywords.Items, ", "), ref actionCounter);
                 Report(1, _event.Events.Count, ref actionCounter);
 
-                PerformSearch(_event, ref eventCounter, ref actionCounter, foundIds);
+                PerformSearch(ref eventCounter, ref actionCounter, foundIds);
 
                 Report(2, eventCounter, ref actionCounter);
                 Report(3, eventCounter, ref actionCounter);
@@ -54,43 +57,46 @@ namespace EventFilter.Events
                 Report(4, elapsedTime, ref actionCounter);
 
                 e.Result = foundIds;
-            }
-            catch (Exception error)
-            {
-                worker.ReportProgress(0, "Log: Error: " + error.Message);
-                Messages.ProblemOccured("searching events for keywords");
-            }
+            //}
+            //catch (Exception error)
+            //{
+            //    worker.ReportProgress(0, "Log: Error: " + error.Message);
+            //    Messages.ProblemOccured("searching events for keywords");
+            //}
         }
 
-        private static void PerformSearch(IEvent instance, ref int eventCounter, ref int actionCounter, List<string> foundIds)
+        private static void PerformSearch(ref int eventCounter, ref int actionCounter, List<string> foundIds)
         {
-            if (instance.Keywords.IsPresent("datestart") || instance.Keywords.IsPresent("dateend") )
-                instance.FilterDate();
+            if (_keywords.Has("datestart") || _keywords.Has("dateend") )
+                _event.FilterDate();
 
-            LoopThroughEvents(instance, ref eventCounter, ref actionCounter, foundIds);
+            LoopThroughEvents(ref eventCounter, ref actionCounter, foundIds);
         }
 
-        private static void LoopThroughEvents(IEvent events, ref int eventCounter, ref int actionCounter, List<string> foundIds)
+        private static void LoopThroughEvents(ref int eventCounter, ref int actionCounter, List<string> foundIds)
         {
-            foreach(EventLogs eventlog in events.Eventlogs)
+            if(_event.Eventlogs.Count > 0)
             {
-                /**
-                 * If description has ignorable keywords or no keywords at all
-                 */
-                if (events.With(eventlog.Description).HasNot(events.Keywords.Items) || events.With(eventlog.Description).Has(events.Keywords.Ignorable))
-                    continue;
+                foreach (EventLogs eventlog in _event.Eventlogs)
+                {
+                    /**
+                     * If description has ignorable keywords or no keywords at all
+                     */
+                    if (_event.With(eventlog.Description).HasNot(_keywords.Items) || _event.With(eventlog.Description).Has(_keywords.Ignorable))
+                        continue;
 
-                eventCounter++;
+                    eventCounter++;
 
-                foundIds.Add(eventlog.Id);
+                    foundIds.Add(eventlog.Id);
 
-                worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " + " + eventlog.Description + " + " + eventlog.Id);
+                    worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " + " + eventlog.Description + " + " + eventlog.Id);
+                }
             }
         }
 
         private static string GetMessage(int index, dynamic data)
         {
-            string[] events = new string[]
+            string[] events =
             {
                 "Log: Parameters used: \t filepath: " + _event.EventLocation.FullName + "\n\t Keywords to use: ",
                 "Log: Lines in eventArray: " + _event.Events.Count,
@@ -110,7 +116,7 @@ namespace EventFilter.Events
         public static void SearchEventBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             string text = e.UserState.ToString();
-            string state = text.Substring(0, e.UserState.ToString().IndexOf(": "));
+            string state = text.Substring(0, e.UserState.ToString().IndexOf(": ", StringComparison.Ordinal));
 
             switch (state)
             {
@@ -123,7 +129,7 @@ namespace EventFilter.Events
                     break;
 
                 case "Time":
-                    Actions.form.lblTime.Text = text.Replace("Time: ", "") + "s";
+                    Actions.Form.lblTime.Text = text.Replace("Time: ", "") + "s";
                     break;
 
                 case "Counter":
@@ -134,7 +140,7 @@ namespace EventFilter.Events
 
         public static void SearchEventBGWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            Actions.form.lbEventResult.Items.Clear();
+            Actions.Form.lbEventResult.Items.Clear();
 
             foreach (string[] item in _event.Entries)
                 if (_event.CanAddListItem(item))
@@ -142,9 +148,9 @@ namespace EventFilter.Events
 
             _event.IsCountOperatorUsed();
 
-            if (_event.Keywords.Counter != 0) Messages.KeywordCounted(_event.Keywords.KeywordCounted, _event.Keywords.Counter);
+            if (_event.EventCounterForKeywords != 0) Messages.KeywordCounted(_keywords.KeywordToCount, _event.EventCounterForKeywords);
 
-            Actions.form.lbEventResult.Sort();
+            Actions.Form.lbEventResult.Sort();
         }
     }
 }

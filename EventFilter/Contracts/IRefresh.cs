@@ -2,6 +2,6 @@
 {
     public interface IRefresh
     {
-        dynamic Refresh();
+        IKeywords Refresh();
     }
 }

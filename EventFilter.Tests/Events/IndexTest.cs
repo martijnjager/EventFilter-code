@@ -14,8 +14,8 @@ namespace EventFilter.Test
         public void IndexTest()
         {
             IEvent events = Event.Instance;
-            Actions.form = new Form1();
-            Bootstrap.Boot(events);
+            Actions.Form = new Form1();
+            Bootstrap.Boot();
 
             events.SetLocation(new FileInfo("G:\\Documents\\Visual Studio 2015\\Projects\\EventFilter\\EventFilter\\bin\\Debug\\eventlog.txt"));
 
@@ -28,8 +28,8 @@ namespace EventFilter.Test
         public void IndexExtvTest()
         {
             IEvent events = Event.Instance;
-            Actions.form = new Form1();
-            Bootstrap.Boot(events);
+            Actions.Form = new Form1();
+            Bootstrap.Boot();
 
             events.SetLocation(new FileInfo("C:\\Users\\marti\\Desktop\\eventlogs.evtx"));
 

@@ -11,20 +11,18 @@ namespace EventFilter.Test
         [TestMethod()]
         public void LoadFilesTest()
         {
-            var events = Event.Instance;
-            Actions.form = new Form1();
+            //Actions.Form = new Form1();
 
-            var boot = Bootstrap.Boot(events);
+            //var boot = Bootstrap.Boot();
 
-            Assert.IsTrue(boot.IsBooted);
+            //Assert.IsTrue(boot.IsBooted);
         }
 
         [TestMethod()]
         public void FilesFoundTest()
         {
-            Actions.form = new Form1();
-            Bootstrap.Boot(Event.Instance);
-            Form1 form = new Form1();
+            Actions.Form = new Form1();
+            Bootstrap.Boot();
             Assert.IsTrue(Bootstrap.FilesFound());
         }
     }

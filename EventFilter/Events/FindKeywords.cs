@@ -4,7 +4,7 @@ using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
-    public partial class Event : IFindKeywords
+    public partial class Event
     {
         private string @event;
 

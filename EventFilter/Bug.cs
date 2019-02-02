@@ -3,18 +3,19 @@ using System.Collections.Generic;
 using System.IO;
 using EventFilter.Events;
 using EventFilter.Filesystem;
+using EventFilter.Keywords;
 
 namespace EventFilter
 {
     public static class Bug
     {
-        public static string exception;
+        public static string Exception;
 
         public static string GetPath { get; } = Bootstrap.CurrentLocation + "\\bugs\\";
 
         public static void CreateReport(string bugText)
         {
-            if (Event.Instance.EventLocation.Exists && Event.Instance.Keywords.GetAllKeywords() == "")
+            if (Event.Instance.EventLocation.Exists && Keyword.Instance.GetAllKeywords() == "")
             {
                 Messages.NoLogSaved();
 
@@ -23,7 +24,7 @@ namespace EventFilter
 
             CreateBugReport(bugText);
 
-            if (exception != null)
+            if (Exception != null)
             {
                 Messages.ErrorLogCollection();
                 return;
@@ -66,10 +67,20 @@ namespace EventFilter
                     createdFiles++;
                 }
 
-                if (!string.IsNullOrEmpty(Event.Instance.Keywords.GetAllKeywords()))
+                if (!string.IsNullOrEmpty(Keyword.Instance.GetAllKeywords()))
                 {
-                    File.WriteAllText(GetPath + @"Keywords.txt", Event.Instance.Keywords.GetIndexedKeywords());
-                    File.WriteAllText(GetPath + @"allkeywords.txt", Event.Instance.Keywords.GetAllKeywords());
+                    /**
+                     * TODO: create a structure for the keywords to save like the following
+                     * from file
+                     *  -
+                     *  -
+                     *  
+                     * from user
+                     *  -
+                     *  -
+                     *  -
+                     */
+                    File.WriteAllText(GetPath + @"Keywords.txt", Keyword.Instance.GetAllKeywords());
                     createdFiles++;
                 }
 
@@ -78,7 +89,7 @@ namespace EventFilter
             }
             catch (Exception e)
             {
-                exception = e.Message;
+                Exception = e.Message;
             }
         }
 

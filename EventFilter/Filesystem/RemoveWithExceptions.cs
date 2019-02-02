@@ -82,47 +82,30 @@ namespace EventFilter.Filesystem
             }
         }
 
-        /// <summary>
-        /// Clear a folder and keep exceptions
-        /// </summary>
-        /// <param name="dir"></param>
-        /// <param name="exceptions"></param>
-        private static void DeleteFiles(DirectoryInfo dir, dynamic exceptions)
-        {
-            ClearFolderExcept(dir, exceptions);
-        }
+        //private static void DeleteFiles(DirectoryInfo dir, dynamic exceptions)
+        //{
+        //    ClearFolderExcept(dir, exceptions);
+        //}
 
-        /// <summary>
-        /// Empty folder of files
-        /// </summary>
-        /// <param name="dir"></param>
-        /// <param name="exceptions"></param>
-        private static void ClearFolderExcept(DirectoryInfo dir, List<dynamic> exceptions)
-        {
-            foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
-            {
-                DeleteAllButExceptions(file, exceptions);
-            }
-        }
+        //private static void ClearFolderExcept(DirectoryInfo dir, List<dynamic> exceptions)
+        //{
+        //    foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
+        //    {
+        //        DeleteAllButExceptions(file, exceptions);
+        //    }
+        //}
 
-        /// <summary>
-        /// DeleteKeywords file if not present in list
-        /// </summary>
-        /// <param name="file"></param>
-        /// <param name="exceptions"></param>
-        private static void DeleteAllButExceptions(FileSystemInfo file, List<dynamic> exceptions)
-        {
-            if(!exceptions.Any(s => file.FullName.Contains(s)))
-            {
-                file.Delete();
-            }
-        }
+        //private static void DeleteAllButExceptions(FileSystemInfo file, List<dynamic> exceptions)
+        //{
+        //    if(!exceptions.Any(s => file.FullName.Contains(s)))
+        //    {
+        //        file.Delete();
+        //    }
+        //}
 
         /// <summary>
         /// Move files
         /// </summary>
-        /// <param name="origin"></param>
-        /// <param name="destination"></param>
         private static void Move(ref string file, dynamic content)
         {
             /**

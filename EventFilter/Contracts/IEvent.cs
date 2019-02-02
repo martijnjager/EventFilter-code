@@ -12,11 +12,13 @@ namespace EventFilter.Contracts
 
         FileInfo EventLocation { get; }
 
+        int EventCounterForKeywords { get; set; }
+
         IEvent IsCountOperatorUsed();
 
         bool CanAddListItem(string[] item);
 
-        IEvent SetKeywordInstance(IKeywords keyword);
+        //IEvent SetKeywordInstance(IKeywords keyword);
 
         IEvent SetLocation(FileInfo location);
     }

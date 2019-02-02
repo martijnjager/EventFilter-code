@@ -36,7 +36,6 @@
             this.saveKeywordsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.eventFilterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.miTemplate = new System.Windows.Forms.ToolStripMenuItem();
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.encodingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.EncodingDefault = new System.Windows.Forms.ToolStripMenuItem();
@@ -89,7 +88,6 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.optionsToolStripMenuItem,
             this.eventFilterToolStripMenuItem,
-            this.miTemplate,
             this.reportBugToolStripMenuItem,
             this.encodingToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -146,11 +144,6 @@
             this.eventFilterToolStripMenuItem.Size = new System.Drawing.Size(77, 20);
             this.eventFilterToolStripMenuItem.Text = "Event Filter";
             this.eventFilterToolStripMenuItem.Click += new System.EventHandler(this.miEventFilter_Click);
-            // 
-            // miTemplate
-            // 
-            this.miTemplate.Name = "miTemplate";
-            this.miTemplate.Size = new System.Drawing.Size(12, 20);
             // 
             // reportBugToolStripMenuItem
             // 
@@ -391,9 +384,9 @@
             this.label9.AutoSize = true;
             this.label9.Location = new System.Drawing.Point(7, 53);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(326, 13);
+            this.label9.Size = new System.Drawing.Size(327, 13);
             this.label9.TabIndex = 7;
-            this.label9.Text = "- If Available, provide the details of the error exception that occured.";
+            this.label9.Text = "- If Available, provide the details of the error Exception that occured.";
             // 
             // label8
             // 
@@ -501,7 +494,6 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem1;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.ToolStripMenuItem eventFilterToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem miTemplate;
         private System.Windows.Forms.ToolStripMenuItem saveKeywordsToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem reportBugToolStripMenuItem;
@@ -526,7 +518,7 @@
         private System.Windows.Forms.ColumnHeader columnEvent;
         private System.Windows.Forms.ColumnHeader columnId;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox tbKeywords;
+        public System.Windows.Forms.TextBox tbKeywords;
         private System.Windows.Forms.Button btnSearch;
         public System.Windows.Forms.Label lblSelectedFile;
         public System.Windows.Forms.OpenFileDialog openFileDialog1;

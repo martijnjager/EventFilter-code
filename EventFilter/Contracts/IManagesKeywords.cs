@@ -6,20 +6,32 @@ namespace EventFilter.Contracts
     public interface IManagesKeywords : IRefresh
     {
         List<string> Items { get; }
+
+        //List<string> Operators { get; set; }
+
+        string DateStart { get; }
+
+        string DateEnd { get; }
+
+        //void Set();
+
+        void AddOperator(string o);
+
+        void SetLocation();
         string GetAllKeywords();
 
         string GetIndexedKeywords();
 
-        string[] ToArray();
+        string FindOperator(string text);
 
         void Delete();
 
         void Add(params string[] values);
 
-        void Add(CheckedListBox clb);
+        void Add(CheckedListBox items);
 
         bool NoItems();
 
-        bool IsPresent(string keyword);
+        bool Has(string keyword);
     }
 }

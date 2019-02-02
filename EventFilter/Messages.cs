@@ -10,8 +10,8 @@ namespace EventFilter
         public static void Filtering() =>
             MessageWrite("We're filtering...", "Busy");
 
-        public static void KeywordCounted(string keywordCounted, int counter) =>
-            MessageWrite(keywordCounted + " appears " + counter + " times", "Keyword Counter");
+        public static void KeywordCounted(string KeywordToCount, int counter) =>
+            MessageWrite(KeywordToCount + " appears " + counter + " times", "Keyword Counter");
 
         public static void ProblemOccured(string action = "")
         {
@@ -28,7 +28,7 @@ namespace EventFilter
             //MessageWrite("A report has been created and is saved in " + Bug.GetPath, "Bug report created", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void ErrorLogCollection() =>
-            MessageWrite(Bug.exception, "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageWrite(Bug.Exception, "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
         public static void LogSaved() =>
             MessageWrite("Logs have been saved in " + Bug.GetPath, "Logs saved");

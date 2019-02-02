@@ -6,7 +6,7 @@ using System.ComponentModel;
 using EventFilter.Contracts;
 using EventFilter.Events;
 using System.Text;
-using System;
+using EventFilter.Keywords;
 
 namespace EventFilter
 {
@@ -18,18 +18,13 @@ namespace EventFilter
 
         public static readonly string CurrentLocation = Directory.GetCurrentDirectory();
 
-        public bool IsBooted;
-
-        public static List<string> FoundLogs = new List<string>();
-
         private static readonly object Lock = new object();
         private static Bootstrap Instance;
 
-        private readonly CheckedListBox _clbKeywords;
+        private static IEvent Events = Event.Instance;
+        private static IKeywords Keywords = Keyword.Instance;
 
-        private static IEvent Events;
-
-        private Bootstrap(IEvent EventClass)
+        private Bootstrap()
         {
             _alternatives = new List<string>
             {
@@ -40,18 +35,14 @@ namespace EventFilter
                 "pnp-events.txt"
             };
 
-            _clbKeywords = Actions.form.clbKeywords;
-
-            Events = EventClass;
-
             LoadFiles();
         }
 
-        public static Bootstrap Boot(IEvent EventClass)
+        public static Bootstrap Boot()
         {
             lock (Lock)
             {
-                return Instance ?? (Instance = new Bootstrap(EventClass));
+                return Instance ?? (Instance = new Bootstrap());
             }
         }
 
@@ -62,13 +53,9 @@ namespace EventFilter
                 LoadKeywordLocation();
 
                 LoadEventlocation();
-
-                IsBooted = true;
             }
             catch (FileLoadException exception)
             {
-                IsBooted = false;
-
                 Actions.Report("FileLoadException: " + exception.Message);
             }
             
@@ -76,10 +63,9 @@ namespace EventFilter
 
         private void LoadKeywordLocation()
         {
-            if (!File.Exists(Events.Keywords.KeywordLocation)) return;
+            if (!File.Exists(Keyword.FileLocation)) return;
             
-            Events.Keywords.LoadFromLocation();
-            Events.Keywords.LoadIntoCLB();
+            Keywords.LoadFromLocation().LoadIntoCLB();
         }
 
         private void LoadEventlocation()
@@ -95,19 +81,6 @@ namespace EventFilter
                         if (Directory.GetFiles(Zip.ExtractLocation).Length > 0)
                             Events.SetLocation(new FileInfo(Directory.GetFiles(Zip.ExtractLocation)[0]));
                     }
-                    //else
-                    //{
-                    //    string[] dirs = Directory.GetDirectories(CurrentLocation);
-                    //    foreach(string dir in dirs)
-                    //    {
-                    //        string[] files = Directory.GetFiles(dir);
-                    //        string[] results = Array.FindAll(files, x => x.Contains(_alternatives));
-                    //        if(results.Length > 0)
-                    //        {
-                    //            Events.SetLocation(new FileInfo(results[0]));
-                    //        }
-                    //    }
-                    //}
                 }
             }
                 
@@ -128,9 +101,9 @@ namespace EventFilter
         /// </summary>
         public static void IsInputEmpty(BackgroundWorker searchEventBgWorker, CheckedListBox clbKeywords, string tbKeywords)
         {
-            Events.Keywords.Refresh();
+            //Events.Keywords.Refresh();
 
-            if (Actions.IsEmpty(tbKeywords) && clbKeywords.Items.Count == 0)
+            if (Actions.IsEmpty(tbKeywords) && clbKeywords.CheckedItems.Count == 0)
             {
                 Messages.NoInput();
 
@@ -143,15 +116,15 @@ namespace EventFilter
             /**
              * Clear the keywords and add new onces
              */
-            Events.Keywords.Delete();
-            Events.Keywords.Add(clbKeywords);
+            //Events.Keywords.Delete();
+            //Events.Keywords.Add(clbKeywords);
 
-            if (!string.IsNullOrEmpty(tbKeywords))
-            {
-                Events.Keywords.Add(tbKeywords.Split(','));
-            }
+            //if (!string.IsNullOrEmpty(tbKeywords))
+            //{
+            //    Events.Keywords.Add(tbKeywords.Split(','));
+            //}
 
-            Events.SetKeywordInstance(Events.Keywords);
+            //Events.SetKeywordInstance(Events.Keywords);
             searchEventBgWorker.RunWorkerAsync();
         }
 
@@ -159,33 +132,33 @@ namespace EventFilter
         {
             SetDefaultEncoding();
 
-            if (Events.Keywords.GetAllKeywords() == "") Actions.Report("No Keywords.txt found");
-            else Actions.Report("Load Keywords from " + Event.Instance.Keywords.KeywordLocation);
+            if (Keywords.GetAllKeywords() == "") Actions.Report("No Keywords.txt found");
+            else Actions.Report("Load Keywords from " + Keyword.FileLocation);
 
             if (Events.EventLocation is FileInfo)
             {
                 Actions.Report("Load event log from " + Event.Instance.EventLocation.FullName);
-                Actions.form.lblSelectedFile.Text = "Selected file: " + Event.Instance.EventLocation.FullName;
+                Actions.Form.lblSelectedFile.Text = "Selected file: " + Event.Instance.EventLocation.FullName;
 
                 return true;
             }
 
             Actions.Report("No eventlog.txt found");
-            Actions.form.lblSelectedFile.Text = "Selected file: no eventlog found";
+            Actions.Form.lblSelectedFile.Text = "Selected file: no eventlog found";
 
             return false;
         }
 
         private static void SetDefaultEncoding()
         {
-            foreach (ToolStripMenuItem encoding in from object items in Actions.form.Utf8.Owner.Items let encoding = items as ToolStripMenuItem where encoding != null select encoding)
+            foreach (ToolStripMenuItem encoding in from object items in Actions.Form.Utf8.Owner.Items let encoding = items as ToolStripMenuItem where encoding != null select encoding)
             {
                 Encodings.EncodingOptions.Add(encoding);
             }
 
             Encodings.CurrentEncoding = Encoding.Default;
-            Actions.form.EncodingDefault.Text = Encodings.CurrentEncoding.BodyName;
-            Actions.form.EncodingDefault.Checked = true;
+            Actions.Form.EncodingDefault.Text = Encodings.CurrentEncoding.BodyName;
+            Actions.Form.EncodingDefault.Checked = true;
 
             Actions.Report("Encoding set to" + Encoding.Default);
         }

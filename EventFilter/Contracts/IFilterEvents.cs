@@ -5,7 +5,7 @@ namespace EventFilter.Contracts
 {
     public interface IFilterEvents
     {
-        IKeywords Keywords { get; }
+        //IKeywords Keywords { get; }
 
         List<EventLogs> FilteredEvents { get; }
 

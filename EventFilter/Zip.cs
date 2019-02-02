@@ -2,6 +2,8 @@
 using System.IO;
 using System.IO.Compression;
 using EventFilter.Filesystem;
+using System.Threading.Tasks;
+using System;
 
 namespace EventFilter
 {
@@ -14,6 +16,8 @@ namespace EventFilter
         {
             try
             {
+                //Task<bool> task = Task.Run(() => );
+
                 Extract(zipfile);
 
                 if (Directory.GetDirectories(ExtractLocation) != null)

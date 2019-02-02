@@ -18,12 +18,14 @@ namespace EventFilter
 
             try
             {
-                Actions.form = this;
+                Actions.Form = this;
 
                 // Instantiating
-                Bootstrap.Boot(Event.Instance);
+                Bootstrap.Boot();
 
                 Bootstrap.FilesFound();
+
+                //Event.Instance.MapEvents();
 
                 SetBackgroundWorkerProperties();
             }
@@ -115,7 +117,7 @@ namespace EventFilter
         {
             Actions.Report("Start saving Keywords");
             saveFileDialog1.ShowDialog();
-            Event.Instance.Keywords.SaveToFile(saveFileDialog1.FileName, tbKeywords.Text);
+            Keywords.Keyword.Instance.SaveToFile(saveFileDialog1.FileName, tbKeywords.Text);
         }
 
         private void miSelectEventlog_Click(object sender, EventArgs e)
@@ -154,7 +156,7 @@ namespace EventFilter
 
             Actions.Report("Keywords to use location: " + keyLoc);
 
-            Event.Instance.Keywords.LoadFromLocation(keyLoc).LoadIntoCLB();
+            Keywords.Keyword.Instance.LoadFromLocation(keyLoc).LoadIntoCLB();
         }
 
         private void miAbout_Click(object sender, EventArgs e)

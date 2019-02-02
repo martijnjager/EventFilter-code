@@ -1,1 +1,1 @@
-Registry, recover, Reset, corrupt, disk, paging, registry, bad block, KMS, flush, IO, crash, dump, -No action, -shadow, -hive, -application, -Bluetooth, -Network Diag, -service name, -API, -Driver Management, -successful, -TCP
+Registry, recover, Reset, corrupt, disk, paging, registry, bad block, fail, KMS, flush, IO, crash, dump, -No action, -shadow, -hive, -application, -Bluetooth, -Network Diag, -service name, -API, -Driver Management, -successful, -TCP

@@ -37,7 +37,7 @@ namespace EventFilter
         public static List<string> ToList(dynamic value, string delimater = " ") => Explode(value is string ? Explode(value, delimater) : value);
 
         /// <summary>
-        /// Convert colection to string by joining each element to each other
+        /// Convert collection to string by joining each element to each other
         /// </summary>
         /// <param name="array" />
         /// <param name="delimater" />

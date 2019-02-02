@@ -39,6 +39,7 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
     <CodeAnalysisRuleSet />
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -78,9 +79,9 @@
     <Compile Include="Contracts\IEventIndex.cs" />
     <Compile Include="Contracts\IFilterEvents.cs" />
     <Compile Include="Contracts\IFindKeywords.cs" />
+    <Compile Include="Contracts\IManagesKeywords.cs" />
     <Compile Include="Contracts\IRefresh.cs" />
     <Compile Include="Contracts\IKeywords.cs" />
-    <Compile Include="Contracts\IManagesKeywords.cs" />
     <Compile Include="Bootstrap.cs" />
     <Compile Include="Encodings.cs" />
     <Compile Include="Events\EventLogs.cs" />

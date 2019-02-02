@@ -7,7 +7,7 @@ using System;
 
 namespace EventFilter.Events
 {
-    public partial class Event :  IEventIndex
+    public partial class Event
     {
         /// <summary>
         /// Index log so we know what it contains
@@ -135,7 +135,7 @@ namespace EventFilter.Events
 
         private void AddContentToIndex(ref List<string> logs, ref int eventCounter, ref List<string> eventlog)
         {
-            for (int i = 0; i < logs.Count(); i++)
+            for (int i = 0; i < logs.Count; i++)
             {
                 if (logs[i].Contains("Event["))
                 {

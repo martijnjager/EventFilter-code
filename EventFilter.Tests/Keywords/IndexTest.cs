@@ -17,12 +17,12 @@ namespace EventFilter.Test
         public void IndexKeywordsTest()
         {
             var events = Event.Instance;
-            Actions.form = new Form1();
-            Bootstrap.Boot(events);
+            Actions.Form = new Form1();
+            Bootstrap.Boot();
 
-            events.Keywords.Map();
+            Keywords.Keyword.Instance.Map();
 
-            Assert.IsTrue(events.Keywords.KeywordsLoaded);
+            Assert.IsTrue(Keywords.Keyword.Instance.KeywordsLoaded);
         }
     }
 }

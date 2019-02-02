@@ -4,6 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using EventFilter.Keywords;
 using EventFilter.Contracts;
+using System.Text.RegularExpressions;
 
 namespace EventFilter.Events
 {
@@ -19,7 +20,7 @@ namespace EventFilter.Events
         /// <summary>
         /// Stores all events to display
         /// </summary>
-        public List<string[]> Entries { get; private set; }
+        public List<string[]> Entries { get; }
 
         /// <summary>
         /// Stores all events filtered on duplicates
@@ -30,15 +31,15 @@ namespace EventFilter.Events
         /// Stores all events filtered on date 
         /// May still contain duplicates with description and is therefore used as some sort of a temp location to filter further
         /// </summary>
-        private List<EventLogs> FilteredEventsOnDate { get; set; }
+        //private List<EventLogs> FilteredEventsOnDate { get; set; }
 
         /// <summary>
         /// Instance of the Keywords class
         /// </summary>
-        public IKeywords Keywords { get; set; }
+        private IKeywords Keywords { get => Keyword.Instance; }
         
         /// <summary>
-        /// ID for message form
+        /// ID for message Form
         /// </summary>
         public int EventIdentifier { get; set; }
 
@@ -61,7 +62,9 @@ namespace EventFilter.Events
         /// Property ensures that the list items are unique 
         /// No duplicate entries can be added
         /// </summary>
-        private HashSet<string[]> _listItem { get; set;}
+        private HashSet<string[]> _listItem { get; }
+
+        public int EventCounterForKeywords { get; set; }
 
         /// <summary>
         /// Private access point
@@ -92,9 +95,7 @@ namespace EventFilter.Events
         /// </summary>
         private static void NewInstance()
         {
-            _event = new Event { Keywords = new Keyword() };
-
-            return;
+            _event = new Event();
         }
 
         /// <summary>
@@ -117,30 +118,17 @@ namespace EventFilter.Events
         }
 
         /// <summary>
-        /// Assigns the keywords instance
-        /// </summary>
-        /// <param name="keyword"></param>
-        /// <returns></returns>
-        public IEvent SetKeywordInstance(IKeywords keyword)
-        {
-            Keywords = keyword;
-
-            return this;
-        }
-
-        /// <summary>
         /// Check Keywords on valid Operators
         /// </summary>
         public IEvent IsCountOperatorUsed()
         {
-            List<string> keywords = Keywords.Map().Items;
-            Keywords.Operators = new List<dynamic>();
+            string text = Arr.ToString(Keywords.AvailableOperators, "|");
 
-            foreach(string key in Keywords.Map().Items)
+            foreach(string key in Keywords.Items)
             {
-                if(Keywords.AvailableOperators.Any(key.Contains))
+                if(Regex.IsMatch(key, @"^(" + text +" )"))
                 {
-                    Keywords.Operators.Add(key);
+                    Keywords.AddOperator(key);
                 }
             }
 
@@ -154,15 +142,14 @@ namespace EventFilter.Events
         /// </summary>
         private void Count()
         {
-            string keyword = Keywords.Operators.Find(s => s.Contains("count:"));
+            string keyword = Keywords.FindOperator("count:");
 
-            Keywords.Counter = 0;
-            Keywords.KeywordCounted = "";
+            Keywords.KeywordToCount = "";
 
             if (!string.IsNullOrEmpty(keyword))
             {
-                Keywords.Counter = Count(keyword.Replace("count:", ""));
-                Keywords.KeywordCounted = keyword.Replace("count:", "");
+                EventCounterForKeywords = Count(keyword.Replace("count:", ""));
+                Keywords.KeywordToCount = keyword.Replace("count:", "");
             }
         }
 

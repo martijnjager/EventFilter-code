@@ -3,53 +3,64 @@ using System;
 using System.Linq;
 using System.IO;
 using EventFilter.Contracts;
+using EventFilter.Keywords;
+using System.Windows.Forms;
 
 namespace EventFilter.Keywords
 {
-    public sealed partial class Keyword : IKeywords, IRefresh
+    public sealed partial class Keyword : IKeywords
     {
+        /**
+         * Property for the count: operator
+         */
+        public string KeywordToCount { get; set; }
 
         public bool KeywordsLoaded { get; set; }
 
-        private Keyword _keywords;
-        private readonly object _lock = new object();
+        public static string FileLocation { get; set; }
 
-        public int Counter { get; set; }
+        private static Keyword _keywords;
+        private static readonly object _lock = new object();
 
-        public string KeywordCounted { get; set; }
-
-        public Keyword()
+        private Keyword()
         {
-            Operators = new List<dynamic>();
-            Ignorable = new List<string>();
-            Delete();
-            _fileKeywords = new List<string>();
-
             AvailableOperators = new List<string> { "-", "count:", "datestart:", "dateend:" };
+            Items = new List<string>();
+            _operators = new List<string>();
+            Ignorable = new List<string>();
 
             SetLocation();
         }
 
-        public IKeywords Instance
+        public static IKeywords Instance
         {
             get
             {
-                NewInstance();
+                if(_keywords is null)
+                    NewInstance();
 
                 return _keywords;
             }
         }
 
-        private void NewInstance()
+        private static void NewInstance()
         {
-            if (_keywords is null) lock(_lock){_keywords = new Keyword();}
+            lock (_lock) { _keywords = new Keyword(); }
         }
 
-        public dynamic Refresh()
+        public IKeywords Refresh()
         {
             NewInstance();
 
             return _keywords;
+        }
+
+        public void SetLocation()
+        {
+            if (Actions.IsEmpty(FileLocation))
+            {
+                FileLocation = Bootstrap.CurrentLocation + @"\keywords.txt";
+            }
         }
 
         /// <summary>
@@ -61,7 +72,7 @@ namespace EventFilter.Keywords
         /// <param name="path">Path of Keywords file</param>
         public IKeywords LoadFromLocation(string path = "")
         {
-            string keywords = LoadFrom(!string.IsNullOrEmpty(path) ? path : KeywordLocation);
+            string keywords = LoadFrom(!string.IsNullOrEmpty(path) ? path : FileLocation);
 
             Set(keywords);
             _fileKeywords = Arr.ToList(keywords, ", ");
@@ -75,7 +86,7 @@ namespace EventFilter.Keywords
         {
             foreach (string str in Items)
             {
-                Actions.form.clbKeywords.Items.Add(str.Trim(), true);
+                Actions.Form.clbKeywords.Items.Add(str.Trim(), true);
             }
         }
 
@@ -98,35 +109,29 @@ namespace EventFilter.Keywords
             if (!KeywordsLoaded)
                 LoadFromLocation();
 
-            DateStart = null;
-            DateEnd = null;
+            /**
+             * Clear the keywords and add new onces
+             */
+            Delete();
+            AddFromClb();
+            AddFromTextbox();
 
-            foreach (string item in ToArray())
-            {
-                AddDate(item);
-                AddIgnoreable(item);
-            }
+            AddOperators();
 
             return this;
         }
 
-        private void AddIgnoreable(string key)
+        private void AddFromTextbox()
         {
-            if (key.Contains("-"))
-                Ignorable.Add(key.Trim('-'));
+            if (!string.IsNullOrEmpty(Actions.Form.tbKeywords.Text))
+            {
+                Add(Actions.Form.tbKeywords.Text.Split(','));
+            }
         }
 
-        private void AddDate(string key)
+        private void AddFromClb()
         {
-            if (key.Contains("dateend:"))
-            {
-                DateEnd = key.Substring(key.IndexOf(':') + 1);
-            }
-
-            if (key.Contains("datestart:"))
-            {
-                DateStart = key.Substring(key.IndexOf(':') + 1);
-            }
+            Add(Actions.Form.clbKeywords);
         }
 
         public void SaveToFile(string fileName, string keywords)

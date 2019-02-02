@@ -5,22 +5,20 @@ namespace EventFilter
 {
     public static class Actions
     {
-        public static Form1 form { get; set; }
+        public static Form1 Form { get; set; }
 
-        public static void Report(string log = "") => form.rtbBugReport.AppendText(log + "\n");
+        public static void Report(string log = "") => Form.rtbBugReport.AppendText(log + "\n");
 
         public static void AddListItem(string[] item)
         {
             Report("Adding: " + Arr.ToString(item, "\t"));
-            ListViewItem addViewItem = new ListViewItem(item);
-            form.lbEventResult.Items.Add(addViewItem);
+            Form.lbEventResult.Items.Add(new ListViewItem(item));
         }
 
         public static void SetResultCount(string text)
         {
-            form.lblResultCount.Text = "Events found: " + text;
+            Form.lblResultCount.Text = "Events found: " + text;
         }
-
 
         /// <summary>
         /// Copies selected items to clipboard

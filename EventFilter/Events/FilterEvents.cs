@@ -7,7 +7,7 @@ using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
-    public partial class Event : IFilterEvents
+    public partial class Event
     {
         /// <summary>
         /// Filter duplicate events 
@@ -15,25 +15,28 @@ namespace EventFilter.Events
         /// <returns>List of non-duplicate events</returns>
         public IEvent Filter()
         {
-            HashSet<EventLogs> tags = new HashSet<EventLogs>();
+            HashSet<string> tags = new HashSet<string>();
+            List<EventLogs> e = new List<EventLogs>();
 
-            foreach (EventLogs entry in FilteredEventsOnDate)
-                if (!tags.Add(entry)) continue;
+            Eventlogs.ForEach(x =>
+            {
+                if(tags.Add(x.Date + " " + x.Description))
+                {
+                    e.Add(new EventLogs() { Id = x.Id, Date = x.Date, Description = x.Description, Log = x.Log });
+                }
+            });
 
-            FilteredEvents = tags.ToList();
+            FilteredEvents = e;
 
             return this;
         }
 
         /// <summary>
-        /// If date keywords present, filter eventlog
+        /// If date keywords present, filter event log
         /// </summary>
-        /// <param name="keyword"></param>
-        /// <param name="tmpDescription"></param>
-        /// <param name="tmpDate"></param>
         public IEvent FilterDate()
         {
-            FilteredEventsOnDate = FilterOnDate();
+            Eventlogs = FilterOnDate();
 
             return this;
         }
@@ -65,7 +68,8 @@ namespace EventFilter.Events
             if(start.Id == null && end.Id != null)
             {
                 // Get the range
-                results = Eventlogs.ToList().GetRange(0, (int.Parse(end.Id) - 1));
+                var x = Eventlogs.ToList();
+                results = x.GetRange(0, int.Parse(end.Id));
             }
 
             if(start.Id != null && end.Id == null)
@@ -104,7 +108,7 @@ namespace EventFilter.Events
                 worker.ReportProgress(progress, data);
             }
 
-            worker.ReportProgress(++progress, "Resultcount: Events found: " + Actions.form.lblResultCount.Text.Substring(Actions.form.lblResultCount.Text.Length - 1, 1) + "\t, After filtering: " + Instance.FilteredEvents.Count);
+            worker.ReportProgress(++progress, "Resultcount: Events found: " + Actions.Form.lblResultCount.Text.Substring(Actions.Form.lblResultCount.Text.Length - 1, 1) + "\t, After filtering: " + Instance.FilteredEvents.Count);
         }
 
         public static void eventFilterBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -112,7 +116,6 @@ namespace EventFilter.Events
             if (e.UserState.ToString().Contains("Resultcount: ") == false)
             {
                 // Cast the e.userstate as an IEnumerable to be able to cast it as an object where we can select what we need and convert it to an array
-
                 string[] items = ((IEnumerable)e.UserState).Cast<object>().Select(x => x.ToString()).ToArray();
 
                 if (items.Length <= 1) return;

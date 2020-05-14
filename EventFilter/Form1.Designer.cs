@@ -413,8 +413,7 @@
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(472, 13);
             this.label5.TabIndex = 3;
-            this.label5.Text = "- Mail all files as attachment to martijnjager@live.nl with title \"Bugreport {you" +
-    "r username} Eventfilter\"";
+            //this.label5.Text = "- Upload/Post everything in the private BSOD Team area.";
             // 
             // label4
             // 

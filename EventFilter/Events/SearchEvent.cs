@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;   
-using System.ComponentModel;
-using EventFilter.Contracts;
-using System;
-using System.Diagnostics;
+﻿using EventFilter.Contracts;
 using EventFilter.Keywords;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Diagnostics;
+using System.Drawing;
 
 namespace EventFilter.Events
 {
@@ -11,23 +13,36 @@ namespace EventFilter.Events
     {
         private static BackgroundWorker worker;
 
-        private static readonly IEvent _event = Event.Instance;
+        private static IEvent _event;
 
-        private static readonly IKeywords _keywords = Keyword.Instance;
+        private static IKeywords _keywords;
+
+        public static DataTable EventTable;
+
+        public static void SetupTable()
+        {
+            EventTable = new DataTable();
+            EventTable.Columns.Add("Date");
+            EventTable.Columns.Add("Description");
+            EventTable.Columns.Add("ID", typeof(int));
+        }
 
         public static void Search(object sender, DoWorkEventArgs e)
         {
             worker = sender as BackgroundWorker;
 
-            //try
-            //{
+            try
+            {
                 /**
                  * Preparations before searching
                  */
+
                 List<string> foundIds = new List<string>();
                 int eventCounter = 0; // Counter for total found events
                 int actionCounter = 0; // how many actions have been reported
-
+                SetupTable();
+                _keywords = Keyword.GetInstance();
+                _event = Event.GetInstance();
                 _event.MapEvents();
                 _keywords.Map();
 
@@ -47,9 +62,7 @@ namespace EventFilter.Events
                 Report(3, eventCounter, ref actionCounter);
 
                 if (eventCounter == 0)
-                {
                     Messages.NoEventLogHasKeyword();
-                }
 
                 watch.Stop();
                 double elapsedTime = watch.Elapsed.TotalSeconds;
@@ -57,17 +70,17 @@ namespace EventFilter.Events
                 Report(4, elapsedTime, ref actionCounter);
 
                 e.Result = foundIds;
-            //}
-            //catch (Exception error)
-            //{
-            //    worker.ReportProgress(0, "Log: Error: " + error.Message);
-            //    Messages.ProblemOccured("searching events for keywords");
-            //}
+            }
+            catch (Exception error)
+            {
+                worker.ReportProgress(0, "Log: Error: " + error.Message);
+                Messages.ProblemOccured("searching events for keywords");
+            }
         }
 
         private static void PerformSearch(ref int eventCounter, ref int actionCounter, List<string> foundIds)
         {
-            if (_keywords.Has("datestart") || _keywords.Has("dateend") )
+            if (_keywords.Has("datestart") || _keywords.Has("dateend"))
                 _event.FilterDate();
 
             LoopThroughEvents(ref eventCounter, ref actionCounter, foundIds);
@@ -75,22 +88,32 @@ namespace EventFilter.Events
 
         private static void LoopThroughEvents(ref int eventCounter, ref int actionCounter, List<string> foundIds)
         {
-            if(_event.Eventlogs.Count > 0)
+            if (_event.Eventlogs.Count <= 0)
             {
-                foreach (EventLogs eventlog in _event.Eventlogs)
+                worker.ReportProgress(actionCounter++, "Log: There is no eventlog to search through");
+                Messages.ProblemOccured("searching through the events, there appears to be no event present");
+            }
+
+            foreach (EventLog eventlog in _event.Eventlogs)
+            {
+                if (!eventlog.Contains(_keywords.IgnorablePiracy) && eventlog.Contains(_keywords.Piracy))
                 {
-                    /**
-                     * If description has ignorable keywords or no keywords at all
-                     */
-                    if (_event.With(eventlog.Description).HasNot(_keywords.Items) || _event.With(eventlog.Description).Has(_keywords.Ignorable))
-                        continue;
-
-                    eventCounter++;
-
-                    foundIds.Add(eventlog.Id);
-
-                    worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " + " + eventlog.Description + " + " + eventlog.Id);
+                    _event.PiracyEvents.Add(eventlog);
+                    worker.ReportProgress(actionCounter++, "Log: Piracy is detected in " + eventlog.Log + "\n\n");
+                    worker.ReportProgress(actionCounter++, "Piracy: Piracy has been detected in one or more events.");
                 }
+
+                /**
+                * If description has ignorable keywords or no keywords at all
+                */
+                if (_event.With(eventlog.Description).HasNot(_keywords.Items) || _event.With(eventlog.Description).Has(_keywords.Ignorable))
+                    continue;
+
+                ++eventCounter;
+
+                foundIds.Add(eventlog.Id);
+
+                worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " | " + eventlog.Description + " | " + eventlog.Id);
             }
         }
 
@@ -98,7 +121,7 @@ namespace EventFilter.Events
         {
             string[] events =
             {
-                "Log: Parameters used: \t filepath: " + _event.EventLocation.FullName + "\n\t Keywords to use: ",
+                "Log: Parameters used: \t filepath: " + _event.FileLocation.FullName + "\n\t Keywords to use: ",
                 "Log: Lines in eventArray: " + _event.Events.Count,
                 "Log: \n\nEvents found: ",
                 "Counter: ",
@@ -115,42 +138,70 @@ namespace EventFilter.Events
         }
         public static void SearchEventBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
+            if (e.ProgressPercentage == 0)
+            {
+                EventTable.Rows.Clear();
+                Helper.Form.dataGridView1.DataSource = SearchEvent.EventTable;
+            }
+
             string text = e.UserState.ToString();
             string state = text.Substring(0, e.UserState.ToString().IndexOf(": ", StringComparison.Ordinal));
 
             switch (state)
             {
                 case "Log":
-                    Actions.Report(text.Replace("Log: ", ""));
+                    Helper.Report(text.Replace("Log: ", ""));
                     break;
 
                 case "Event":
-                    _event.Entries.Add(Arr.Explode(text.Replace("Event: ", ""), " + "));
+                    string[] t = text.Replace("Event:", "").Explode("|");
+                    if (!_event.CanAddListItem(t))
+                        break;
+
+                    Helper.AddListItem(EventTable, t);
                     break;
 
                 case "Time":
-                    Actions.Form.lblTime.Text = text.Replace("Time: ", "") + "s";
+                    Helper.Form.lblTime.Text = text.Replace("Time: ", "") + "s";
                     break;
 
                 case "Counter":
-                    Actions.SetResultCount(text.Replace("Counter: ", ""));
+                    Helper.SetResultCount(text.Replace("Counter: ", ""));
+                    break;
+
+                case "Piracy":
+                    Helper.Form.lblKMS.Text = text.Replace("Piracy:", "");
+                    Helper.Form.lblKMS.ForeColor = Color.Red;
                     break;
             }
         }
 
         public static void SearchEventBGWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            Actions.Form.lbEventResult.Items.Clear();
+            //Helper.Form.lbEventResult.Items.Clear();
 
-            foreach (string[] item in _event.Entries)
-                if (_event.CanAddListItem(item))
-                    Actions.AddListItem(item);
+            if (_event.PiracyEvents.Count > 0)
+                Helper.Form.linklblPiracy.Visible = true;
+            else
+                Helper.Form.linklblPiracy.Visible = false;
 
             _event.IsCountOperatorUsed();
 
-            if (_event.EventCounterForKeywords != 0) Messages.KeywordCounted(_keywords.KeywordToCount, _event.EventCounterForKeywords);
+            if (_event.EventCounterForKeywords == 0)
+                return;
 
-            Actions.Form.lbEventResult.Sort();
+            Messages.KeywordCounted(_keywords.KeywordToCount.Trim("count:"), _event.EventCounterForKeywords);
+
+
+            //foreach (string[] item in _event.Entries)
+            //    if (_event.CanAddListItem(item))
+            //        Actions.AddListItem(EventTable, item);
+
+            //_event.IsCountOperatorUsed();
+
+            //if (_event.EventCounterForKeywords != 0) Messages.KeywordCounted(_keywords.KeywordToCount, _event.EventCounterForKeywords);
+
+            //Actions.Form.lbEventResult.Sort();
         }
     }
 }

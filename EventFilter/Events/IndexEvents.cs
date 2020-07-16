@@ -1,26 +1,22 @@
-﻿using System.Collections.Generic;
+﻿using EventFilter.Contracts;
+using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
-using EventFilter.Contracts;
-using System.Diagnostics.Eventing.Reader;
-using System;
 
 namespace EventFilter.Events
 {
-    public partial class Event
+    public partial class Event : IEventIndex
     {
         /// <summary>
         /// Index log so we know what it contains
         /// </summary>
         public void MapEvents()
         {
-            //if (NewFileUsed())
-            //{
-                if (EventLocation.Extension == ".evtx")
-                    CreateFromEventViewer();
-                else
-                    CreateFromText();
-            //}
+            if (FileLocation.Extension == ".evtx")
+                CreateFromEventViewer();
+            else
+                CreateFromText();
         }
 
         /// <summary>
@@ -28,7 +24,7 @@ namespace EventFilter.Events
         /// </summary>
         private void CreateFromEventViewer()
         {
-            using (EventLogReader reader = new EventLogReader(EventLocation.FullName, PathType.FilePath))
+            using (EventLogReader reader = new EventLogReader(FileLocation.FullName, PathType.FilePath))
             {
                 EventRecord record;
                 int counter = 0;
@@ -46,9 +42,9 @@ namespace EventFilter.Events
 
         private static string CreateEventText(EventRecord record, ref int counter)
         {
-            string task = record.TaskDisplayName != string.Empty ? record.TaskDisplayName : "N/A";
+            string task = !record.TaskDisplayName.IsEmpty() ? record.TaskDisplayName : "N/A";
             string user = record.UserId != null ? record.UserId.ToString() : "N/A";
-            string opcode = record.OpcodeDisplayName != string.Empty ? record.OpcodeDisplayName : "N/A";
+            string opcode = !record.OpcodeDisplayName.IsEmpty() ? record.OpcodeDisplayName : "N/A";
             string desc = record.FormatDescription();
 
             string text = "Event[" + counter++ +
@@ -69,7 +65,8 @@ namespace EventFilter.Events
 
         private void InitProp()
         {
-            Eventlogs = new List<EventLogs>();
+            Eventlogs = new List<EventLog>();
+            PiracyEvents = new List<EventLog>();
         }
 
         /// <summary>
@@ -78,10 +75,10 @@ namespace EventFilter.Events
         /// <returns></returns>
         private void CreateFromText()
         {
-            string[] lines = File.ReadAllLines(EventLocation.FullName, Encodings.CurrentEncoding);
+            string[] lines = File.ReadAllLines(FileLocation.FullName, Encodings.CurrentEncoding);
 
             Events = new List<string>();
-            Eventlogs = new List<EventLogs>();
+            Eventlogs = new List<EventLog>();
 
             MakeEvents(lines.ToArray());
         }
@@ -123,7 +120,7 @@ namespace EventFilter.Events
             // stores content of all files
             List<string> eventlog = new List<string>();
 
-            files.ForEach(file => 
+            files.ForEach(file =>
             {
                 List<string> text = File.ReadAllLines(file, Encodings.CurrentEncoding).ToList();
 
@@ -143,16 +140,10 @@ namespace EventFilter.Events
                     ++eventCounter;
                 }
 
-               eventlog.Add(logs[i]);
+                eventlog.Add(logs[i]);
             }
         }
 
-        public bool NoEvents()
-        {
-            if (Eventlogs.Count > 0)
-                return false;
-
-            return true;
-        }
+        public bool NoEvents() => Eventlogs.Count == 0;
     }
 }

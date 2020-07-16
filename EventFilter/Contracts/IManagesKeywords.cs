@@ -1,37 +1,29 @@
 ﻿using System.Collections.Generic;
-using System.Windows.Forms;
 
 namespace EventFilter.Contracts
 {
     public interface IManagesKeywords : IRefresh
     {
+        Dictionary<string, List<string>> Keywords { get; }
+
         List<string> Items { get; }
 
-        //List<string> Operators { get; set; }
+        List<string> Piracy { get; }
+
+        List<string> Ignorable { get; }
+
+        List<string> IgnorablePiracy { get; }
 
         string DateStart { get; }
 
         string DateEnd { get; }
 
-        //void Set();
-
-        void AddOperator(string o);
-
-        void SetLocation();
         string GetAllKeywords();
-
-        string GetIndexedKeywords();
-
-        string FindOperator(string text);
-
-        void Delete();
-
-        void Add(params string[] values);
-
-        void Add(CheckedListBox items);
 
         bool NoItems();
 
         bool Has(string keyword);
+
+        void SaveKeywords(string keywords, string piracy);
     }
 }

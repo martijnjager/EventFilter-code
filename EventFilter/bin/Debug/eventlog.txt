@@ -12,6 +12,7 @@ Event[0]:
   Computer: WIN-FMKOBU77TFV
   Description: 
 Microsoft (R) Windows (R) 10.00. 15063  Multiprocessor Free.
+KMS
 
 Event[1]:
   Log Name: System

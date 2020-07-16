@@ -1,20 +1,29 @@
-﻿using System.Collections.Generic;
-using System.Windows.Forms;
-using EventFilter.Contracts;
+﻿using EventFilter.Contracts;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace EventFilter.Keywords
 {
-    public partial class Keyword
+    public partial class Keyword : IManagesKeywords
     {
         // File and user input keywords
-        public List<string> Items { get; private set; }
+
+        public Dictionary<string, List<string>> Keywords { get; private set; }
 
         private List<string> _fileKeywords;
 
         public string DateStart { get; private set; }
 
         public string DateEnd { get; private set; }
+
+        public List<string> Piracy { get => Keywords["Piracy"]; }
+
+        public List<string> Items { get => Keywords["Items"]; }
+
+        public List<string> Ignorable { get => Keywords["Ignorable"]; }
+
+        public List<string> IgnorablePiracy { get => Keywords["IgnorablePiracy"]; }
 
         /**
          * Indexes the used operators
@@ -24,85 +33,133 @@ namespace EventFilter.Keywords
         /**
          * Indexes all operators, both used and unused operators
          */
-        public List<string> AvailableOperators { get; set; }
+        //public List<string> AvailableOperators => _operators;
 
-        public string KeywordLocation { get; set; }
-
-        public List<string> Ignorable { get; private set; }
+        //public string KeywordLocation { get; set; }
 
         public string GetIndexedKeywords() => Arr.ToString(_fileKeywords, ", ");
 
-        public string GetAllKeywords() => Arr.ToString(Items, ",");
-
-        private void Set(string val)
+        public string GetAllKeywords()
         {
-            string[] value = Arr.Explode(val, ", ");
-            Arr.Trim(ref value);
-            Items = Arr.ToList(value);
+            string items = Items.ToString(", ");
+            string piracy = Piracy.ToString(", ");
+            string ignorable = Ignorable.ToString(", ");
+            string ignorablePiracy = IgnorablePiracy.ToString(", ");
+
+            return items + "\n\tIgnorable:\t" + ignorable + "\n\tPiracy:\t" + piracy + "\n\tPiracy ignorable\t" + ignorablePiracy + "\n\n";
         }
 
-        public void Delete()
-        {
-            Items = new List<string>();
-            Ignorable = new List<string>();
-            _operators = new List<string>();
-            AvailableOperators = new List<string>();
-        }
-
-        /// <summary>
-        /// Add multiple values to the collection
-        /// </summary>
-        /// <param name="values">values</param>
-        public void Add(params string[] values)
-        {
-            /**
-             * Used by the global app
-             */
-            foreach (string str in values)
-            {
-                Add(str);
-            }
-        }
 
         /// <summary>
         /// Add multiple values to the collection
         /// </summary>
         /// <param name="clb"></param>
-        public void Add(CheckedListBox items)
+        public void Set(CheckedListBox.CheckedItemCollection items)
         {
             /**
              * Used by the keywords loading function
              */
-            foreach (string item in items.CheckedItems)
+            foreach (string item in items)
             {
-                Add(item);
+                AddToRelevantList(item);
             }
         }
 
-        private void Add(string keyword)
+        private void AddToRelevantList(string item)
         {
-            Items.Add(keyword);
+            if (item.StartsWith("P: "))
+                AddPiracy(item.Trim("P: "));
+
+            if (item.StartsWith("-P: "))
+                AddIgnorablePiracy(item.Trim("-P: "));
+
+            if (!item.StartsWith("-P: ") && item.StartsWith("-"))
+                AddIgnorable(item.Trim("-"));
+
+            if (item.StartsWith("-") || item.StartsWith("P: "))
+                return;
+
+            AddItem(item);
         }
 
-        public string FindOperator(string text) => _operators.Find(s => s.StartsWith(text));
-
-        public void AddOperator(string o) => _operators.Add(o);
-
-        public bool NoItems()
+        private void CheckWhereToAddAndAdd(string item)
         {
-            if (Items.Count > 0)
-                return false;
-
-            return true;
+            if (item.StartsWith("-"))
+                AddIgnorable(item);
+            else
+                AddItem(item);
         }
 
-        public bool Has(string keyword)
+        private void Set(string val, string target)
         {
-            if (Items.Any(s => s.Contains(keyword)))
-                return true;
+            List<string> vals = val.Explode(", ").Trim().ToList<string>();
 
-            return false;
+            if (target == "Items")
+            {
+                vals.ForEach(item =>
+                {
+                    if (item.StartsWith("-"))
+                        AddIgnorable(item.Trim("-"));
+                    else
+                        AddItem(item);
+                });
+            }
+
+            if (target == "Piracy")
+            {
+
+                vals.ForEach(item =>
+                {
+                    if (item.StartsWith("-"))
+                        AddIgnorablePiracy(item.Trim("-P: "));
+                    else
+                        AddPiracy(item.Trim("P: "));
+                });
+            }
         }
+
+        public void Refresh()
+        {
+            Keywords = new Dictionary<string, List<string>>()
+            {
+                ["Items"] = new List<string>(),
+                ["Ignorable"] = new List<string>(),
+                ["Piracy"] = new List<string>(),
+                ["IgnorablePiracy"] = new List<string>()
+            };
+        }
+
+        private void AddItem(string item)
+        {
+            Items.Add(item);
+        }
+
+        private void AddIgnorable(string item)
+        {
+            Ignorable.Add(item);
+        }
+
+        private void AddIgnorablePiracy(string item)
+        {
+            IgnorablePiracy.Add(item);
+        }
+
+        private void AddPiracy(string item)
+        {
+            Piracy.Add(item);
+        }
+
+        public void Add(params string[] values)
+        {
+            foreach (string str in values)
+            {
+                CheckWhereToAddAndAdd(str);
+            }
+        }
+
+        public bool NoItems() => Keywords.Count <= 0;
+
+        public bool Has(string keyword) => Keywords.Any(s => s.Key.ToLower().Contains(keyword));
 
         private void AddOperators()
         {

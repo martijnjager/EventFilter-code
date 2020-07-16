@@ -51,9 +51,9 @@ namespace EventFilter
         /// <returns></returns>
         public static string[] Trim(ref string[] array)
         {
-            for(int i = 0; i < array.Length; i++)
+            for (int i = 0; i < array.Length; i++)
                 array[i] = array[i].Trim();
-            
+
             return array;
         }
     }

@@ -1,16 +1,22 @@
-﻿using System.Collections.Generic;
-using EventFilter.Events;
+﻿using EventFilter.Events;
+using System.Collections.Generic;
 using System.IO;
 
 namespace EventFilter.Contracts
 {
     public interface IEvent : IFilterEvents, IEventIndex, IFindKeywords
     {
-        List<EventLogs> Eventlogs { get; }
+        void SetLocation(string location);
 
-        List<string[]> Entries { get; }
+        List<EventLog> PiracyEvents { get; }
 
-        FileInfo EventLocation { get; }
+        //IKeywords Keyword { get; }
+
+        List<EventLog> Eventlogs { get; }
+
+        //List<string[]> Entries { get; }
+
+        FileInfo FileLocation { get; }
 
         int EventCounterForKeywords { get; set; }
 
@@ -20,6 +26,6 @@ namespace EventFilter.Contracts
 
         //IEvent SetKeywordInstance(IKeywords keyword);
 
-        IEvent SetLocation(FileInfo location);
+        List<EventLog> GetFoundEvents();
     }
 }

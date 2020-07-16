@@ -61,6 +61,9 @@
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.ValueTuple.4.5.0\lib\netstandard1.0\System.ValueTuple.dll</HintPath>
+    </Reference>
     <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -73,7 +76,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Actions.cs" />
     <Compile Include="Arr.cs" />
     <Compile Include="Contracts\IEvent.cs" />
     <Compile Include="Contracts\IEventIndex.cs" />
@@ -84,7 +86,7 @@
     <Compile Include="Contracts\IKeywords.cs" />
     <Compile Include="Bootstrap.cs" />
     <Compile Include="Encodings.cs" />
-    <Compile Include="Events\EventLogs.cs" />
+    <Compile Include="Events\EventLog.cs" />
     <Compile Include="Events\Events.cs" />
     <Compile Include="Events\FindKeywords.cs" />
     <Compile Include="Events\FilterEvents.cs" />
@@ -92,6 +94,7 @@
     <Compile Include="Bug.cs" />
     <Compile Include="Events\IndexEvents.cs" />
     <Compile Include="Filesystem\Remover.cs" />
+    <Compile Include="Helper.cs" />
     <Compile Include="Keywords\Keyword.cs" />
     <Compile Include="Keywords\ManagesKeywords.cs" />
     <Compile Include="Message.cs">
@@ -102,6 +105,12 @@
     </Compile>
     <Compile Include="Messages.cs" />
     <Compile Include="Events\SearchEvent.cs" />
+    <Compile Include="Piracy.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Piracy.Designer.cs">
+      <DependentUpon>Piracy.cs</DependentUpon>
+    </Compile>
     <Compile Include="Zip.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -119,14 +128,16 @@
       <DependentUpon>Message.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
+      <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

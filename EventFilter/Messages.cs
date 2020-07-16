@@ -1,31 +1,31 @@
 ﻿using System.Windows.Forms;
+using Resource = EventFilter.Properties.Resources;
 
 namespace EventFilter
 {
     internal static class Messages
     {
         public static void SelectFileForSearching() =>
-            MessageWrite("Please select a file to Search through.", "No file selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageWrite(Resource.SelectFile, "No file selected", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void Filtering() =>
-            MessageWrite("We're filtering...", "Busy");
+            MessageWrite(Resource.Filtering, "Busy");
 
         public static void KeywordCounted(string KeywordToCount, int counter) =>
             MessageWrite(KeywordToCount + " appears " + counter + " times", "Keyword Counter");
 
+        public static void KeywordsSaved() => MessageWrite("Keywords have been successfully saved in " + Keywords.Keyword.FileLocation, "", MessageBoxButtons.OK, MessageBoxIcon.None);
+
         public static void ProblemOccured(string action = "")
         {
-            if(!string.IsNullOrEmpty(action))
+            if (!action.IsEmpty())
             {
                 MessageWrite("A problem has occured with " + action + ".\nPlease notify the developer of this issue!", "App crashed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            MessageWrite("A problem has occured.\nPlease notify the developer of this issue!", "App crashed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageWrite(Resource.ProblemNotifyDeveloper, "App crashed", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-
-        //public static void ReportCreated() =>
-            //MessageWrite("A report has been created and is saved in " + Bug.GetPath, "Bug report created", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void ErrorLogCollection() =>
             MessageWrite(Bug.Exception, "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -34,19 +34,19 @@ namespace EventFilter
             MessageWrite("Logs have been saved in " + Bug.GetPath, "Logs saved");
 
         public static void NoLogSaved() =>
-            MessageWrite("No log could be saved! Check if the eventlog and Keywords are loaded", "No log");
+            MessageWrite(Resource.NoLogCouldBeSaved, "No log");
 
         public static void NoLogFound() =>
-            MessageWrite("No eventlog has been found", "No eventlog found");
+            MessageWrite(Resource.NoLogFound, "No eventlog found");
 
         public static void NoEventLogHasKeyword() =>
-            MessageWrite("No event log has the provided Keywords.", "No result", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageWrite(Resource.NoEventWithKeywords, "No result", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         public static void NoInput() =>
-            MessageWrite("Please provide keywords", "No input", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+            MessageWrite(Resource.ProvideKeywords, "No input", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
 
         public static void IncorrectLogSize() =>
-            MessageWrite("Please select a log that is not of size 0KB", "No valid log size", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageWrite(Resource.ZeroSizeFile, "No valid log size", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
         private static void MessageWrite(string text, string title = "", MessageBoxButtons button = MessageBoxButtons.OK, MessageBoxIcon icon = MessageBoxIcon.None) => MessageBox.Show(text, title, button, icon);
     }

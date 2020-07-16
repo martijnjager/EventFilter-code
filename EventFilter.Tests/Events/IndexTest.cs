@@ -1,8 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using EventFilter.Contracts;
 using EventFilter.Events;
-using System.Windows.Forms;
-using EventFilter.Contracts;
-using System.IO;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 // ReSharper disable CheckNamespace
 namespace EventFilter.Test
@@ -13,11 +11,11 @@ namespace EventFilter.Test
         [TestMethod()]
         public void IndexTest()
         {
-            IEvent events = Event.Instance;
-            Actions.Form = new Form1();
+            IEvent events = Event.GetInstance();
+            Helper.Form = new Form1();
             Bootstrap.Boot();
 
-            events.SetLocation(new FileInfo("G:\\Documents\\Visual Studio 2015\\Projects\\EventFilter\\EventFilter\\bin\\Debug\\eventlog.txt"));
+            events.SetLocation("G:\\Documents\\Visual Studio 2015\\Projects\\EventFilter\\EventFilter\\bin\\Debug\\eventlog.txt");
 
             events.MapEvents();
 
@@ -27,11 +25,11 @@ namespace EventFilter.Test
         [TestMethod()]
         public void IndexExtvTest()
         {
-            IEvent events = Event.Instance;
-            Actions.Form = new Form1();
+            IEvent events = Event.GetInstance();
+            Helper.Form = new Form1();
             Bootstrap.Boot();
 
-            events.SetLocation(new FileInfo("C:\\Users\\marti\\Desktop\\eventlogs.evtx"));
+            events.SetLocation("C:\\Users\\marti\\Desktop\\eventlogs.evtx");
 
             events.MapEvents();
 

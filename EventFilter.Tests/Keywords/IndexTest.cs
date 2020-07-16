@@ -1,12 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EventFilter.Events;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using EventFilter.Contracts;
-using System.Windows.Forms;
+﻿using EventFilter.Events;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EventFilter.Test
 {
@@ -16,13 +9,12 @@ namespace EventFilter.Test
         [TestMethod()]
         public void IndexKeywordsTest()
         {
-            var events = Event.Instance;
-            Actions.Form = new Form1();
+            Helper.Form = new Form1();
             Bootstrap.Boot();
 
-            Keywords.Keyword.Instance.Map();
+            Keywords.Keyword.GetInstance().Map();
 
-            Assert.IsTrue(Keywords.Keyword.Instance.KeywordsLoaded);
+            Assert.IsTrue(Keywords.Keyword.GetInstance().KeywordsLoaded);
         }
     }
 }

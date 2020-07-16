@@ -1,13 +1,6 @@
-﻿using EventFilter;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EventFilter.Contracts;
+﻿using EventFilter.Contracts;
 using EventFilter.Events;
-using System.Windows.Forms;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EventFilter.Test
 {
@@ -17,8 +10,8 @@ namespace EventFilter.Test
         [TestMethod()]
         public void ScanTest()
         {
-            IEvent events = Event.Instance;
-            Actions.Form = new Form1();
+            IEvent events = Event.GetInstance();
+            Helper.Form = new Form1();
             Bootstrap.Boot();
             string eventLocation = null;
             Zip.ExtractZip("C:\\Users\\marti\\Desktop\\DESKTOP-NPASAR7 (2018-06-26 10 11).zip", ref eventLocation);

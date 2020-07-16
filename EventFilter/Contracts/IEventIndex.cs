@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using EventFilter.Events;
+using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace EventFilter.Contracts
 {
@@ -9,10 +11,10 @@ namespace EventFilter.Contracts
         List<string> Events { get; set; }
 
         void MapEvents();
-        
-        string Next(int curId);
 
-        string Previous(int curId);
+        dynamic GoToNext(int curId, EventLog[] logs = null, bool useFoundEvents = false);
+
+        dynamic GoToPrevious(int curId, EventLog[] logs = null, bool useFoundEvents = false);
 
         string[] PrepareForMultipleLogs(List<string> files);
 

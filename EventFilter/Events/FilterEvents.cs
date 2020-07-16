@@ -1,44 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using EventFilter.Contracts;
+using System;
 using System.Collections;
-using System.Linq;
+using System.Collections.Generic;
 using System.ComponentModel;
-using EventFilter.Contracts;
+using System.Data;
+using System.Linq;
 
 namespace EventFilter.Events
 {
-    public partial class Event
+    public partial class Event : IFilterEvents
     {
         /// <summary>
         /// Filter duplicate events 
         /// </summary>
         /// <returns>List of non-duplicate events</returns>
-        public IEvent Filter()
+        public void Filter()
         {
             HashSet<string> tags = new HashSet<string>();
-            List<EventLogs> e = new List<EventLogs>();
+            List<EventLog> e = new List<EventLog>();
 
-            Eventlogs.ForEach(x =>
+            GetFoundEvents().ForEach(x =>
             {
-                if(tags.Add(x.Date + " " + x.Description))
-                {
-                    e.Add(new EventLogs() { Id = x.Id, Date = x.Date, Description = x.Description, Log = x.Log });
-                }
+                if (!tags.Add(x.Description))
+                    return;
+
+                e.Add(new EventLog() { Id = x.Id, Date = x.Date, Description = x.Description, Log = x.Log });
             });
 
             FilteredEvents = e;
-
-            return this;
         }
 
         /// <summary>
         /// If date keywords present, filter event log
         /// </summary>
-        public IEvent FilterDate()
+        public void FilterDate()
         {
             Eventlogs = FilterOnDate();
-
-            return this;
         }
 
         /// <summary>
@@ -46,39 +43,39 @@ namespace EventFilter.Events
         /// </summary>
         /// <param name="id">ID of first line in description</param>
         /// <returns></returns>
-        public string FindEvent(int id) => Eventlogs[id].Log;
+        public EventLog FindEvent(int id) => Eventlogs[id];
 
         /// <summary>
         /// Filter events on date
         /// </summary>
         /// <returns>List of non-duplicate events</returns>
-        private List<EventLogs> FilterOnDate()
+        private List<EventLog> FilterOnDate()
         {
-            List<EventLogs> results = new List<EventLogs>();
-            EventLogs start = new EventLogs();
-            EventLogs end = new EventLogs();
+            List<EventLog> results = new List<EventLog>();
+            EventLog start = new EventLog();
+            EventLog end = new EventLog();
 
             // Get the first match with DateStart
-            if (Keywords.DateStart != null)
-                start = Eventlogs.FirstOrDefault(s => s.Date.Contains(Keywords.DateStart));
+            if (!Keyword.DateStart.IsEmpty())
+                start = FindClosestMatchingEvent(Keyword.DateStart);
             // Get the first match with DateEnd
-            if (Keywords.DateEnd != null)
-                end = Eventlogs.FirstOrDefault(s => s.Date.Contains(Keywords.DateEnd));
+            if (!Keyword.DateEnd.IsEmpty())
+                end = FindClosestMatchingEvent(Keyword.DateEnd);
 
-            if(start.Id == null && end.Id != null)
+            if (start.Id == null && end.Id != null)
             {
                 // Get the range
                 var x = Eventlogs.ToList();
                 results = x.GetRange(0, int.Parse(end.Id));
             }
 
-            if(start.Id != null && end.Id == null)
+            if (start.Id != null && end.Id == null)
             {
                 // Get the range
                 results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((Eventlogs.Count - 1) - int.Parse(start.Id)));
             }
 
-            if(start.Id != null && end.Id != null)
+            if (start.Id != null && end.Id != null)
             {
                 // Get the range
                 if (int.Parse(start.Id) < int.Parse(end.Id))
@@ -92,28 +89,34 @@ namespace EventFilter.Events
         {
             BackgroundWorker worker = sender as BackgroundWorker;
 
-            Instance.Filter();
+            IEvent events = GetInstance();
+            events.Filter();
 
             int progress;
 
-            for (progress = 0; progress < Instance.FilteredEvents.Count; progress++)
+            for (progress = 0; progress < events.FilteredEvents.Count - 1; progress++)
             {
                 string[] data =
                 {
-                    "Data: " + Instance.FilteredEvents[progress].Date,
-                    "Data: " + Instance.FilteredEvents[progress].Description,
-                    "Data: " + Instance.FilteredEvents[progress].Id
+                    GetInstance().FilteredEvents[progress].Date,
+                    events.FilteredEvents[progress].Description,
+                    events.FilteredEvents[progress].Id
                 };
 
                 worker.ReportProgress(progress, data);
             }
 
-            worker.ReportProgress(++progress, "Resultcount: Events found: " + Actions.Form.lblResultCount.Text.Substring(Actions.Form.lblResultCount.Text.Length - 1, 1) + "\t, After filtering: " + Instance.FilteredEvents.Count);
+            //string s = Helper.Form.lblResultCount.Text.Substring(14, Helper.Form.lblResultCount.Text.Length - 1);
+
+            worker.ReportProgress(progress++, "Resultcount: " + events.GetFoundEvents().Count + "\t, After filtering: " + (events.FilteredEvents.Count - 1));
         }
 
         public static void eventFilterBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            if (e.UserState.ToString().Contains("Resultcount: ") == false)
+            if(e.ProgressPercentage == 0)
+                SearchEvent.EventTable.Rows.Clear();
+
+            if (!e.UserState.ToString().Contains("Resultcount:"))
             {
                 // Cast the e.userstate as an IEnumerable to be able to cast it as an object where we can select what we need and convert it to an array
                 string[] items = ((IEnumerable)e.UserState).Cast<object>().Select(x => x.ToString()).ToArray();
@@ -121,14 +124,43 @@ namespace EventFilter.Events
                 if (items.Length <= 1) return;
 
                 for (int i = 0; i < items.Length; i++)
-                {
-                    items[i] = items[i].Replace("Data: ", "").Trim('{').Trim('}');
-                }
+                    items[i] = items[i].Trim('{').Trim('}');
 
-                Actions.AddListItem(items);
+                SearchEvent.EventTable.Rows.Add(items);
             }
             else
-                Actions.SetResultCount(e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}'));
+                Helper.SetResultCount(e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}'));
+        }
+
+        private EventLog FindClosestMatchingEvent(string eventDate)
+        {
+            SortedList<long, EventLog> data = new SortedList<long, EventLog>();
+
+            Eventlogs.ForEach(e => data.Add((eventDate.ToDate().Ticks - e.Date.ToDate().Ticks), e));
+
+            return data.First().Value;
+        }
+
+        private dynamic FindClosestMatchingEventById(List<EventLog> foundEvents, int id, bool min = false)
+        {
+            SortedList<int, EventLog> data = new SortedList<int, EventLog>();
+
+            for (int i = 0; i < foundEvents.Count; i++)
+            {
+                var e = foundEvents[i];
+
+                if (min)
+                    if (e.GetId() < id)
+                        data.Add(i, e);
+                if (!min)
+                    if (e.GetId() > id)
+                        data.Add(i, e);
+            }
+
+            if (min)
+                return data.Last();
+
+            return data.First();
         }
     }
 }

@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using EventFilter.Contracts;
+using System.Collections.Generic;
 using System.Linq;
-using EventFilter.Contracts;
 
 namespace EventFilter.Events
 {
-    public partial class Event
+    public partial class Event : IFindKeywords
     {
         private string @event;
 

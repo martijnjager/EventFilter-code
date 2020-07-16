@@ -2,6 +2,6 @@
 {
     public interface IRefresh
     {
-        IKeywords Refresh();
+        void Refresh();
     }
 }

@@ -1,36 +1,38 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace EventFilter.Events
 {
     public partial class Event
     {
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="text"></param>
         private void AddToIndex(HashSet<string> array, string text)
         {
             List<string> Event = SplitText(text);
 
-            if(Event.Count >= 13)
+            if (Event.Count < 13)
+                return;
+
+            int index = Event[0].Replace("Event[", "").Replace("]:", "").ToInt();
+            string description = GetDescription(Event);
+            string date = Event[3].Replace("Date: ", "");
+
+            if (array.Add(date + ", " + description))
             {
-                int index = int.Parse(Event[0].Replace("Event[", "").Replace("]:", ""));
-
-                string description = GetDescription(Event);
-
-                string date = Event[3].Replace("Date: ", "");
-
-                if (array.Add(date + ", " + description))
+                EventLog @event = new EventLog
                 {
-                    EventLogs @event = new EventLogs
-                    {
-                        Id = index.ToString(),
-                        Date = date,
-                        Description = description,
-                        Log = text
-                    };
-                    Eventlogs.Add(@event);
-                }
-
-                Events.Add(text);
+                    Id = index.ToString(),
+                    Date = date,
+                    Description = description,
+                    Log = text
+                };
+                Eventlogs.Add(@event);
             }
+
+            Events.Add(text);
         }
 
         private string GetDescription(List<string> Event)

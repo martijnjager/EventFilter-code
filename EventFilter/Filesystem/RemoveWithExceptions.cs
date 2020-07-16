@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
 
 namespace EventFilter.Filesystem
 {
@@ -24,13 +24,13 @@ namespace EventFilter.Filesystem
 
             foreach (string log in Zip.Logs)
             {
-                FilePresent(ref files, Items, log);
+                AddFileIfPresent(ref files, Items, log);
             }
 
             if (files.Count >= 2)
             {
                 string filename = files.First();
-                string[] fileContent = Events.Event.Instance.PrepareForMultipleLogs(files);
+                string[] fileContent = Events.Event.GetInstance().PrepareForMultipleLogs(files);
 
                 Move(ref filename, fileContent);
 
@@ -51,7 +51,7 @@ namespace EventFilter.Filesystem
         /// <param name="list"></param>
         /// <param name="items"></param>
         /// <param name="file"></param>
-        private static void FilePresent(ref List<string> list, List<string> items, string file)
+        private static void AddFileIfPresent(ref List<string> list, List<string> items, string file)
         {
             string filePath = items.Find(s => s.Contains(file));
 
@@ -81,27 +81,6 @@ namespace EventFilter.Filesystem
                 Items.Add(item);
             }
         }
-
-        //private static void DeleteFiles(DirectoryInfo dir, dynamic exceptions)
-        //{
-        //    ClearFolderExcept(dir, exceptions);
-        //}
-
-        //private static void ClearFolderExcept(DirectoryInfo dir, List<dynamic> exceptions)
-        //{
-        //    foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
-        //    {
-        //        DeleteAllButExceptions(file, exceptions);
-        //    }
-        //}
-
-        //private static void DeleteAllButExceptions(FileSystemInfo file, List<dynamic> exceptions)
-        //{
-        //    if(!exceptions.Any(s => file.FullName.Contains(s)))
-        //    {
-        //        file.Delete();
-        //    }
-        //}
 
         /// <summary>
         /// Move files

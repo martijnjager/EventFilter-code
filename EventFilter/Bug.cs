@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using EventFilter.Events;
+﻿using EventFilter.Events;
 using EventFilter.Filesystem;
 using EventFilter.Keywords;
+using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace EventFilter
 {
@@ -15,7 +15,7 @@ namespace EventFilter
 
         public static void CreateReport(string bugText)
         {
-            if (Event.Instance.EventLocation.Exists && Keyword.Instance.GetAllKeywords() == "")
+            if (Event.GetInstance().FileLocation.Exists && Keyword.GetInstance().GetAllKeywords() == "")
             {
                 Messages.NoLogSaved();
 
@@ -45,17 +45,17 @@ namespace EventFilter
 
                 int createdFiles = 0;
 
-                if (Event.Instance.Events is List<string> && Event.Instance.Events.Count > 0)
+                if (Event.GetInstance().Events is List<string> && Event.GetInstance().Events.Count > 0)
                 {
                     List<string> log = new List<string>();
 
-                    for (int i = 0; i < Event.Instance.Events.Count; i++)
+                    for (int i = 0; i < Event.GetInstance().Events.Count; i++)
                     {
-                        log.Add(i + " " + Event.Instance.Events[i].Replace("\n", "\r\n") + "\r\n");
+                        log.Add(i + " " + Event.GetInstance().Events[i].Replace("\n", "\r\n") + "\r\n");
                     }
 
                     File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.ToString(log));
-                    File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(Event.Instance.Events));
+                    File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(Event.GetInstance().Events));
                     createdFiles++;
                 }
 
@@ -67,7 +67,7 @@ namespace EventFilter
                     createdFiles++;
                 }
 
-                if (!string.IsNullOrEmpty(Keyword.Instance.GetAllKeywords()))
+                if (!string.IsNullOrEmpty(Keyword.GetInstance().GetAllKeywords()))
                 {
                     /**
                      * TODO: create a structure for the keywords to save like the following
@@ -80,7 +80,7 @@ namespace EventFilter
                      *  -
                      *  -
                      */
-                    File.WriteAllText(GetPath + @"Keywords.txt", Keyword.Instance.GetAllKeywords());
+                    File.WriteAllText(GetPath + @"Keywords.txt", Keyword.GetInstance().GetAllKeywords());
                     createdFiles++;
                 }
 

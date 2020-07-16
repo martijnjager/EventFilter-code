@@ -1,18 +1,18 @@
-﻿using System.Collections.Generic;
-using EventFilter.Events;
+﻿using EventFilter.Events;
+using System.Collections.Generic;
 
 namespace EventFilter.Contracts
 {
     public interface IFilterEvents
     {
-        //IKeywords Keywords { get; }
+        //IKeywords Keyword { get; }
 
-        List<EventLogs> FilteredEvents { get; }
+        List<EventLog> FilteredEvents { get; }
 
-        IEvent Filter();
+        void Filter();
 
-        string FindEvent(int id);
+        EventLog FindEvent(int id);
 
-        IEvent FilterDate();
+        void FilterDate();
     }
 }

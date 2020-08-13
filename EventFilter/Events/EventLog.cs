@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace EventFilter.Events
@@ -24,7 +23,7 @@ namespace EventFilter.Events
 
         public override string ToString()
         {
-            return this.Log;
+            return Log;
         }
     }
 }

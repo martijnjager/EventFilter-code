@@ -1,10 +1,10 @@
 ﻿using EventFilter.Contracts;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
+using System;
 
 namespace EventFilter.Events
 {
@@ -16,16 +16,15 @@ namespace EventFilter.Events
         /// <returns>List of non-duplicate events</returns>
         public void Filter()
         {
-            HashSet<string> tags = new HashSet<string>();
-            List<EventLog> e = new List<EventLog>();
+            //List<string> tags = new List<string>();
+            List<Tuple<int, EventLog>> e = new List<Tuple<int, EventLog>>();
 
-            GetFoundEvents().ForEach(x =>
+            foreach(EventLog eventlog in GetFoundEvents())
             {
-                if (!tags.Add(x.Description))
-                    return;
-
-                e.Add(new EventLog() { Id = x.Id, Date = x.Date, Description = x.Description, Log = x.Log });
-            });
+                if(!e.IncreaseCountIfAlreadyInList(eventlog))
+                    e.Add(new Tuple<int, EventLog>(1, 
+                        new EventLog() { Id = eventlog.Id, Date = eventlog.Date, Description = eventlog.Description, Log = eventlog.Log }));
+            }
 
             FilteredEvents = e;
         }
@@ -66,26 +65,26 @@ namespace EventFilter.Events
             {
                 // Get the range
                 var x = Eventlogs.ToList();
-                results = x.GetRange(0, int.Parse(end.Id));
+                results = x.GetRange(0, end.GetId());
             }
 
             if (start.Id != null && end.Id == null)
             {
                 // Get the range
-                results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((Eventlogs.Count - 1) - int.Parse(start.Id)));
+                results = Eventlogs.ToList().GetRange(start.GetId(), ((Eventlogs.Count - 1) - start.GetId()));
             }
 
             if (start.Id != null && end.Id != null)
             {
                 // Get the range
-                if (int.Parse(start.Id) < int.Parse(end.Id))
-                    results = Eventlogs.ToList().GetRange(int.Parse(start.Id), ((int.Parse(end.Id) - 1) - int.Parse(start.Id)));
+                if (start.GetId() < end.GetId())
+                    results = Eventlogs.ToList().GetRange(start.GetId(), ((end.GetId() - 1) - start.GetId()));
             }
 
             return results.Distinct().ToList();
         }
 
-        public static void eventFilterBGWorker_DoWork(object sender, DoWorkEventArgs e)
+        public static void EventFilterBGWorker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
 
@@ -94,13 +93,14 @@ namespace EventFilter.Events
 
             int progress;
 
-            for (progress = 0; progress < events.FilteredEvents.Count - 1; progress++)
+            for (progress = 0; progress < events.GetFilteredEvents().Count - 1; progress++)
             {
                 string[] data =
                 {
-                    GetInstance().FilteredEvents[progress].Date,
-                    events.FilteredEvents[progress].Description,
-                    events.FilteredEvents[progress].Id
+                    GetInstance().GetFilteredEvents()[progress].Item2.Date,
+                    events.GetFilteredEvents()[progress].Item2.Description,
+                    events.GetFilteredEvents()[progress].Item2.Id,
+                    events.GetFilteredEvents()[progress].Item1.ToString()
                 };
 
                 worker.ReportProgress(progress, data);
@@ -108,13 +108,21 @@ namespace EventFilter.Events
 
             //string s = Helper.Form.lblResultCount.Text.Substring(14, Helper.Form.lblResultCount.Text.Length - 1);
 
-            worker.ReportProgress(progress++, "Resultcount: " + events.GetFoundEvents().Count + "\t, After filtering: " + (events.FilteredEvents.Count - 1));
+            worker.ReportProgress(progress++, "Resultcount: " + events.GetFoundEvents().Count + "\t, After filtering: " + (events.GetFilteredEvents().Count - 1));
         }
 
-        public static void eventFilterBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        public static void EventFilterBGWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            if(e.ProgressPercentage == 0)
-                SearchEvent.EventTable.Rows.Clear();
+            if (e.ProgressPercentage == 0)
+            {
+                SearchEvent.EventTable = new DataTable();
+                SearchEvent.EventTable.Columns.Add("Date");
+                SearchEvent.EventTable.Columns.Add("Description");
+                SearchEvent.EventTable.Columns.Add("ID");
+                SearchEvent.EventTable.Columns.Add("Count");
+
+                Helper.Form.dataGridView1.DataSource = SearchEvent.EventTable;
+            }
 
             if (!e.UserState.ToString().Contains("Resultcount:"))
             {
@@ -135,10 +143,20 @@ namespace EventFilter.Events
         private EventLog FindClosestMatchingEvent(string eventDate)
         {
             SortedList<long, EventLog> data = new SortedList<long, EventLog>();
+            EventLog? eventLog = null;
 
-            Eventlogs.ForEach(e => data.Add((eventDate.ToDate().Ticks - e.Date.ToDate().Ticks), e));
+            Eventlogs.ForEach(e =>
+            {
+                if (e.Date.Contains(eventDate))
+                    eventLog = e;
 
-            return data.First().Value;
+                long result = eventDate.ToDate().Ticks - e.Date.ToDate().Ticks;
+
+                if (!data.ContainsKey(result))
+                    data.Add(result, e);
+            });
+
+            return eventLog is EventLog log ? log : data.First().Value;
         }
 
         private dynamic FindClosestMatchingEventById(List<EventLog> foundEvents, int id, bool min = false)
@@ -152,15 +170,13 @@ namespace EventFilter.Events
                 if (min)
                     if (e.GetId() < id)
                         data.Add(i, e);
+
                 if (!min)
                     if (e.GetId() > id)
                         data.Add(i, e);
             }
 
-            if (min)
-                return data.Last();
-
-            return data.First();
+            return min ? data.Last() : data.First();
         }
     }
 }

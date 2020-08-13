@@ -1,6 +1,5 @@
 ﻿using EventFilter.Events;
 using System.Collections.Generic;
-using System.Windows.Forms;
 
 namespace EventFilter.Contracts
 {

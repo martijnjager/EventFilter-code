@@ -35,7 +35,7 @@ namespace EventFilter.Events
             Events.Add(text);
         }
 
-        private string GetDescription(List<string> Event)
+        private static string GetDescription(List<string> Event)
         {
             string description;
 
@@ -50,7 +50,7 @@ namespace EventFilter.Events
             return description;
         }
 
-        private List<string> SplitText(string text)
+        private static List<string> SplitText(string text)
         {
             return Arr.ToList(text, "\n");
         }

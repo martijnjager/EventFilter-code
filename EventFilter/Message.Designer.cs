@@ -43,7 +43,7 @@
             this.btnPrevious.TabIndex = 0;
             this.btnPrevious.Text = "Previous";
             this.btnPrevious.UseVisualStyleBackColor = true;
-            this.btnPrevious.Click += new System.EventHandler(this.btnPrevious_Click);
+            this.btnPrevious.Click += new System.EventHandler(this.BtnPrevious_Click);
             // 
             // btnNext
             // 
@@ -53,7 +53,7 @@
             this.btnNext.TabIndex = 1;
             this.btnNext.Text = "Next";
             this.btnNext.UseVisualStyleBackColor = true;
-            this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
+            this.btnNext.Click += new System.EventHandler(this.BtnNext_Click);
             // 
             // lblEvent
             // 
@@ -72,7 +72,7 @@
             this.btnPreviousFound.TabIndex = 3;
             this.btnPreviousFound.Text = "Previous found";
             this.btnPreviousFound.UseVisualStyleBackColor = true;
-            this.btnPreviousFound.Click += new System.EventHandler(this.btnPreviousFound_Click);
+            this.btnPreviousFound.Click += new System.EventHandler(this.BtnPreviousFound_Click);
             // 
             // btnNextFound
             // 
@@ -82,7 +82,7 @@
             this.btnNextFound.TabIndex = 4;
             this.btnNextFound.Text = "Next found";
             this.btnNextFound.UseVisualStyleBackColor = true;
-            this.btnNextFound.Click += new System.EventHandler(this.btnNextFound_Click);
+            this.btnNextFound.Click += new System.EventHandler(this.BtnNextFound_Click);
             // 
             // Message
             // 

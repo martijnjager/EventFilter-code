@@ -33,33 +33,36 @@ namespace EventFilter
         /// </summary>
         private void InitializeComponent()
         {
-            //this.components = new System.ComponentModel.Container();
-            //this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            //this.ClientSize = new System.Drawing.Size(800, 450);
-            //this.Text = "Piracy";
-
-            this.dataGridView1 = new DataGridView();
-            ((ISupportInitialize)this.dataGridView1).BeginInit();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
+            // 
+            // dataGridView1
+            // 
             this.dataGridView1.AllowUserToAddRows = false;
             this.dataGridView1.AllowUserToDeleteRows = false;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new Point(-7, 8);
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Location = new System.Drawing.Point(-7, 8);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.ReadOnly = true;
-            this.dataGridView1.Size = new Size(814, 435);
+            this.dataGridView1.Size = new System.Drawing.Size(814, 435);
             this.dataGridView1.TabIndex = 15;
-            this.dataGridView1.CellDoubleClick += new DataGridViewCellEventHandler(this.dataGridView1_CellDoubleClick);
-            this.AutoScaleDimensions = new SizeF(6f, 13f);
-            this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(800, 450);
-            this.Controls.Add((Control)this.dataGridView1);
+            this.dataGridView1.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridView1_CellDoubleClick);
+            // 
+            // Piracy
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.dataGridView1);
             this.Name = "Piracy";
             this.Text = "Piracy";
-            this.SizeChanged += new EventHandler(this.Piracy_SizeChanged);
-            this.KeyDown += new KeyEventHandler(this.Piracy_KeyDown);
-            ((ISupportInitialize)this.dataGridView1).EndInit();
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Piracy_FormClosing);
+            this.SizeChanged += new System.EventHandler(this.Piracy_SizeChanged);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Piracy_KeyDown);
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
+
         }
 
         #endregion

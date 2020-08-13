@@ -22,7 +22,7 @@ namespace EventFilter.Keywords
 
         private Keyword()
         {
-            _operators = new List<string> { "-", "count:", "datestart:", "dateend:" };
+            //_operators = new List<string> { "-", "count:", "datestart:", "dateend:" };
             Refresh();
             SetLocation();
         }
@@ -43,7 +43,7 @@ namespace EventFilter.Keywords
             lock (_lock) { _keywords = new Keyword(); }
         }
 
-        public void SetLocation()
+        public static void SetLocation()
         {
             if (!FileLocation.IsEmpty())
                 return;
@@ -85,7 +85,6 @@ namespace EventFilter.Keywords
             {
                 clb.Items.Add(item.Trim(), true);
             });
-
         }
 
         /// <summary>
@@ -101,7 +100,7 @@ namespace EventFilter.Keywords
 
             if (content.Length == 0)
                 throw new IOException("There are no keywords in the file.");
-            
+
             Set(content[0], "Items");
 
             if (content.Length < 2)
@@ -140,31 +139,28 @@ namespace EventFilter.Keywords
 
         public void SaveKeywords(string keywords, string piracy)
         {
-            string keywords1 = keywords + "\nPIRACY:" + piracy;
+            string keywords1 = keywords + "\nPIRACY: " + piracy;
             if (!SaveToFile(FileLocation, keywords1))
                 return;
 
             Messages.KeywordsSaved();
         }
 
-        public bool SaveToFile(string fileName, string keywords)
+        public static bool SaveToFile(string fileName, string keywords)
         {
-            using (StreamWriter writer = new StreamWriter(fileName))
+            try
             {
-                try
-                {
-                    StreamWriter streamWriter = new StreamWriter(fileName);
-                    streamWriter.WriteLine(keywords);
-                    Helper.Report("Saving Keywords " + keywords + " to file");
-                    streamWriter.Close();
-                    return true;
-                }
-                catch (Exception error)
-                {
-                    Helper.Report("An error occured when trying to save Keywords: " + error.Message);
-                    Messages.ProblemOccured("saving keywords");
-                    return false;
-                }
+                File.WriteAllText(fileName, keywords);
+                Helper.Report("Saving Keywords to file");
+
+                return true;
+            }
+            catch(Exception error)
+            {
+                Helper.Report("An error occured when trying to save Keywords: " + error.Message);
+                Messages.ProblemOccured("saving keywords");
+
+                return false;
             }
         }
     }

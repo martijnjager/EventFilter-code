@@ -1,6 +1,4 @@
-﻿using EventFilter.Contracts;
-using EventFilter.Events;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EventFilter.Test
 {
@@ -10,7 +8,7 @@ namespace EventFilter.Test
         [TestMethod()]
         public void ScanTest()
         {
-            IEvent events = Event.GetInstance();
+            //IEvent events = Event.GetInstance();
             Helper.Form = new Form1();
             Bootstrap.Boot();
             string eventLocation = null;

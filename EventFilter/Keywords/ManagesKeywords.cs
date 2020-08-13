@@ -11,7 +11,7 @@ namespace EventFilter.Keywords
 
         public Dictionary<string, List<string>> Keywords { get; private set; }
 
-        private List<string> _fileKeywords;
+        //private List<string> _fileKeywords;
 
         public string DateStart { get; private set; }
 
@@ -28,7 +28,7 @@ namespace EventFilter.Keywords
         /**
          * Indexes the used operators
          */
-        private List<string> _operators;
+        //private readonly List<string> _operators;
 
         /**
          * Indexes all operators, both used and unused operators
@@ -37,7 +37,7 @@ namespace EventFilter.Keywords
 
         //public string KeywordLocation { get; set; }
 
-        public string GetIndexedKeywords() => Arr.ToString(_fileKeywords, ", ");
+        //public string GetIndexedKeywords() => Arr.ToString(_fileKeywords, ", ");
 
         public string GetAllKeywords()
         {
@@ -84,7 +84,7 @@ namespace EventFilter.Keywords
 
         private void CheckWhereToAddAndAdd(string item)
         {
-            if (item.StartsWith("-"))
+            if (item.StartsWith("-", System.StringComparison.Ordinal))
                 AddIgnorable(item);
             else
                 AddItem(item);
@@ -98,7 +98,7 @@ namespace EventFilter.Keywords
             {
                 vals.ForEach(item =>
                 {
-                    if (item.StartsWith("-"))
+                    if (item.StartsWith("-", System.StringComparison.Ordinal))
                         AddIgnorable(item.Trim("-"));
                     else
                         AddItem(item);
@@ -157,9 +157,18 @@ namespace EventFilter.Keywords
             }
         }
 
-        public bool NoItems() => Keywords.Count <= 0;
+        public bool NoItems() => Items.Count <= 0;
 
-        public bool Has(string keyword) => Keywords.Any(s => s.Key.ToLower().Contains(keyword));
+        public bool Has(string keyword)
+        {
+            foreach (string item in Items)
+            {
+                if (item.Contains(keyword))
+                    return true;
+            }
+
+            return false;
+        }
 
         private void AddOperators()
         {

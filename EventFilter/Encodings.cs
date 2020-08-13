@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Windows.Forms;
 
@@ -46,21 +47,21 @@ namespace EventFilter
         {
             Encoding currentEncoding;
 
-            switch (encodeValue.ToLower())
+            switch (encodeValue.ToUpperInvariant())
             {
-                case "utf7":
+                case "UTF7":
                     currentEncoding = new UTF7Encoding();
                     break;
-                case "utf8":
+                case "UTF8":
                     currentEncoding = new UTF8Encoding();
                     break;
-                case "unicode":
+                case "UNICODE":
                     currentEncoding = new UnicodeEncoding();
                     break;
-                case "utf32":
+                case "UTF32":
                     currentEncoding = new UTF32Encoding();
                     break;
-                case "ascii":
+                case "ASCII":
                     currentEncoding = new ASCIIEncoding();
                     break;
                 default:

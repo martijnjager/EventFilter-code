@@ -28,7 +28,7 @@ namespace EventFilter
         }
 
         public static void ErrorLogCollection() =>
-            MessageWrite(Bug.Exception, "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageWrite(Bug.GetExceptionMessage(), "Error collecting logs", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
         public static void LogSaved() =>
             MessageWrite("Logs have been saved in " + Bug.GetPath, "Logs saved");
@@ -47,6 +47,9 @@ namespace EventFilter
 
         public static void IncorrectLogSize() =>
             MessageWrite(Resource.ZeroSizeFile, "No valid log size", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        public static DialogResult VerifyContinueNoInput() =>
+            MessageBox.Show("If you continue all events will be displayed which may take some time. \nAre you sure you want to continue?", "No keyword input", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
         private static void MessageWrite(string text, string title = "", MessageBoxButtons button = MessageBoxButtons.OK, MessageBoxIcon icon = MessageBoxIcon.None) => MessageBox.Show(text, title, button, icon);
     }

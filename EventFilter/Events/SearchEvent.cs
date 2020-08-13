@@ -33,43 +33,43 @@ namespace EventFilter.Events
 
             try
             {
-                /**
-                 * Preparations before searching
-                 */
+            /**
+             * Preparations before searching
+             */
 
-                List<string> foundIds = new List<string>();
-                int eventCounter = 0; // Counter for total found events
-                int actionCounter = 0; // how many actions have been reported
-                SetupTable();
-                _keywords = Keyword.GetInstance();
-                _event = Event.GetInstance();
-                _event.MapEvents();
-                _keywords.Map();
+            List<string> foundIds = new List<string>();
+            int eventCounter = 0; // Counter for total found events
+            int actionCounter = 0; // how many actions have been reported
+            SetupTable();
+            _keywords = Keyword.GetInstance();
+            _event = Event.GetInstance();
+            _event.MapEvents();
+            _keywords.Map();
 
-                if (_event.NoEvents() || _keywords.NoItems()) return;
+            if (_event.NoEvents()) return;
 
-                /**
-                * We're good to search
-                */
-                Stopwatch watch = Stopwatch.StartNew();
+            /**
+            * We're good to search
+            */
+            Stopwatch watch = Stopwatch.StartNew();
 
-                Report(0, Arr.ToString(_keywords.Items, ", "), ref actionCounter);
-                Report(1, _event.Events.Count, ref actionCounter);
+            Report(0, Arr.ToString(_keywords.Items, ", "), ref actionCounter);
+            Report(1, _event.Events.Count, ref actionCounter);
 
-                PerformSearch(ref eventCounter, ref actionCounter, foundIds);
+            PerformSearch(ref eventCounter, ref actionCounter, foundIds);
 
-                Report(2, eventCounter, ref actionCounter);
-                Report(3, eventCounter, ref actionCounter);
+            Report(2, eventCounter, ref actionCounter);
+            Report(3, eventCounter, ref actionCounter);
 
-                if (eventCounter == 0)
-                    Messages.NoEventLogHasKeyword();
+            if (eventCounter == 0)
+                Messages.NoEventLogHasKeyword();
 
-                watch.Stop();
-                double elapsedTime = watch.Elapsed.TotalSeconds;
+            watch.Stop();
+            double elapsedTime = watch.Elapsed.TotalSeconds;
 
-                Report(4, elapsedTime, ref actionCounter);
+            Report(4, elapsedTime, ref actionCounter);
 
-                e.Result = foundIds;
+            e.Result = foundIds;
             }
             catch (Exception error)
             {
@@ -94,26 +94,38 @@ namespace EventFilter.Events
                 Messages.ProblemOccured("searching through the events, there appears to be no event present");
             }
 
-            foreach (EventLog eventlog in _event.Eventlogs)
+            if (_keywords.NoItems())
             {
-                if (!eventlog.Contains(_keywords.IgnorablePiracy) && eventlog.Contains(_keywords.Piracy))
+                foreach (EventLog eventlog in _event.Eventlogs)
                 {
-                    _event.PiracyEvents.Add(eventlog);
-                    worker.ReportProgress(actionCounter++, "Log: Piracy is detected in " + eventlog.Log + "\n\n");
-                    worker.ReportProgress(actionCounter++, "Piracy: Piracy has been detected in one or more events.");
+                    ++eventCounter;
+
+                    worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " ||| " + eventlog.Description + " ||| " + eventlog.Id);
                 }
+            }
+            else
+            {
+                foreach (EventLog eventlog in _event.Eventlogs)
+                {
+                    if (!eventlog.Contains(_keywords.IgnorablePiracy) && eventlog.Contains(_keywords.Piracy))
+                    {
+                        _event.PiracyEvents.Add(eventlog);
+                        worker.ReportProgress(actionCounter++, "Log: Piracy is detected in " + eventlog.Log + "\n\n");
+                        worker.ReportProgress(actionCounter++, "Piracy: Piracy has been detected in one or more events.");
+                    }
 
-                /**
-                * If description has ignorable keywords or no keywords at all
-                */
-                if (_event.With(eventlog.Description).HasNot(_keywords.Items) || _event.With(eventlog.Description).Has(_keywords.Ignorable))
-                    continue;
+                    /**
+                    * If description has ignorable keywords or no keywords at all
+                    */
+                    if (_event.With(eventlog.Description).HasNot(_keywords.Items) || _event.With(eventlog.Description).Has(_keywords.Ignorable))
+                        continue;
 
-                ++eventCounter;
+                    ++eventCounter;
 
-                foundIds.Add(eventlog.Id);
+                    foundIds.Add(eventlog.Id);
 
-                worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " | " + eventlog.Description + " | " + eventlog.Id);
+                    worker.ReportProgress(actionCounter++, "Event: " + eventlog.Date + " ||| " + eventlog.Description + " ||| " + eventlog.Id);
+                }
             }
         }
 
@@ -154,7 +166,7 @@ namespace EventFilter.Events
                     break;
 
                 case "Event":
-                    string[] t = text.Replace("Event:", "").Explode("|");
+                    string[] t = text.Replace("Event:", "").Explode(" ||| ");
                     if (!_event.CanAddListItem(t))
                         break;
 
@@ -178,12 +190,16 @@ namespace EventFilter.Events
 
         public static void SearchEventBGWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            //Helper.Form.lbEventResult.Items.Clear();
-
             if (_event.PiracyEvents.Count > 0)
+            {
                 Helper.Form.linklblPiracy.Visible = true;
+                Helper.Form.lblKMS.Visible = true;
+            }
             else
+            {
+                Helper.Form.lblKMS.Visible = false;
                 Helper.Form.linklblPiracy.Visible = false;
+            }
 
             _event.IsCountOperatorUsed();
 
@@ -191,17 +207,6 @@ namespace EventFilter.Events
                 return;
 
             Messages.KeywordCounted(_keywords.KeywordToCount.Trim("count:"), _event.EventCounterForKeywords);
-
-
-            //foreach (string[] item in _event.Entries)
-            //    if (_event.CanAddListItem(item))
-            //        Actions.AddListItem(EventTable, item);
-
-            //_event.IsCountOperatorUsed();
-
-            //if (_event.EventCounterForKeywords != 0) Messages.KeywordCounted(_keywords.KeywordToCount, _event.EventCounterForKeywords);
-
-            //Actions.Form.lbEventResult.Sort();
         }
     }
 }

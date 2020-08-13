@@ -34,3 +34,4 @@ G:\Onedrive\Projects\EventFilter\EventFilter\bin\Debug\System.ValueTuple.dll
 G:\Onedrive\Projects\EventFilter\EventFilter\bin\Debug\System.ValueTuple.xml
 G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csprojAssemblyReference.cache
 G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.csproj.CopyComplete
+G:\Onedrive\Projects\EventFilter\EventFilter\obj\Debug\EventFilter.Piracy.resources

@@ -1,5 +1,4 @@
-﻿using EventFilter.Events;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EventFilter.Test
 {

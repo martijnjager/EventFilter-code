@@ -3,7 +3,6 @@ using EventFilter.Events;
 using EventFilter.Keywords;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -13,11 +12,11 @@ namespace EventFilter
 {
     public class Bootstrap
     {
-        private const string EventLocation = @"\eventlog.txt";
+        private const string EventFile = @"\eventlog.txt";
 
         private readonly List<string> _alternatives;
 
-        public static readonly string CurrentLocation = Directory.GetCurrentDirectory();
+        public static readonly string CurrentLocation = Directory.GetCurrentDirectory() + "\\";
 
         private static readonly object Lock = new object();
         private static Bootstrap Instance;
@@ -25,7 +24,7 @@ namespace EventFilter
         private static IEvent Events;
         private static IKeywords Keywords;
 
-        public static bool FilesFound = false;
+        public static bool AreFilesFound = false;
 
         private Bootstrap()
         {
@@ -40,7 +39,7 @@ namespace EventFilter
 
             InitProps();
 
-            this.LoadFiles();
+            LoadFiles();
         }
 
         public static Bootstrap Boot()
@@ -80,7 +79,7 @@ namespace EventFilter
 
         private void LoadEventlocation()
         {
-            if (!File.Exists(CurrentLocation + EventLocation))
+            if (!File.Exists(CurrentLocation + EventFile))
             {
                 string alternative = GetAlternativeLogs();
 
@@ -93,32 +92,20 @@ namespace EventFilter
                 }
             }
             else
-                Events.SetLocation(CurrentLocation + EventLocation);
+                Events.SetLocation(CurrentLocation + EventFile);
         }
 
         private string GetAlternativeLogs()
         {
             foreach (string alternative in _alternatives)
-                if (File.Exists(CurrentLocation + alternative))
-                    return alternative;
-
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// If input is empty return a message
-        /// </summary>
-        public static void IsInputEmpty(BackgroundWorker searchEventBgWorker, CheckedListBox clbKeywords, string tbKeywords)
-        {
-            if (tbKeywords.IsEmpty() && clbKeywords.CheckedItems.Count == 0)
             {
-                Messages.NoInput();
+                string file = CurrentLocation + alternative;
 
-                return;
+                if (File.Exists(file))
+                    return file;
             }
 
-            if (!searchEventBgWorker.IsBusy)
-                searchEventBgWorker.RunWorkerAsync();
+            return string.Empty;
         }
 
         private static void LogFilesFound()
@@ -127,7 +114,7 @@ namespace EventFilter
 
             if (Keywords.GetAllKeywords().IsEmpty())
                 Helper.Report("No Keywords.txt found");
-            else 
+            else
                 Helper.Report("Load Keywords from " + Keyword.FileLocation);
 
             if (Event.GetInstance().FileLocation is FileInfo)
@@ -135,13 +122,13 @@ namespace EventFilter
                 Helper.Report("Load event log from " + Events.FileLocation.FullName);
                 Helper.Form.lblSelectedFile.Text = "Selected file: " + Events.FileLocation.FullName;
 
-                FilesFound = true;
+                AreFilesFound = true;
             }
             else
             {
-                FilesFound = false;
+                AreFilesFound = false;
 
-                Helper.Report("No eventlog.txt found");
+                Helper.Report("No eventlog found");
                 Helper.Form.lblSelectedFile.Text = Properties.Resources.NoLogFound;
             }
         }

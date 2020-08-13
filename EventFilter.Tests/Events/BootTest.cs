@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using EventFilter;
 
 // ReSharper disable CheckNamespace
 namespace EventFilter.Test
@@ -22,7 +21,7 @@ namespace EventFilter.Test
         {
             Helper.Form = new Form1();
             Bootstrap.Boot();
-            Assert.IsTrue(Bootstrap.FilesFound);
+            Assert.IsTrue(Bootstrap.AreFilesFound);
         }
     }
 }

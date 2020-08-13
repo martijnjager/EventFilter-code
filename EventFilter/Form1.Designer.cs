@@ -53,10 +53,8 @@ namespace EventFilter
             this.miManageKeywords = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tpEventFilter = new System.Windows.Forms.TabPage();
+            this.cbCheckAll = new System.Windows.Forms.CheckBox();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            //this.columnDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            //this.columnDescription = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            //this.columnId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.linklblPiracy = new System.Windows.Forms.LinkLabel();
             this.lblKMS = new System.Windows.Forms.Label();
             this.clbKeywords = new System.Windows.Forms.CheckedListBox();
@@ -79,11 +77,11 @@ namespace EventFilter
             this.tpKeywords = new System.Windows.Forms.TabPage();
             this.btnSaveKeywords = new System.Windows.Forms.Button();
             this.rtbPiracyIgnorable = new System.Windows.Forms.RichTextBox();
-            this.label11 = new System.Windows.Forms.Label();
+            this.lblPiracyIgnorable = new System.Windows.Forms.Label();
             this.rtbIgnorables = new System.Windows.Forms.RichTextBox();
-            this.label10 = new System.Windows.Forms.Label();
+            this.lblIgnoreKeywords = new System.Windows.Forms.Label();
             this.rtbPiracyKeywords = new System.Windows.Forms.RichTextBox();
-            this.label6 = new System.Windows.Forms.Label();
+            this.lblPiracy = new System.Windows.Forms.Label();
             this.rtbKeywordsToUse = new System.Windows.Forms.RichTextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.btnCopyClipboard = new System.Windows.Forms.Button();
@@ -134,7 +132,7 @@ namespace EventFilter
             this.miSelectEventLog.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
             this.miSelectEventLog.Size = new System.Drawing.Size(200, 22);
             this.miSelectEventLog.Text = "Select event log";
-            this.miSelectEventLog.Click += new System.EventHandler(this.miSelectEventlog_Click);
+            this.miSelectEventLog.Click += new System.EventHandler(this.MiSelectEventlog_Click);
             // 
             // miLoadKeywords
             // 
@@ -142,7 +140,7 @@ namespace EventFilter
             this.miLoadKeywords.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.L)));
             this.miLoadKeywords.Size = new System.Drawing.Size(200, 22);
             this.miLoadKeywords.Text = "Load Keywords";
-            this.miLoadKeywords.Click += new System.EventHandler(this.miLoadKeywords_Click);
+            this.miLoadKeywords.Click += new System.EventHandler(this.MiLoadKeywords_Click);
             // 
             // saveKeywordsToolStripMenuItem
             // 
@@ -150,28 +148,28 @@ namespace EventFilter
             this.saveKeywordsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.K)));
             this.saveKeywordsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
             this.saveKeywordsToolStripMenuItem.Text = "Save Keywords";
-            this.saveKeywordsToolStripMenuItem.Click += new System.EventHandler(this.miSaveKeywords_Click);
+            this.saveKeywordsToolStripMenuItem.Click += new System.EventHandler(this.MiSaveKeywords_Click);
             // 
             // aboutToolStripMenuItem1
             // 
             this.aboutToolStripMenuItem1.Name = "aboutToolStripMenuItem1";
             this.aboutToolStripMenuItem1.Size = new System.Drawing.Size(200, 22);
             this.aboutToolStripMenuItem1.Text = "About";
-            this.aboutToolStripMenuItem1.Click += new System.EventHandler(this.miAbout_Click);
+            this.aboutToolStripMenuItem1.Click += new System.EventHandler(this.MiAbout_Click);
             // 
             // eventFilterToolStripMenuItem
             // 
             this.eventFilterToolStripMenuItem.Name = "eventFilterToolStripMenuItem";
             this.eventFilterToolStripMenuItem.Size = new System.Drawing.Size(77, 20);
             this.eventFilterToolStripMenuItem.Text = "Event Filter";
-            this.eventFilterToolStripMenuItem.Click += new System.EventHandler(this.miEventFilter_Click);
+            this.eventFilterToolStripMenuItem.Click += new System.EventHandler(this.MiEventFilter_Click);
             // 
             // reportBugToolStripMenuItem
             // 
             this.reportBugToolStripMenuItem.Name = "reportBugToolStripMenuItem";
             this.reportBugToolStripMenuItem.Size = new System.Drawing.Size(78, 20);
             this.reportBugToolStripMenuItem.Text = "Report bug";
-            this.reportBugToolStripMenuItem.Click += new System.EventHandler(this.miBugReport_Click);
+            this.reportBugToolStripMenuItem.Click += new System.EventHandler(this.MiBugReport_Click);
             // 
             // encodingToolStripMenuItem
             // 
@@ -259,6 +257,7 @@ namespace EventFilter
             // 
             // tpEventFilter
             // 
+            this.tpEventFilter.Controls.Add(this.cbCheckAll);
             this.tpEventFilter.Controls.Add(this.dataGridView1);
             this.tpEventFilter.Controls.Add(this.linklblPiracy);
             this.tpEventFilter.Controls.Add(this.lblKMS);
@@ -278,6 +277,19 @@ namespace EventFilter
             this.tpEventFilter.Text = "tabPage1";
             this.tpEventFilter.UseVisualStyleBackColor = true;
             // 
+            // cbCheckAll
+            // 
+            this.cbCheckAll.AutoSize = true;
+            this.cbCheckAll.Checked = true;
+            this.cbCheckAll.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbCheckAll.Location = new System.Drawing.Point(715, 7);
+            this.cbCheckAll.Name = "cbCheckAll";
+            this.cbCheckAll.Size = new System.Drawing.Size(71, 17);
+            this.cbCheckAll.TabIndex = 17;
+            this.cbCheckAll.Text = "Check All";
+            this.cbCheckAll.UseVisualStyleBackColor = true;
+            this.cbCheckAll.CheckedChanged += new System.EventHandler(this.CbCheckAll_CheckedChanged);
+            // 
             // dataGridView1
             // 
             this.dataGridView1.BackgroundColor = this.BackColor;
@@ -286,7 +298,7 @@ namespace EventFilter
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.Size = new System.Drawing.Size(814, 435);
             this.dataGridView1.TabIndex = 16;
-            this.dataGridView1.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridView1_CellDoubleClick);
+            this.dataGridView1.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridView1_CellDoubleClick);
             // 
             // linklblPiracy
             // 
@@ -298,7 +310,7 @@ namespace EventFilter
             this.linklblPiracy.TabStop = true;
             this.linklblPiracy.Text = "Click here to view the piracy events";
             this.linklblPiracy.Visible = false;
-            this.linklblPiracy.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linklblPiracy_LinkClicked);
+            this.linklblPiracy.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.LinklblPiracy_LinkClicked);
             // 
             // lblKMS
             // 
@@ -325,7 +337,7 @@ namespace EventFilter
             this.btnResultCleanup.TabIndex = 11;
             this.btnResultCleanup.Text = "Cleanup results";
             this.btnResultCleanup.UseVisualStyleBackColor = false;
-            this.btnResultCleanup.Click += new System.EventHandler(this.btnResultCleanup_Click);
+            this.btnResultCleanup.Click += new System.EventHandler(this.BtnResultCleanup_Click);
             // 
             // lblTime
             // 
@@ -370,7 +382,7 @@ namespace EventFilter
             this.btnSearch.TabIndex = 4;
             this.btnSearch.Text = "Search";
             this.btnSearch.UseVisualStyleBackColor = false;
-            this.btnSearch.Click += new System.EventHandler(this.btnSearch_Click);
+            this.btnSearch.Click += new System.EventHandler(this.BtnSearch_Click);
             // 
             // lblSelectedFile
             // 
@@ -477,11 +489,11 @@ namespace EventFilter
             // 
             this.tpKeywords.Controls.Add(this.btnSaveKeywords);
             this.tpKeywords.Controls.Add(this.rtbPiracyIgnorable);
-            this.tpKeywords.Controls.Add(this.label11);
+            this.tpKeywords.Controls.Add(this.lblPiracyIgnorable);
             this.tpKeywords.Controls.Add(this.rtbIgnorables);
-            this.tpKeywords.Controls.Add(this.label10);
+            this.tpKeywords.Controls.Add(this.lblIgnoreKeywords);
             this.tpKeywords.Controls.Add(this.rtbPiracyKeywords);
-            this.tpKeywords.Controls.Add(this.label6);
+            this.tpKeywords.Controls.Add(this.lblPiracy);
             this.tpKeywords.Controls.Add(this.rtbKeywordsToUse);
             this.tpKeywords.Controls.Add(this.label2);
             this.tpKeywords.Location = new System.Drawing.Point(4, 5);
@@ -498,7 +510,7 @@ namespace EventFilter
             this.btnSaveKeywords.TabIndex = 10;
             this.btnSaveKeywords.Text = "Save";
             this.btnSaveKeywords.UseVisualStyleBackColor = true;
-            this.btnSaveKeywords.Click += new System.EventHandler(this.btnSaveKeywords_Click);
+            this.btnSaveKeywords.Click += new System.EventHandler(this.BtnSaveKeywords_Click);
             // 
             // rtbPiracyIgnorable
             // 
@@ -509,14 +521,14 @@ namespace EventFilter
             this.rtbPiracyIgnorable.TabIndex = 9;
             this.rtbPiracyIgnorable.Text = "";
             // 
-            // label11
+            // lblPiracyIgnorable
             // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(425, 29);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(87, 13);
-            this.label11.TabIndex = 8;
-            this.label11.Text = "Piracy ignorables";
+            this.lblPiracyIgnorable.AutoSize = true;
+            this.lblPiracyIgnorable.Location = new System.Drawing.Point(425, 29);
+            this.lblPiracyIgnorable.Name = "lblPiracyIgnorable";
+            this.lblPiracyIgnorable.Size = new System.Drawing.Size(87, 13);
+            this.lblPiracyIgnorable.TabIndex = 8;
+            this.lblPiracyIgnorable.Text = "Piracy ignorables";
             // 
             // rtbIgnorables
             // 
@@ -527,14 +539,14 @@ namespace EventFilter
             this.rtbIgnorables.TabIndex = 7;
             this.rtbIgnorables.Text = "";
             // 
-            // label10
+            // lblIgnoreKeywords
             // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(213, 29);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(85, 13);
-            this.label10.TabIndex = 6;
-            this.label10.Text = "Ignore keywords";
+            this.lblIgnoreKeywords.AutoSize = true;
+            this.lblIgnoreKeywords.Location = new System.Drawing.Point(213, 29);
+            this.lblIgnoreKeywords.Name = "lblIgnoreKeywords";
+            this.lblIgnoreKeywords.Size = new System.Drawing.Size(85, 13);
+            this.lblIgnoreKeywords.TabIndex = 6;
+            this.lblIgnoreKeywords.Text = "Ignore keywords";
             // 
             // rtbPiracyKeywords
             // 
@@ -545,14 +557,14 @@ namespace EventFilter
             this.rtbPiracyKeywords.TabIndex = 3;
             this.rtbPiracyKeywords.Text = "";
             // 
-            // label6
+            // lblPiracy
             // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(636, 29);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(84, 13);
-            this.label6.TabIndex = 2;
-            this.label6.Text = "Piracy keywords";
+            this.lblPiracy.AutoSize = true;
+            this.lblPiracy.Location = new System.Drawing.Point(636, 29);
+            this.lblPiracy.Name = "lblPiracy";
+            this.lblPiracy.Size = new System.Drawing.Size(84, 13);
+            this.lblPiracy.TabIndex = 2;
+            this.lblPiracy.Text = "Piracy keywords";
             // 
             // rtbKeywordsToUse
             // 
@@ -674,11 +686,12 @@ namespace EventFilter
         private System.Windows.Forms.RichTextBox rtbIgnorables;
         private System.Windows.Forms.RichTextBox rtbPiracyKeywords;
         private System.Windows.Forms.RichTextBox rtbKeywordsToUse;
-        private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Label lblPiracyIgnorable;
+        private System.Windows.Forms.Label lblIgnoreKeywords;
+        private System.Windows.Forms.Label lblPiracy;
         private System.Windows.Forms.Label label2;
         public DataGridView dataGridView1;
+        private CheckBox cbCheckAll;
         //private DataGridViewTextBoxColumn columnDate;
         //private DataGridViewTextBoxColumn columnDescription;
         //private DataGridViewTextBoxColumn columnId;

@@ -16,14 +16,14 @@ namespace EventFilter.Events
         /// <summary>
         /// Stores all events filtered on duplicates
         /// </summary>
-        public List<EventLog> FilteredEvents { get; private set; }
+        private List<Tuple<int, EventLog>> FilteredEvents { get; set; }
 
         public List<EventLog> PiracyEvents { get; private set; }
 
         /// <summary>
         /// Instance of the Keywords class
         /// </summary>
-        private IKeywords Keyword;
+        private readonly IKeywords Keyword;
 
         /// <summary>
         /// ID for message Form
@@ -61,7 +61,7 @@ namespace EventFilter.Events
             PiracyEvents = new List<EventLog>();
             ListItem = new HashSet<string[]>();
             Eventlogs = new List<EventLog>();
-            this.Keyword = keywords;
+            Keyword = keywords;
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace EventFilter.Events
             return _event;
         }
 
-        public List<EventLog> GetFilteredEvents() => FilteredEvents;
+        public List<Tuple<int, EventLog>> GetFilteredEvents() => FilteredEvents;
 
 
         /// <summary>
@@ -162,13 +162,13 @@ namespace EventFilter.Events
         /// <returns></returns>
         public dynamic GoToNext(int curId, EventLog[] logs, bool useFoundEvents = false)
         {
-            if(useFoundEvents)
+            if (useFoundEvents)
             {
                 List<EventLog> e = GetFoundEvents();
                 var eve = e.Where(x => x.GetId().Equals(curId)).FirstOrDefault();
                 if (!(eve.Log is string))
                 {
-                    var result = this.FindClosestMatchingEventById(e, curId, false);
+                    var result = FindClosestMatchingEventById(e, curId, false);
 
                     return result;
                 }
@@ -215,14 +215,14 @@ namespace EventFilter.Events
         /// <param name="curId">ID of first line of description of current event</param>
         /// <returns>string</returns>
         public dynamic GoToPrevious(int curId, EventLog[] logs = null, bool useFoundEvents = false)
-         {
+        {
             if (useFoundEvents)
             {
                 List<EventLog> e = GetFoundEvents();
                 var eve = e.Where(x => x.GetId().Equals(curId)).FirstOrDefault();
                 if (!(eve.Log is string))
                 {
-                    var result = this.FindClosestMatchingEventById(e, curId, true);
+                    var result = FindClosestMatchingEventById(e, curId, true);
 
                     return result;
                 }
@@ -241,16 +241,29 @@ namespace EventFilter.Events
 
             if (logs != null)
             {
-                if (curId == 0)
-                    return logs[curId];
+                for (int index = 0; index < logs.Length; index++)
+                {
+                    if (logs[index].GetId() == curId)
+                    {
+                        if (index - 1 < 0)
+                            return logs[index];
 
-                EventIdentifier = curId - 1;
-                return logs[EventIdentifier];
+                        EventIdentifier = logs[index - 1].GetId();
+
+                        return Eventlogs[EventIdentifier];
+                    }
+                }
+
+                //if (curId == 0)
+                //    return logs[curId];
+
+                //EventIdentifier = curId - 1;
+                //return logs.ToList().Find(x => x.GetId() == EventIdentifier);
             }
 
             EventIdentifier = Eventlogs.GetByIdMinusOne(curId).GetId();
 
-            return Eventlogs[EventIdentifier];
+            return Eventlogs.Find(x => x.GetId() == EventIdentifier);
         }
 
         /// <summary>
@@ -267,14 +280,14 @@ namespace EventFilter.Events
         {
             List<EventLog> foundItems = new List<EventLog>();
 
-            foreach(string[] x in ListItem)
+            foreach (string[] x in ListItem)
             {
-                foundItems.Add(new EventLog() 
+                foundItems.Add(new EventLog()
                 {
                     Date = x[0],
                     Description = x[1],
                     Id = x[2],
-                    Log = this.Eventlogs[x[2].ToInt()].Log
+                    Log = Eventlogs[x[2].ToInt()].Log
                 });
             }
 

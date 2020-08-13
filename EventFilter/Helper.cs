@@ -1,8 +1,9 @@
 ﻿using EventFilter.Events;
+using EventFilter.Keywords;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
-using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 namespace EventFilter
@@ -15,7 +16,7 @@ namespace EventFilter
 
         public static void AddListItem(DataTable table, string[] item)
         {
-            string data = item.ToString("\n");
+            string data = item.ToString(" \n ");
             Report("Adding: " + data);
             table.Rows.Add(item);
         }
@@ -42,15 +43,10 @@ namespace EventFilter
             return empty;
         }
 
-        private static List<string> Explode(string[] value)
-        {
-            return new List<string>(value);
-        }
-
         private static string CollectionToString(dynamic array, string delimater = "")
         {
             string x = string.Empty;
-            foreach(string y in array)
+            foreach (string y in array)
             {
                 x += y;
                 x += delimater;
@@ -128,5 +124,80 @@ namespace EventFilter
         }
 
         public static DateTime ToDate(this string date) => Convert.ToDateTime(date);
+
+        /// <summary>
+        /// If input is empty return a message
+        /// </summary>
+        public static void ValidateInput(BackgroundWorker searchEventBgWorker, CheckedListBox clbKeywords, string tbKeywords)
+        {
+            if (tbKeywords.IsEmpty() && clbKeywords.CheckedItems.Count == 0)
+            {
+                if (Messages.VerifyContinueNoInput() == DialogResult.Yes)
+                    if (!searchEventBgWorker.IsBusy)
+                        searchEventBgWorker.RunWorkerAsync();
+            }
+            else
+            {
+                if (!searchEventBgWorker.IsBusy)
+                    searchEventBgWorker.RunWorkerAsync();
+            }
+        }
+
+        public static void SaveKeywords(params string[] keywordsInput)
+        {
+            string piracy;
+            string keywords = piracy = string.Empty;
+            string keywordsToUse = keywordsInput[0];
+            string ignorables = keywordsInput[1];
+            string piracyKeywords = keywordsInput[2];
+            string piracyIgnorables = keywordsInput[3];
+
+            if (!keywordsToUse.Trim().IsEmpty())
+                keywords = keywordsToUse.RemoveTrailingNewLine().Replace("\n", ", ");
+
+            if (!ignorables.Trim().IsEmpty())
+                keywords += ignorables.RemoveTrailingNewLine().Replace("\n", ", -").StartWith(", -");
+
+            if (!piracyKeywords.Trim().IsEmpty())
+                piracy = piracyKeywords.RemoveTrailingNewLine().Replace("\n", ", ");
+
+            if (!piracyIgnorables.Trim().IsEmpty())
+                piracy += piracyIgnorables.RemoveTrailingNewLine().Replace("\n", ", -").StartWith(", -");
+
+            Keyword.GetInstance().SaveKeywords(keywords, piracy);
+        }
+
+        public static void Message(Message message, EventLog text)
+        {
+            message.Use(text);
+            message.Source(null);
+            Report("\n\nCalling event id: " + text.Id);
+            Report("Output: \n" + text);
+            message.Show();
+        }
+
+        public static string RemoveTrailingNewLine(this string input)
+        {
+            string stringToRemove = input.Substring(input.Length - 1);
+
+            if (stringToRemove == "\n")
+                input = input.Substring(0, input.Length - 1);
+
+            return input;
+        }
+
+        public static bool IncreaseCountIfAlreadyInList(this List<Tuple<int, EventLog>> list, EventLog eventLog)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Item2.Description.Equals(eventLog.Description))
+                {
+                    list[i] = new Tuple<int, EventLog>(list[i].Item1 + 1, list[i].Item2);
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

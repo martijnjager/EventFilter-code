@@ -4,6 +4,7 @@ using EventFilter.Keywords;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -13,13 +14,19 @@ namespace EventFilter
 {
     public partial class Form1 : Form
     {
-        private event StartSearch _startSearch;
-
-        private IKeywords Keywords;
-
-        private IEvent Events;
-
         private delegate void StartSearch();
+
+        private delegate void SaveKeywords(params string[] input);
+
+        private event StartSearch EventSearchEvent;
+
+        private event SaveKeywords saveKeywords;
+
+        private readonly IKeywords Keywords;
+
+        private new readonly IEvent Events;
+
+        private int currentCheckListState;
 
         public Form1()
         {
@@ -27,7 +34,8 @@ namespace EventFilter
 
             try
             {
-                this._startSearch += Search;
+                EventSearchEvent += Search;
+                saveKeywords += Helper.SaveKeywords;
 
                 Helper.Form = this;
                 dataGridView1.BackgroundColor = BackColor;
@@ -41,10 +49,12 @@ namespace EventFilter
                 Keywords = Keyword.GetInstance();
                 Events = Event.GetInstance();
 
-                this.rtbKeywordsToUse.Text = Keywords.Items.ToString("\n");
-                this.rtbIgnorables.Text = Keywords.Ignorable.ToString("\n");
-                this.rtbPiracyKeywords.Text = Keywords.Piracy.ToString("\n");
-                this.rtbPiracyIgnorable.Text = Keywords.IgnorablePiracy.ToString("\n");
+                rtbKeywordsToUse.Text = Keywords.Items.ToString("\n");
+                rtbIgnorables.Text = Keywords.Ignorable.ToString("\n");
+                rtbPiracyKeywords.Text = Keywords.Piracy.ToString("\n");
+                rtbPiracyIgnorable.Text = Keywords.IgnorablePiracy.ToString("\n");
+
+                currentCheckListState = 1;
             }
             catch (Exception error)
             {
@@ -67,41 +77,27 @@ namespace EventFilter
             tabControl1.SelectedTab = tpKeywords;
         }
 
-        private void btnSaveKeywords_Click(object sender, EventArgs e)
+        private void BtnSaveKeywords_Click(object sender, EventArgs e)
         {
-            Helper.Report("Saving keywords");
-            SaveKeywords();
+            if (ShouldSaveKeywords())
+            {
+                Helper.Report("Saving keywords");
+
+                saveKeywords.Invoke(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
+
+                //Helper.SaveKeywords(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
+            }
         }
 
-        private void SaveKeywords()
-        {
-            string piracy;
-            string keywords = piracy = string.Empty;
-
-            if (!rtbKeywordsToUse.Text.Trim().IsEmpty())
-                keywords = rtbKeywordsToUse.Text.Replace("\n", "");
-
-            if (!rtbIgnorables.Text.Trim().IsEmpty())
-                keywords += rtbIgnorables.Text.Replace("\n", ", -").StartWith(", -");
-
-            if (!rtbPiracyKeywords.Text.Trim().IsEmpty())
-                piracy = rtbPiracyKeywords.Text.Replace("\n", ", ");
-
-            if (!rtbPiracyIgnorable.Text.Trim().IsEmpty())
-                piracy += rtbPiracyIgnorable.Text.Replace("\n", ", -").StartWith(", -");
-
-            Keywords.SaveKeywords(keywords, piracy);
-        }
-
-        private void linklblPiracy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        private void LinklblPiracy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
             new Piracy(Events, Events.PiracyEvents).Show();
         }
 
         #region buttons
-        private void btnSearch_Click(object sender, EventArgs e)
+        private void BtnSearch_Click(object sender, EventArgs e)
         {
-            _startSearch();
+            EventSearchEvent();
         }
 
         private void Search()
@@ -114,7 +110,7 @@ namespace EventFilter
 
                 Helper.Report("Selected log: " + lblSelectedFile.Text);
 
-                Bootstrap.IsInputEmpty(SearchEventBGWorker, clbKeywords, tbKeywords.Text);
+                Helper.ValidateInput(SearchEventBGWorker, clbKeywords, tbKeywords.Text);
             }
             else
             {
@@ -127,43 +123,30 @@ namespace EventFilter
             Bug.CreateReport(rtbBugReport.Text);
         }
 
-        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        private void DataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0)
                 return;
 
-            EventLog text = Event.GetInstance().FindEvent(SearchEvent.EventTable.Rows[e.RowIndex].ItemArray[2].ToString().ToInt());
+            Events.EventLog text = Event.GetInstance().FindEvent(SearchEvent.EventTable.Rows[e.RowIndex].ItemArray[2].ToString().ToInt());
 
-            foreach(Form openForm in (ReadOnlyCollectionBase) Application.OpenForms)
+            foreach (Form openForm in (ReadOnlyCollectionBase)Application.OpenForms)
             {
-                if(openForm.Text == "Message")
+                if (openForm.Text == "Message")
                 {
-                    Message((Message)openForm, text);
+                    Helper.Message((Message)openForm, text);
                     return;
                 }
             }
 
-            Message(new Message(Event.GetInstance()), text);
+            Helper.Message(new Message(Event.GetInstance()), text);
         }
 
-        private void Message(Message message, EventLog text)
-        {
-            message.Use(text);
-            message.Source(null);
-            Helper.Report("\n\nCalling event id: " + text.Id);
-            Helper.Report("Output: \n" + text);
-            message.Show();
-        }
-
-        private void btnResultCleanup_Click(object sender, EventArgs e)
+        private void BtnResultCleanup_Click(object sender, EventArgs e)
         {
             if (eventFilterBGWorker.IsBusy == false)
             {
                 Helper.Report("Cleaning up results");
-                //foreach (ListViewItem item in lbEventResult.Items)
-                //{
-                //    item.Remove();
-                //}
 
                 eventFilterBGWorker.RunWorkerAsync();
             }
@@ -189,24 +172,24 @@ namespace EventFilter
         private void SetBackgroundWorkerProperties()
         {
             SearchEventBGWorker.WorkerReportsProgress = true;
-            SearchEventBGWorker.DoWork += SearchEvent.Search;
-            SearchEventBGWorker.ProgressChanged += SearchEvent.SearchEventBGWorker_ProgressChanged;
-            SearchEventBGWorker.RunWorkerCompleted += SearchEvent.SearchEventBGWorker_RunWorkerCompleted;
+            SearchEventBGWorker.DoWork += EventFilter.Events.SearchEvent.Search;
+            SearchEventBGWorker.ProgressChanged += EventFilter.Events.SearchEvent.SearchEventBGWorker_ProgressChanged;
+            SearchEventBGWorker.RunWorkerCompleted += EventFilter.Events.SearchEvent.SearchEventBGWorker_RunWorkerCompleted;
 
             eventFilterBGWorker.WorkerReportsProgress = true;
-            eventFilterBGWorker.DoWork += Event.eventFilterBGWorker_DoWork;
-            eventFilterBGWorker.ProgressChanged += Event.eventFilterBGWorker_ProgressChanged;
+            eventFilterBGWorker.DoWork += Event.EventFilterBGWorker_DoWork;
+            eventFilterBGWorker.ProgressChanged += Event.EventFilterBGWorker_ProgressChanged;
         }
 
         #region MenuItems
-        private void miSaveKeywords_Click(object sender, EventArgs e)
+        private void MiSaveKeywords_Click(object sender, EventArgs e)
         {
             Helper.Report("Start saving Keywords");
             saveFileDialog1.ShowDialog();
             Keywords.SaveKeywords(saveFileDialog1.FileName, tbKeywords.Text);
         }
 
-        private void miSelectEventlog_Click(object sender, EventArgs e)
+        private void MiSelectEventlog_Click(object sender, EventArgs e)
         {
             Helper.Report("Loading event logs");
             openFileDialog1.ShowDialog();
@@ -233,7 +216,7 @@ namespace EventFilter
             lblSelectedFile.Text = "Selected file: " + Events.FileLocation.FullName;
         }
 
-        private void miLoadKeywords_Click(object sender, EventArgs e)
+        private void MiLoadKeywords_Click(object sender, EventArgs e)
         {
             Helper.Report("Loading Keywords to use");
             openFileDialog1.ShowDialog();
@@ -242,15 +225,15 @@ namespace EventFilter
 
             Helper.Report("Keywords to use location: " + keyLoc);
 
-            Keywords.LoadFromLocation(keyLoc).Into(this.clbKeywords);
+            Keywords.LoadFromLocation(keyLoc).Into(clbKeywords);
         }
 
-        private void miAbout_Click(object sender, EventArgs e)
+        private void MiAbout_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Name: \t\t EventFilter\nDeveloper: \t Martijn (axe0)\nVersion: \t\t BETA\nDate: \t\t 12-02-2018", "About app", MessageBoxButtons.OK);
+            MessageBox.Show("Name: \t\t EventFilter\nDeveloper: \t axe0\nVersion: \t\t 1.0.1\nDate: \t\t 12 Sept 2020", "About app", MessageBoxButtons.OK);
         }
 
-        private void miEventFilter_Click(object sender, EventArgs e)
+        private void MiEventFilter_Click(object sender, EventArgs e)
         {
             tabControl1.SelectedTab = tpEventFilter;
 
@@ -273,90 +256,7 @@ namespace EventFilter
             arr.ForEach(i => clbKeywords.Items.Add(i, true));
         }
 
-        private void miBugReport_Click(object sender, EventArgs e) => tabControl1.SelectedTab = tpBugReport;
-        #endregion
-
-        #region Listview actions
-        //private void lbEventResult_MouseDoubleClick(object sender, MouseEventArgs e)
-        //{
-        //    EventLog text = Event.Instance.FindEvent(int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text));
-        //    Message mes = new Message()
-        //    {
-        //        Id = int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text)
-        //    };
-
-        //    Helper.Report("\n\nCalling event id: " + Event.Instance.Eventlogs[int.Parse(lbEventResult.SelectedItems[0].SubItems[2].Text)].Id);
-        //    Helper.Report("Output: \n" + text);
-        //    mes.ShowDialog();
-        //}
-        //private void lbEventResult_ColumnClick(object sender, ColumnClickEventArgs e)
-        //{
-        //    lbEventResult.Sorting = lbEventResult.Sorting == SortOrder.Descending ? SortOrder.Ascending : SortOrder.Descending;
-
-        //    lbEventResult.Sort();
-        //}
-        #endregion
-
-        #region Form actions
-        private void Form1_SizeChanged(object sender, EventArgs e)
-        {
-            btnResultCleanup.Location = new Point(Width - 153, Height - 111);
-            btnSearch.Location = new Point(Width - 132, 78);
-            btnSaveReport.Location = new Point(6, Height - 127);
-            btnCopyClipboard.Location = new Point(7, Height - 126);
-            tpEventFilter.Size = new Size(Width - 51, Height - 88);
-            rtbBugReport.Size = new Size(Width - 58, Height - 271);
-            rtbResults.Size = new Size(Width - 63, Height - 140);
-            //lbEventResult.Size = new Size(Width - 66, Height - 219);
-            tabControl1.Size = new Size(Width - 43, Height - 79);
-            tbKeywords.Size = new Size(Width - 506, 20);
-            clbKeywords.Location = new Point(Width - 290, 6);
-            dataGridView1.Size = new Size(Width - 66, Height - 219);
-        }
-
-        private void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
-            {
-                if (dataGridView1.SelectedRows.Count > 0)
-                    Helper.CopyToClipboard(dataGridView1.SelectedRows);
-                else
-                    Helper.CopyToClipboard(dataGridView1.Rows);
-            }
-
-            if (e.KeyCode != Keys.Return || tabControl1.SelectedTab != tpEventFilter)
-                return;
-
-            _startSearch();
-        }
-
-        private void Form1_DragEnter(object sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                e.Effect = DragDropEffects.Copy;
-            }
-        }
-
-        private void Form1_DragDrop(object sender, DragEventArgs e)
-        {
-            Array data = e.Data.GetData(DataFormats.FileDrop) as Array;
-            string d = data.GetValue(0).ToString();
-            string eventLocation = d;
-
-            if (d.Contains(".zip"))
-            {
-                Zip.ExtractZip(d, ref eventLocation);
-                Events.SetLocation(eventLocation);
-            }
-            else
-                Events.SetLocation(eventLocation);
-
-            Helper.Report("Extracted eventlog from " + d);
-
-            lblSelectedFile.Text = eventLocation;
-        }
-        #endregion
+        private void MiBugReport_Click(object sender, EventArgs e) => tabControl1.SelectedTab = tpBugReport;
 
         private void Utf7_Click(object sender, EventArgs e)
         {
@@ -392,41 +292,171 @@ namespace EventFilter
         {
             Encodings.CheckState((ToolStripMenuItem)sender);
         }
+        #endregion
+
+        #region Form actions
+        private void Form1_SizeChanged(object sender, EventArgs e)
+        {
+            btnResultCleanup.Location = new Point(Width - 153, Height - 111);
+            btnSearch.Location = new Point(Width - 132, 78);
+            btnSaveReport.Location = new Point(6, Height - 127);
+            btnCopyClipboard.Location = new Point(7, Height - 126);
+            tpEventFilter.Size = new Size(Width - 51, Height - 88);
+            rtbBugReport.Size = new Size(Width - 58, Height - 271);
+            rtbResults.Size = new Size(Width - 63, Height - 140);
+            //lbEventResult.Size = new Size(Width - 66, Height - 219);
+            tabControl1.Size = new Size(Width - 43, Height - 79);
+            tbKeywords.Size = new Size(Width - 506, 20);
+            clbKeywords.Location = new Point(Width - 290, 6);
+            dataGridView1.Size = new Size(Width - 66, Height - 219);
+            cbCheckAll.Location = new Point(clbKeywords.Location.X + clbKeywords.Width + 6, cbCheckAll.Location.Y);
+
+            double resizeValue = 5.3;
+            rtbKeywordsToUse.Size = new Size(Convert.ToInt32(Convert.ToDouble(Width) / resizeValue), Height - 285);
+
+            rtbIgnorables.Location = new Point(rtbKeywordsToUse.Location.X + rtbKeywordsToUse.Size.Width + 46, rtbIgnorables.Location.Y);
+            lblIgnoreKeywords.Location = new Point(rtbIgnorables.Location.X, lblIgnoreKeywords.Location.Y);
+            rtbIgnorables.Size = new Size(Convert.ToInt32(Convert.ToDouble(Width) / resizeValue), Height - 285);
+
+            rtbPiracyIgnorable.Location = new Point(rtbIgnorables.Location.X + rtbIgnorables.Size.Width + 46, rtbPiracyIgnorable.Location.Y);
+            rtbPiracyIgnorable.Size = new Size(Convert.ToInt32(Convert.ToDouble(Width) / resizeValue), Height - 285);
+            lblPiracyIgnorable.Location = new Point(rtbPiracyIgnorable.Location.X, lblPiracyIgnorable.Location.Y);
+
+            rtbPiracyKeywords.Location = new Point(rtbPiracyIgnorable.Location.X + rtbPiracyIgnorable.Size.Width + 46, rtbPiracyKeywords.Location.Y);
+            rtbPiracyKeywords.Size = new Size(Convert.ToInt32(Convert.ToDouble(Width) / resizeValue), Height - 285);
+            lblPiracy.Location = new Point(rtbPiracyKeywords.Location.X, lblPiracy.Location.Y);
+
+            btnSaveKeywords.Location = new Point(rtbIgnorables.Location.X + rtbIgnorables.Size.Width - 18, tpKeywords.Size.Height - 94);
+        }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.C && e.Modifiers == Keys.Control)
+            {
+                if (dataGridView1.SelectedRows.Count > 0)
+                    Helper.CopyToClipboard(dataGridView1.SelectedRows);
+                else
+                    Helper.CopyToClipboard(dataGridView1.Rows);
+            }
+
+            if (e.KeyCode != Keys.Return || tabControl1.SelectedTab != tpEventFilter)
+                return;
+
+            EventSearchEvent();
+        }
+
+        private void Form1_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy;
+            }
+        }
+
+        private void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+            Array data = e.Data.GetData(DataFormats.FileDrop) as Array;
+            string d = data.GetValue(0).ToString();
+            string eventLocation = d;
+
+            if (d.Contains(".zip"))
+            {
+                Zip.ExtractZip(d, ref eventLocation);
+                Events.SetLocation(eventLocation);
+            }
+            else
+                Events.SetLocation(eventLocation);
+
+            Helper.Report("Extracted eventlog from " + d);
+
+            lblSelectedFile.Text = eventLocation;
+        }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            string fileKeywords = string.Empty;
+            if (ShouldSaveKeywords())
+            {
+                Helper.Report("Saving keywords");
+
+                saveKeywords.Invoke(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
+            }
+        }
+        #endregion
+
+        private void CbCheckAll_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateCheckListItems();
+        }
+
+        public void UpdateCheckListItems()
+        {
+            currentCheckListState = currentCheckListState == 0 ? currentCheckListState = 1 : currentCheckListState = 0;
+
+            for (int i = 0; i < clbKeywords.Items.Count; i++)
+            {
+                clbKeywords.SetItemCheckState(i, (CheckState)currentCheckListState);
+            }
+        }
+
+        private bool ShouldSaveKeywords()
+        {
+            string input, fileKeywords;
+            fileKeywords = input = string.Empty;
 
             if (File.Exists(Keyword.FileLocation))
                 fileKeywords = string.Join("\n", File.ReadAllLines(Keyword.FileLocation));
 
-            string input = string.Empty;
+            string keywordsToUse = rtbKeywordsToUse.Text;
+            string ignorable = rtbIgnorables.Text;
+            string piracy = rtbPiracyKeywords.Text;
+            string igPiracy = rtbPiracyIgnorable.Text;
 
-            if (!rtbKeywordsToUse.Text.Trim().IsEmpty())
-                input = rtbKeywordsToUse.Text.Replace("\n", ", ");
-
-            if (!rtbIgnorables.Text.Trim().IsEmpty())
-                input += rtbIgnorables.Text.Replace("\n", ", -").StartWith("-");
-
-            if(!rtbPiracyKeywords.Text.Trim().IsEmpty() || !rtbPiracyIgnorable.Text.Trim().IsEmpty())
+            if (!keywordsToUse.Trim().IsEmpty())
             {
-                input = input.Substring(0, input.Length - 3);
-                input = input.EndWith("\nPIRACY: ");
+                keywordsToUse = keywordsToUse.RemoveTrailingNewLine();
+
+                input = keywordsToUse.Replace("\n", ", ");
             }
 
-            if (!rtbPiracyKeywords.Text.Trim().IsEmpty())
-                input += rtbPiracyKeywords.Text.Replace("\n", ", ");
+            if (!ignorable.Trim().IsEmpty())
+            {
+                ignorable = ignorable.RemoveTrailingNewLine();
 
-            if (!rtbPiracyIgnorable.Text.Trim().IsEmpty())
-                input += rtbPiracyIgnorable.Text.Replace("\n", ", -").StartWith("-");
+                input += ignorable.Replace("\n", ", -").StartWith(", -");
+            }
 
-            input = input.Substring(0, input.Length - 3);
+            if (!piracy.Trim().IsEmpty() || !igPiracy.Trim().IsEmpty())
+                input = input.EndWith("\nPIRACY: ");
 
-            if (input.IsEmpty() || input == fileKeywords || MessageBox.Show("Unsaved changes in the keywords have been detected. \n Do you want to save the changes?", 
-                "Keyword changes", MessageBoxButtons.YesNo) != DialogResult.Yes)
-                return;
+            if (!piracy.Trim().IsEmpty())
+            {
+                piracy = piracy.RemoveTrailingNewLine();
 
-            SaveKeywords();
+                input += piracy.Replace("\n", ", ");
+            }
+
+            if (!igPiracy.Trim().IsEmpty())
+            {
+                igPiracy = igPiracy.RemoveTrailingNewLine();
+
+                if(!piracy.IsEmpty())
+                    input += ", ";
+
+                input += igPiracy.Replace("\n", ", -").StartWith("-");
+            }
+
+            string trace = (new StackTrace()).GetFrame(1).GetMethod().Name;
+
+            if(trace != "BtnSaveKeywords_Click")
+            {
+                if (input.IsEmpty() || input == fileKeywords || MessageBox.Show("Unsaved changes in the keywords have been detected. \n Do you want to save the changes?",
+                    "Keyword changes", MessageBoxButtons.YesNo) != DialogResult.Yes)
+                    return false;
+                else
+                    return true;
+            }
+
+            return true;
         }
     }
 }

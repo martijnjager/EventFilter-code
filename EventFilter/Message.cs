@@ -12,7 +12,7 @@ namespace EventFilter
     {
         public int Id { get; private set; }
         private readonly IEvent _events;
-        private EventLog[] events;
+        private EventLog[] source;
 
         public EventLog SelectedEvent { get; set; }
         private dynamic selectedEvent;
@@ -30,24 +30,29 @@ namespace EventFilter
             SelectedEvent = log;
         }
 
-        public void Source(EventLog[] events = null) => this.events = events;
-
-        private void btnPrevious_Click(object sender, EventArgs e)
+        public void Source(EventLog[] events = null)
         {
-            SelectedEvent = events != null ?
-                _events.GoToPrevious(SelectedEvent.GetId(), this.events) :
-                _events.GoToPrevious(SelectedEvent.GetId(), null);
+            source = events;
+
+            if (events is EventLog[])
+            {
+                btnNextFound.Visible = false;
+                btnPreviousFound.Visible = false;
+            }
+        }
+
+        private void BtnPrevious_Click(object sender, EventArgs e)
+        {
+            SelectedEvent = _events.GoToPrevious(SelectedEvent.GetId(), source);
 
             UpdateText(SelectedEvent.Log);
 
             UpdateButtons();
         }
 
-        private void btnNext_Click(object sender, EventArgs e)
+        private void BtnNext_Click(object sender, EventArgs e)
         {
-            SelectedEvent = events != null ?
-                _events.GoToNext(SelectedEvent.GetId(), events) :
-                _events.GoToNext(SelectedEvent.GetId(), null);
+            SelectedEvent = _events.GoToNext(SelectedEvent.GetId(), source);
 
             UpdateText(SelectedEvent.Log);
 
@@ -111,11 +116,11 @@ namespace EventFilter
                 Application.Exit();
         }
 
-        private void btnPreviousFound_Click(object sender, EventArgs e)
+        private void BtnPreviousFound_Click(object sender, EventArgs e)
         {
             selectedEvent = _events.GoToPrevious(SelectedEvent.GetId(), null, true);
 
-            if(selectedEvent is KeyValuePair<int, EventLog>)
+            if (selectedEvent is KeyValuePair<int, EventLog>)
             {
                 UpdateText(selectedEvent.Value.Log);
 
@@ -133,11 +138,11 @@ namespace EventFilter
             }
         }
 
-        private void btnNextFound_Click(object sender, EventArgs e)
+        private void BtnNextFound_Click(object sender, EventArgs e)
         {
             selectedEvent = _events.GoToNext(SelectedEvent.GetId(), null, true);
 
-            if(selectedEvent is KeyValuePair<int, EventLog>)
+            if (selectedEvent is KeyValuePair<int, EventLog>)
             {
                 UpdateText(selectedEvent.Value.Log);
 

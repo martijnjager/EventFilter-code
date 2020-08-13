@@ -1,5 +1,6 @@
 ﻿using EventFilter.Events;
 using System.Collections.Generic;
+using System;
 
 namespace EventFilter.Contracts
 {
@@ -7,7 +8,7 @@ namespace EventFilter.Contracts
     {
         //IKeywords Keyword { get; }
 
-        List<EventLog> FilteredEvents { get; }
+        List<Tuple<int, EventLog>> GetFilteredEvents();
 
         void Filter();
 

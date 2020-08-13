@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.Contracts;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -11,21 +12,23 @@ namespace EventFilter
 {
     public partial class Piracy : Form
     {
-        private DataTable EventTable;
-        private List<EventLog> logs;
+        private readonly DataTable EventTable;
+        private readonly List<EventLog> logs;
         private DataGridView dataGridView1;
-        private IEvent events;
+        private readonly IEvent events;
 
         public Piracy(IEvent events, List<EventLog> logs)
         {
             InitializeComponent();
             this.events = events;
             this.logs = logs;
-            this.EventTable = new DataTable();
-            this.EventTable.Columns.Add("Date");
-            this.EventTable.Columns.Add("Description");
-            this.EventTable.Columns.Add("ID");
+            EventTable = new DataTable();
+            EventTable.Columns.Add("Date");
+            EventTable.Columns.Add("Description");
+            EventTable.Columns.Add("ID");
+
             AddToTable(logs);
+            
             dataGridView1.DataSource = EventTable;
             dataGridView1.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
         }
@@ -37,7 +40,7 @@ namespace EventFilter
 
         private void Piracy_SizeChanged(object sender, EventArgs e)
         {
-            this.dataGridView1.Size = new Size(this.Width, this.Height);
+            dataGridView1.Size = new Size(Width, Height);
         }
 
         private void Piracy_KeyDown(object sender, KeyEventArgs e)
@@ -50,11 +53,11 @@ namespace EventFilter
                 Helper.CopyToClipboard(dataGridView1.Rows);
         }
 
-        private void dataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        private void DataGridView1_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0)
                 return;
-            DataRow row = this.EventTable.Rows[e.RowIndex];
+            DataRow row = EventTable.Rows[e.RowIndex];
             Helper.Report(row.ToString());
             string str = row.ItemArray[2].ToString();
             EventLog log = events.FindEvent(str.ToInt());
@@ -65,7 +68,7 @@ namespace EventFilter
                 {
                     Message message = (Message)openForm;
                     message.Use(log);
-                    message.Source(this.logs.ToArray());
+                    message.Source(logs.ToArray());
                     Helper.Report("\n\nCalling event id: " + log.Id);
                     Helper.Report("Output: \n" + log.ToString());
                     message.Show();
@@ -74,11 +77,17 @@ namespace EventFilter
             }
 
             Message message1 = new Message(events);
-            message1.Source(this.logs.ToArray());
+            message1.Source(logs.ToArray());
             message1.Use(log);
             Helper.Report("\n\nCalling event id: " + log.Id);
             Helper.Report("Output: \n" + log.ToString());
             message1.Show();
+        }
+
+        private void Piracy_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            EventTable.Dispose();
+            dataGridView1.Dispose();
         }
     }
 }

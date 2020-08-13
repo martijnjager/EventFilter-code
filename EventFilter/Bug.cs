@@ -3,19 +3,22 @@ using EventFilter.Filesystem;
 using EventFilter.Keywords;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.IO;
 
 namespace EventFilter
 {
     public static class Bug
     {
-        public static string Exception;
+        private static string Exception;
 
         public static string GetPath { get; } = Bootstrap.CurrentLocation + "\\bugs\\";
 
+        public static string GetExceptionMessage() => Exception;
+
         public static void CreateReport(string bugText)
         {
-            if (Event.GetInstance().FileLocation.Exists && Keyword.GetInstance().GetAllKeywords() == "")
+            if (Event.GetInstance().FileLocation.Exists && Keyword.GetInstance().GetAllKeywords().IsEmpty())
             {
                 Messages.NoLogSaved();
 
@@ -59,27 +62,13 @@ namespace EventFilter
                     createdFiles++;
                 }
 
-                if (bugreport != "")
-                {
-                    string bugReport = bugreport.Replace("\n", "\r\n");
+                string bugReport = bugreport.Replace("\n", "\r\n");
 
-                    File.WriteAllText(GetPath + "problemReport.txt", bugReport);
-                    createdFiles++;
-                }
+                File.WriteAllText(GetPath + "problemReport.txt", bugReport);
+                createdFiles++;
 
-                if (!string.IsNullOrEmpty(Keyword.GetInstance().GetAllKeywords()))
+                if (!Keyword.GetInstance().GetAllKeywords().IsEmpty())
                 {
-                    /**
-                     * TODO: create a structure for the keywords to save like the following
-                     * from file
-                     *  -
-                     *  -
-                     *  
-                     * from user
-                     *  -
-                     *  -
-                     *  -
-                     */
                     File.WriteAllText(GetPath + @"Keywords.txt", Keyword.GetInstance().GetAllKeywords());
                     createdFiles++;
                 }

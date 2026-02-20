@@ -16,7 +16,6 @@ namespace EventFilter.Events
         /// <returns>List of non-duplicate events</returns>
         public void Filter()
         {
-            //List<string> tags = new List<string>();
             List<Tuple<int, EventLog>> e = new List<Tuple<int, EventLog>>();
 
             foreach (EventLog eventlog in GetFoundEvents())
@@ -113,8 +112,6 @@ namespace EventFilter.Events
 
                 worker.ReportProgress(progress, data);
             }
-
-            //string s = Helper.Form.lblResultCount.Text.Substring(14, Helper.Form.lblResultCount.Text.Length - 1);
 
             worker.ReportProgress(progress++, "Resultcount: " + events.GetFoundEvents().Count + "\t, After filtering: " + (events.GetFilteredEvents().Count - 1));
         }

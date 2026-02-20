@@ -1,4 +1,5 @@
 ﻿using EventFilter.Contracts;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.IO;
@@ -6,17 +7,29 @@ using System.Linq;
 
 namespace EventFilter.Events
 {
-    public partial class Event : IEventIndex
+    public sealed class Indexer : IIndexer
     {
+        private List<EventLog> MappedEvents { get; set; }
+
+        private List<string> RawEvents { get; set; }
+
+        public Indexer()
+        {
+            RawEvents = new List<string>();
+            MappedEvents = new List<EventLog>();
+        }
+
         /// <summary>
         /// Index log so we know what it contains
         /// </summary>
-        public void MapEvents()
+        public Tuple<List<EventLog>, List<string>> Map()
         {
-            if (FileLocation.Extension == ".evtx")
+            if (Event.FileLocation.Extension== ".evtx")
                 CreateFromEventViewer();
             else
                 CreateFromText();
+
+            return new Tuple<List<EventLog>, List<string>>(MappedEvents, RawEvents);
         }
 
         /// <summary>
@@ -24,27 +37,78 @@ namespace EventFilter.Events
         /// </summary>
         private void CreateFromEventViewer()
         {
-            using (EventLogReader reader = new EventLogReader(FileLocation.FullName, PathType.FilePath))
+            using (EventLogReader reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
             {
                 EventRecord record;
                 int counter = 0;
-                Events = new List<string>();
+                RawEvents = new List<string>();
                 HashSet<string> array = new HashSet<string>();
 
                 while ((record = reader.ReadEvent()) != null)
                 {
-                    string @event = CreateEventText(record, ref counter);
+                    string @event = this.CreateEventText(record, ref counter);
 
-                    AddToIndex(array, @event);
+                    this.AddToIndex(array, @event);
                 }
             }
         }
 
-        private static string CreateEventText(EventRecord record, ref int counter)
+        private static string GetDescription(List<string> Event)
         {
-            string task = !record.TaskDisplayName.IsEmpty() ? record.TaskDisplayName : "N/A";
+            string description;
+
+            if (Event.Count - 1 > 12)
+            {
+                int range = Event.Count - 12;
+                description = Arr.ToString(Event.GetRange(12, range), "\r").Replace("Description: ", "").Trim();
+            }
+            else
+                description = Event[12].Replace("Description: ", "").Trim();
+
+            return description;
+        }
+
+        private static List<string> SplitText(string text)
+        {
+            return Arr.ToList(text, "\n");
+        }
+
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="text"></param>
+        private void AddToIndex(HashSet<string> array, string text)
+        {
+            List<string> Event = SplitText(text);
+
+            if (Event.Count < 13)
+                return;
+
+            int index = Event[0].Replace("Event[", "").Replace("]", "").Replace(":", "").ToInt();
+            string description = GetDescription(Event);
+            string date = Event[3].Replace("Date: ", "");
+
+            if (array.Add(date + ", " + description))
+            {
+                EventLog @event = new EventLog
+                {
+                    Id = index.ToString(),
+                    Date = DateTime.Parse(date),
+                    Description = description,
+                    Log = text
+                };
+                MappedEvents.Add(@event);
+            }
+
+            RawEvents.Add(text);
+        }
+
+        private string CreateEventText(EventRecord record, ref int counter)
+        {
+            string task = !string.IsNullOrEmpty(record.TaskDisplayName) ? record.TaskDisplayName : "N/A";
             string user = record.UserId != null ? record.UserId.ToString() : "N/A";
-            string opcode = !record.OpcodeDisplayName.IsEmpty() ? record.OpcodeDisplayName : "N/A";
+            string opcode = !string.IsNullOrEmpty(record.OpcodeDisplayName) ? record.OpcodeDisplayName : "N/A";
             string desc = record.FormatDescription();
 
             string text = "Event[" + counter++ +
@@ -63,30 +127,22 @@ namespace EventFilter.Events
             return text;
         }
 
-        private void InitProp()
-        {
-            Eventlogs = new List<EventLog>();
-            PiracyEvents = new List<EventLog>();
-        }
-
         /// <summary>
         /// Create eventlog from location
         /// </summary>
         /// <returns></returns>
         private void CreateFromText()
         {
-            string[] lines = File.ReadAllLines(FileLocation.FullName, Encodings.CurrentEncoding);
+            string[] lines = File.ReadAllLines(Event.FileLocation.FullName, Encodings.CurrentEncoding);
 
-            Events = new List<string>();
-            Eventlogs = new List<EventLog>();
+            RawEvents = new List<string>();
+            MappedEvents = new List<EventLog>();
 
             MakeEvents(lines.ToArray());
         }
 
         private void MakeEvents(string[] EventArray)
         {
-            InitProp();
-
             for (int i = 0; i < EventArray.Length; i++)
             {
                 if (EventArray[0].Contains("Event["))
@@ -144,6 +200,6 @@ namespace EventFilter.Events
             }
         }
 
-        public bool NoEvents() => Eventlogs.Count == 0;
+        public bool NoEvents() => MappedEvents.Count == 0;
     }
 }

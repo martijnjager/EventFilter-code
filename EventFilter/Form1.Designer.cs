@@ -38,7 +38,6 @@ namespace EventFilter
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.miSelectEventLog = new System.Windows.Forms.ToolStripMenuItem();
             this.miLoadKeywords = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveKeywordsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.eventFilterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportBugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -89,6 +88,8 @@ namespace EventFilter
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.eventFilterBGWorker = new System.ComponentModel.BackgroundWorker();
             this.SearchEventBGWorker = new System.ComponentModel.BackgroundWorker();
+            this.linkLblNextPage = new System.Windows.Forms.LinkLabel();
+            this.linkLblPreviousPage = new System.Windows.Forms.LinkLabel();
             this.menuStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tpEventFilter.SuspendLayout();
@@ -120,7 +121,6 @@ namespace EventFilter
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.miSelectEventLog,
             this.miLoadKeywords,
-            this.saveKeywordsToolStripMenuItem,
             this.aboutToolStripMenuItem1});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
@@ -141,14 +141,6 @@ namespace EventFilter
             this.miLoadKeywords.Size = new System.Drawing.Size(200, 22);
             this.miLoadKeywords.Text = "Load Keywords";
             this.miLoadKeywords.Click += new System.EventHandler(this.MiLoadKeywords_Click);
-            // 
-            // saveKeywordsToolStripMenuItem
-            // 
-            this.saveKeywordsToolStripMenuItem.Name = "saveKeywordsToolStripMenuItem";
-            this.saveKeywordsToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.K)));
-            this.saveKeywordsToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.saveKeywordsToolStripMenuItem.Text = "Save Keywords";
-            this.saveKeywordsToolStripMenuItem.Click += new System.EventHandler(this.MiSaveKeywords_Click);
             // 
             // aboutToolStripMenuItem1
             // 
@@ -257,6 +249,8 @@ namespace EventFilter
             // 
             // tpEventFilter
             // 
+            this.tpEventFilter.Controls.Add(this.linkLblPreviousPage);
+            this.tpEventFilter.Controls.Add(this.linkLblNextPage);
             this.tpEventFilter.Controls.Add(this.cbCheckAll);
             this.tpEventFilter.Controls.Add(this.dataGridView1);
             this.tpEventFilter.Controls.Add(this.linklblPiracy);
@@ -299,6 +293,7 @@ namespace EventFilter
             this.dataGridView1.Size = new System.Drawing.Size(814, 435);
             this.dataGridView1.TabIndex = 16;
             this.dataGridView1.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DataGridView1_CellDoubleClick);
+            this.dataGridView1.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dataGridView1_ColumnHeaderMouseClick);
             // 
             // linklblPiracy
             // 
@@ -327,6 +322,7 @@ namespace EventFilter
             this.clbKeywords.Name = "clbKeywords";
             this.clbKeywords.Size = new System.Drawing.Size(120, 94);
             this.clbKeywords.TabIndex = 12;
+            this.clbKeywords.ItemCheck += new System.Windows.Forms.ItemCheckEventHandler(this.clbKeywords_ItemCheck);
             // 
             // btnResultCleanup
             // 
@@ -599,6 +595,30 @@ namespace EventFilter
             this.rtbResults.TabIndex = 0;
             this.rtbResults.Text = "";
             // 
+            // linkLblNextPage
+            // 
+            this.linkLblNextPage.AutoSize = true;
+            this.linkLblNextPage.Location = new System.Drawing.Point(287, 91);
+            this.linkLblNextPage.Name = "linkLblNextPage";
+            this.linkLblNextPage.Size = new System.Drawing.Size(29, 13);
+            this.linkLblNextPage.TabIndex = 18;
+            this.linkLblNextPage.TabStop = true;
+            this.linkLblNextPage.Text = "Next";
+            this.linkLblNextPage.Visible = false;
+            this.linkLblNextPage.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblNextPage_LinkClicked);
+            // 
+            // linkLblPreviousPage
+            // 
+            this.linkLblPreviousPage.AutoSize = true;
+            this.linkLblPreviousPage.Location = new System.Drawing.Point(233, 91);
+            this.linkLblPreviousPage.Name = "linkLblPreviousPage";
+            this.linkLblPreviousPage.Size = new System.Drawing.Size(48, 13);
+            this.linkLblPreviousPage.TabIndex = 19;
+            this.linkLblPreviousPage.TabStop = true;
+            this.linkLblPreviousPage.Text = "Previous";
+            this.linkLblPreviousPage.Visible = false;
+            this.linkLblPreviousPage.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLblPreviousPage_LinkClicked);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -639,7 +659,6 @@ namespace EventFilter
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem1;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.ToolStripMenuItem eventFilterToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem saveKeywordsToolStripMenuItem;
         private System.Windows.Forms.SaveFileDialog saveFileDialog1;
         private System.Windows.Forms.ToolStripMenuItem reportBugToolStripMenuItem;
         private System.Windows.Forms.TabPage tpBugReport;
@@ -692,6 +711,8 @@ namespace EventFilter
         private System.Windows.Forms.Label label2;
         public DataGridView dataGridView1;
         private CheckBox cbCheckAll;
+        public LinkLabel linkLblPreviousPage;
+        public LinkLabel linkLblNextPage;
         //private DataGridViewTextBoxColumn columnDate;
         //private DataGridViewTextBoxColumn columnDescription;
         //private DataGridViewTextBoxColumn columnId;

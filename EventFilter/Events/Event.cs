@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace EventFilter.Events
 {
-    public sealed partial class Event : IEvent
+    public partial class Event : IEvent
     {
         /// <summary>
         /// Instance of the class
@@ -17,8 +17,6 @@ namespace EventFilter.Events
         /// Stores all events filtered on duplicates
         /// </summary>
         private List<Tuple<int, EventLog>> FilteredEvents { get; set; }
-
-        public List<EventLog> PiracyEvents { get; private set; }
 
         /// <summary>
         /// Instance of the Keywords class
@@ -33,12 +31,12 @@ namespace EventFilter.Events
         /// <summary>
         /// Stores information about the file being used
         /// </summary>
-        public FileInfo FileLocation { get; private set; }
+        public static FileInfo FileLocation { get; private set; }
 
         /// <summary>
         /// Stores all events
         /// </summary>
-        public List<string> Events { get; set; }
+        public List<string> RawEvents { get; private set; }
 
         /// <summary>
         /// Stores all events, using the EventLogs struct allows the app to search/filter easier
@@ -46,22 +44,28 @@ namespace EventFilter.Events
         public List<EventLog> Eventlogs { get; private set; }
 
         /// <summary>
-        /// Property ensures that the list items are unique 
+        /// Ensure the list items are unique 
         /// No duplicate entries can be added
         /// </summary>
         private HashSet<string[]> ListItem { get; }
 
-        public int EventCounterForKeywords { get; set; }
+        public int CountableCounted { get; set; }
 
         /// <summary>
         /// Private access point
         /// </summary>
         private Event(IKeywords keywords)
         {
-            PiracyEvents = new List<EventLog>();
             ListItem = new HashSet<string[]>();
             Eventlogs = new List<EventLog>();
             Keyword = keywords;
+        }
+
+        public Event(List<EventLog> events, List<string> rawEvents)
+        {
+            _event = new Event(Keywords.Keyword.GetInstance());
+            _event.Eventlogs = events;
+            _event.RawEvents = rawEvents;
         }
 
         /// <summary>
@@ -76,6 +80,17 @@ namespace EventFilter.Events
         }
 
         public List<Tuple<int, EventLog>> GetFilteredEvents() => FilteredEvents;
+
+        public List<EventLog> GetFilteredEventsForTable()
+        {
+            List<EventLog> filtered = new List<EventLog>();
+
+            foreach (var x in FilteredEvents)
+            {
+                filtered.Add(x.Item2);
+            }
+            return filtered;
+        }
 
 
         /// <summary>
@@ -103,57 +118,6 @@ namespace EventFilter.Events
         }
 
         public FileInfo GetLocation() => FileLocation;
-
-        /// <summary>
-        /// Check Keywords on valid Operators
-        /// </summary>
-        public IEvent IsCountOperatorUsed()
-        {
-            //string text = Arr.ToString(Keywords.AvailableOperators, "|");
-
-            //foreach(string key in Keywords.Items)
-            //{
-            //    if(Regex.IsMatch(key, @"^(" + text +" )"))
-            //    {
-            //        Keywords.AddOperator(key);
-            //    }
-            //}
-
-            Count();
-
-            return this;
-        }
-
-        /// <summary>
-        /// Count how many times the given keyword is present in the log
-        /// </summary>
-        private void Count()
-        {
-            string keyword = Keyword.KeywordToCount;
-
-            if (!keyword.IsEmpty())
-                EventCounterForKeywords = Count(keyword.Replace("count:", ""));
-        }
-
-        /// <summary>
-        /// Count how many times a value is present
-        /// </summary>
-        /// <param name="value">value to Search for</param>
-        /// <returns>string Count of value</returns>
-        private int Count(string value)
-        {
-            int count = 0;
-
-            foreach (EventLog e in Eventlogs)
-            {
-                if (e.Log.IndexOf(value, StringComparison.OrdinalIgnoreCase) != -1)
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
 
         /// <summary>
         /// Skip current event and get Next event
@@ -284,7 +248,7 @@ namespace EventFilter.Events
             {
                 foundItems.Add(new EventLog()
                 {
-                    Date = x[0],
+                    Date = DateTime.Parse(x[0]),
                     Description = x[1],
                     Id = x[2],
                     Log = Eventlogs[x[2].ToInt()].Log
@@ -292,6 +256,24 @@ namespace EventFilter.Events
             }
 
             return foundItems;
+        }
+
+        public bool HasEvents() => Eventlogs.Count > 0;
+
+        public bool HasPiracyEvents()
+        {
+            return Eventlogs.Any(x => x.IsPiracyEvent);
+        }
+
+        /// <summary>
+        /// Indexes the events from the input file
+        /// </summary>
+        public void Index()
+        {
+            IIndexer indexer = new Indexer();
+            Tuple<List<EventLog>, List<string>>  results = indexer.Map();
+            this.Eventlogs = results.Item1;
+            this.RawEvents = results.Item2;
         }
     }
 }

@@ -286,3 +286,22 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+
+# Project-specific build output and temporary files
+EventFilter/bin/
+EventFilter/obj/
+EventFilter/*.exe
+EventFilter/*.pdb
+EventFilter/*.cache
+EventFilter/*.user
+EventFilter/*.suo
+EventFilter/keywords.txt
+
+EventFilter.Tests/bin/
+EventFilter.Tests/obj/
+
+# Ignore Visual Studio and build artifacts in subfolders
+**/bin/
+**/obj/
+
+# End of file

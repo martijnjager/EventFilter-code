@@ -8,7 +8,7 @@ using System;
 
 namespace EventFilter.Events
 {
-    public partial class Event : IFilterEvents
+    public partial class Event: IFilterEvents
     {
         /// <summary>
         /// Filter duplicate events 
@@ -19,11 +19,19 @@ namespace EventFilter.Events
             //List<string> tags = new List<string>();
             List<Tuple<int, EventLog>> e = new List<Tuple<int, EventLog>>();
 
-            foreach(EventLog eventlog in GetFoundEvents())
+            foreach (EventLog eventlog in GetFoundEvents())
             {
-                if(!e.IncreaseCountIfAlreadyInList(eventlog))
-                    e.Add(new Tuple<int, EventLog>(1, 
-                        new EventLog() { Id = eventlog.Id, Date = eventlog.Date, Description = eventlog.Description, Log = eventlog.Log }));
+                if (!e.IncreaseCountIfDescriptionExists(eventlog))
+                {
+                    e.Add(new Tuple<int, EventLog>(1, new EventLog()
+                    {
+                        Id = eventlog.Id,
+                        Date = eventlog.Date,
+                        Description = eventlog.Description,
+                        Log = eventlog.Log
+                    }));
+                }
+
             }
 
             FilteredEvents = e;
@@ -55,10 +63,10 @@ namespace EventFilter.Events
             EventLog end = new EventLog();
 
             // Get the first match with DateStart
-            if (!Keyword.DateStart.IsEmpty())
+            if (Keyword.DateStart > DateTime.MinValue)
                 start = FindClosestMatchingEvent(Keyword.DateStart);
             // Get the first match with DateEnd
-            if (!Keyword.DateEnd.IsEmpty())
+            if (Keyword.DateEnd > DateTime.MinValue)
                 end = FindClosestMatchingEvent(Keyword.DateEnd);
 
             if (start.Id == null && end.Id != null)
@@ -97,7 +105,7 @@ namespace EventFilter.Events
             {
                 string[] data =
                 {
-                    GetInstance().GetFilteredEvents()[progress].Item2.Date,
+                    events.GetFilteredEvents()[progress].Item2.Date.ToString(),
                     events.GetFilteredEvents()[progress].Item2.Description,
                     events.GetFilteredEvents()[progress].Item2.Id,
                     events.GetFilteredEvents()[progress].Item1.ToString()
@@ -115,68 +123,75 @@ namespace EventFilter.Events
         {
             if (e.ProgressPercentage == 0)
             {
-                SearchEvent.EventTable = new DataTable();
-                SearchEvent.EventTable.Columns.Add("Date");
-                SearchEvent.EventTable.Columns.Add("Description");
-                SearchEvent.EventTable.Columns.Add("ID");
-                SearchEvent.EventTable.Columns.Add("Count");
-
-                Helper.Form.dataGridView1.DataSource = SearchEvent.EventTable;
+                Searcher.EventTable = new PaginationDataTable(1000, true);
+                Searcher.EventTable.Columns.Add("Date");
+                Searcher.EventTable.Columns.Add("Description");
+                Searcher.EventTable.Columns.Add("ID", typeof(int));
+                Searcher.EventTable.Columns.Add("Count");
             }
 
             if (!e.UserState.ToString().Contains("Resultcount:"))
             {
-                // Cast the e.userstate as an IEnumerable to be able to cast it as an object where we can select what we need and convert it to an array
+                // Cast the e.userstate as an IEnumerable to be able to cast it as an object
+                // where we can select what we need and convert it to an array
                 string[] items = ((IEnumerable)e.UserState).Cast<object>().Select(x => x.ToString()).ToArray();
 
                 if (items.Length <= 1) return;
 
                 for (int i = 0; i < items.Length; i++)
+                {
                     items[i] = items[i].Trim('{').Trim('}');
+                }
 
-                SearchEvent.EventTable.Rows.Add(items);
+                Searcher.EventTable.Add(items);
             }
-            else
-                Helper.SetResultCount(e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}'));
         }
 
-        private EventLog FindClosestMatchingEvent(string eventDate)
+        private EventLog FindClosestMatchingEvent(DateTime eventDate)
         {
-            SortedList<long, EventLog> data = new SortedList<long, EventLog>();
-            EventLog? eventLog = null;
+            EventLog eventLog = Eventlogs.First();
+            long minDiff = long.MaxValue;
 
-            Eventlogs.ForEach(e =>
+            foreach (var e in Eventlogs)
             {
-                if (e.Date.Contains(eventDate))
+                if (e.Date.Equals(eventDate))
+                {
                     eventLog = e;
+                    break;
+                }
 
-                long result = eventDate.ToDate().Ticks - e.Date.ToDate().Ticks;
+                long diff = Math.Abs(eventDate.Ticks - e.Date.Ticks);
 
-                if (!data.ContainsKey(result))
-                    data.Add(result, e);
-            });
+                if (diff < minDiff)
+                {
+                    minDiff = diff;
+                    eventLog = e;
+                }
+            }
 
-            return eventLog is EventLog log ? log : data.First().Value;
+            return eventLog;
         }
 
         private dynamic FindClosestMatchingEventById(List<EventLog> foundEvents, int id, bool min = false)
         {
-            SortedList<int, EventLog> data = new SortedList<int, EventLog>();
+            EventLog closestEvent = Eventlogs.First();
+            int closestIndex = -1;
 
             for (int i = 0; i < foundEvents.Count; i++)
             {
                 var e = foundEvents[i];
 
-                if (min)
-                    if (e.GetId() < id)
-                        data.Add(i, e);
-
-                if (!min)
-                    if (e.GetId() > id)
-                        data.Add(i, e);
+                if ((min && e.GetId() < id) || (!min && e.GetId() > id))
+                {
+                    if ((min && e.GetId() > closestEvent.GetId()) || (!min && e.GetId() < closestEvent.GetId()))
+                    {
+                        closestEvent = e;
+                        closestIndex = i;
+                    }
+                }
             }
 
-            return min ? data.Last() : data.First();
+            return new KeyValuePair<int, EventLog>(closestIndex, closestEvent);
         }
     }
 }

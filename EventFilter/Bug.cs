@@ -18,7 +18,7 @@ namespace EventFilter
 
         public static void CreateReport(string bugText)
         {
-            if (Event.GetInstance().FileLocation.Exists && Keyword.GetInstance().GetAllKeywords().IsEmpty())
+            if (Event.FileLocation.Exists && Keyword.GetInstance().AllKeywordsToString().IsEmpty())
             {
                 Messages.NoLogSaved();
 
@@ -48,17 +48,17 @@ namespace EventFilter
 
                 int createdFiles = 0;
 
-                if (Event.GetInstance().Events is List<string> && Event.GetInstance().Events.Count > 0)
+                if (Event.GetInstance().Eventlogs is List<string> && Event.GetInstance().Eventlogs.Count > 0)
                 {
                     List<string> log = new List<string>();
 
-                    for (int i = 0; i < Event.GetInstance().Events.Count; i++)
+                    for (int i = 0; i < Event.GetInstance().Eventlogs.Count; i++)
                     {
-                        log.Add(i + " " + Event.GetInstance().Events[i].Replace("\n", "\r\n") + "\r\n");
+                        log.Add(i + " " + Event.GetInstance().Eventlogs[i].Log.Replace("\n", "\r\n") + "\r\n");
                     }
 
                     File.WriteAllText(GetPath + "eventlog-debug.txt", Arr.ToString(log));
-                    File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(Event.GetInstance().Events));
+                    File.WriteAllText(GetPath + "eventlog.txt", Arr.ToString(Event.GetInstance().Eventlogs));
                     createdFiles++;
                 }
 
@@ -67,9 +67,9 @@ namespace EventFilter
                 File.WriteAllText(GetPath + "problemReport.txt", bugReport);
                 createdFiles++;
 
-                if (!Keyword.GetInstance().GetAllKeywords().IsEmpty())
+                if (!Keyword.GetInstance().AllKeywordsToString().IsEmpty())
                 {
-                    File.WriteAllText(GetPath + @"Keywords.txt", Keyword.GetInstance().GetAllKeywords());
+                    File.WriteAllText(GetPath + @"Keywords.txt", Keyword.GetInstance().AllKeywordsToString());
                     createdFiles++;
                 }
 

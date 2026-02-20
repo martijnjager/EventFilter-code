@@ -4,11 +4,14 @@ using EventFilter.Keywords;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace EventFilter
 {
@@ -16,11 +19,7 @@ namespace EventFilter
     {
         private delegate void StartSearch();
 
-        private delegate void SaveKeywords(params string[] input);
-
         private event StartSearch EventSearchEvent;
-
-        private event SaveKeywords saveKeywords;
 
         private readonly IKeywords Keywords;
 
@@ -35,24 +34,24 @@ namespace EventFilter
             try
             {
                 EventSearchEvent += Search;
-                saveKeywords += Helper.SaveKeywords;
+                //saveKeywords += Helper.SaveKeywords;
 
                 Helper.Form = this;
                 dataGridView1.BackgroundColor = BackColor;
                 dataGridView1.ClipboardCopyMode = DataGridViewClipboardCopyMode.Disable;
 
-                // Instantiating
-                Bootstrap.Boot();
-
-                SetBackgroundWorkerProperties();
-
                 Keywords = Keyword.GetInstance();
                 Events = Event.GetInstance();
 
-                rtbKeywordsToUse.Text = Keywords.Items.ToString("\n");
-                rtbIgnorables.Text = Keywords.Ignorable.ToString("\n");
-                rtbPiracyKeywords.Text = Keywords.Piracy.ToString("\n");
-                rtbPiracyIgnorable.Text = Keywords.IgnorablePiracy.ToString("\n");
+                // Instantiating
+                Bootstrap.Boot(clbKeywords);
+
+                SetBackgroundWorkerProperties();
+
+                rtbKeywordsToUse.Text = Keywords.ItemsFile.ToString("\n");
+                rtbIgnorables.Text = Keywords.IgnorableFile.ToString("\n");
+                rtbPiracyKeywords.Text = Keywords.PiracyFile.ToString("\n");
+                rtbPiracyIgnorable.Text = Keywords.IgnorablePiracyFile.ToString("\n");
 
                 currentCheckListState = 1;
             }
@@ -83,7 +82,7 @@ namespace EventFilter
             {
                 Helper.Report("Saving keywords");
 
-                saveKeywords.Invoke(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
+                Keyword.SaveKeywords(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
 
                 //Helper.SaveKeywords(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
             }
@@ -91,7 +90,7 @@ namespace EventFilter
 
         private void LinklblPiracy_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            new Piracy(Events, Events.PiracyEvents).Show();
+            //new Piracy(Events, Events.PiracyEvents).Show();
         }
 
         #region buttons
@@ -104,13 +103,33 @@ namespace EventFilter
         {
             Helper.Report("Start searching events");
 
-            if (Event.GetInstance().FileLocation is FileInfo && Event.GetInstance().FileLocation.FullName != "openFileDialog1")
+            if (Event.FileLocation is FileInfo && Event.FileLocation.FullName != "openFileDialog1")
             {
-                lblSelectedFile.Text = @"Selected file: " + Event.GetInstance().FileLocation.FullName;
+                lblSelectedFile.Text = @"Selected file: " + Event.FileLocation.FullName;
 
                 Helper.Report("Selected log: " + lblSelectedFile.Text);
 
-                Helper.ValidateInput(SearchEventBGWorker, clbKeywords, tbKeywords.Text);
+                if (tbKeywords.Text.IsEmpty() && clbKeywords.CheckedItems.Count == 0)
+                {
+                    if (Messages.VerifyContinueNoInput() == DialogResult.Yes)
+                    {
+                        if (!SearchEventBGWorker.IsBusy)
+                        {
+                            SearchEventBGWorker.RunWorkerAsync();
+                        }
+                    }
+                }
+                else
+                {
+                    if (!SearchEventBGWorker.IsBusy)
+                    {
+                        List<string> items = tbKeywords.Text.Split(' ').ToList();
+
+                        Tuple<List<string>> keywords = new Tuple<List<string>>(items);
+
+                        SearchEventBGWorker.RunWorkerAsync(keywords);
+                    }
+                }
             }
             else
             {
@@ -128,9 +147,23 @@ namespace EventFilter
             if (e.RowIndex < 0)
                 return;
 
-            Events.EventLog text = Event.GetInstance().FindEvent(SearchEvent.EventTable.Rows[e.RowIndex].ItemArray[2].ToString().ToInt());
+            ListSortDirection direction = GetListSortDirection();
 
-            foreach (Form openForm in (ReadOnlyCollectionBase)Application.OpenForms)
+            int eventIndex = 0;
+
+            if (direction == ListSortDirection.Descending)
+            {
+                eventIndex = Searcher.EventTable.Rows.Count - e.RowIndex - 1;
+            }
+            else
+            {
+                eventIndex = e.RowIndex;
+            }
+
+            var data = Searcher.EventTable.Rows[eventIndex].ItemArray[2];
+            Events.EventLog text = Event.GetInstance().FindEvent(data.ToString().ToInt());
+
+            foreach (Form openForm in (ReadOnlyCollectionBase)System.Windows.Forms.Application.OpenForms)
             {
                 if (openForm.Text == "Message")
                 {
@@ -142,18 +175,23 @@ namespace EventFilter
             Helper.Message(new Message(Event.GetInstance()), text);
         }
 
+        private ListSortDirection GetListSortDirection()
+        {
+            return dataGridView1.SortOrder == SortOrder.Ascending ? ListSortDirection.Ascending : ListSortDirection.Descending;
+        }
+
         private void BtnResultCleanup_Click(object sender, EventArgs e)
         {
-            if (eventFilterBGWorker.IsBusy == false)
+            if (!eventFilterBGWorker.IsBusy)
             {
                 Helper.Report("Cleaning up results");
 
                 eventFilterBGWorker.RunWorkerAsync();
+
+                return;
             }
-            else
-            {
-                Messages.Filtering();
-            }
+            
+            Messages.Filtering();
         }
         #endregion
 
@@ -161,10 +199,13 @@ namespace EventFilter
         {
             btnSearch.FlatStyle = FlatStyle.Popup;
             btnSearch.FlatAppearance.BorderColor = Color.Wheat;
+
             btnResultCleanup.FlatStyle = FlatStyle.Popup;
             btnResultCleanup.FlatAppearance.BorderColor = Color.Wheat;
+            
             btnCopyClipboard.FlatStyle = FlatStyle.Popup;
             btnCopyClipboard.FlatAppearance.BorderColor = Color.Wheat;
+            
             btnSaveReport.FlatStyle = FlatStyle.Popup;
             btnSaveReport.FlatAppearance.BorderColor = Color.Wheat;
         }
@@ -172,23 +213,21 @@ namespace EventFilter
         private void SetBackgroundWorkerProperties()
         {
             SearchEventBGWorker.WorkerReportsProgress = true;
-            SearchEventBGWorker.DoWork += EventFilter.Events.SearchEvent.Search;
-            SearchEventBGWorker.ProgressChanged += EventFilter.Events.SearchEvent.SearchEventBGWorker_ProgressChanged;
-            SearchEventBGWorker.RunWorkerCompleted += EventFilter.Events.SearchEvent.SearchEventBGWorker_RunWorkerCompleted;
+            SearchEventBGWorker.DoWork += Searcher.Search;
+            SearchEventBGWorker.ProgressChanged += Searcher.SearchEventBGWorker_ProgressChanged;
+            SearchEventBGWorker.ProgressChanged += UpdateResultsSearcher;
+
+            SearchEventBGWorker.RunWorkerCompleted += Searcher.SearchEventBGWorker_RunWorkerCompleted;
+            SearchEventBGWorker.RunWorkerCompleted += UpdateUIFinishSearch;
 
             eventFilterBGWorker.WorkerReportsProgress = true;
             eventFilterBGWorker.DoWork += Event.EventFilterBGWorker_DoWork;
             eventFilterBGWorker.ProgressChanged += Event.EventFilterBGWorker_ProgressChanged;
+            eventFilterBGWorker.ProgressChanged += UpdateResultsEventFilter;
+            eventFilterBGWorker.RunWorkerCompleted += UpdateUIFinishFilter;
         }
 
         #region MenuItems
-        private void MiSaveKeywords_Click(object sender, EventArgs e)
-        {
-            Helper.Report("Start saving Keywords");
-            saveFileDialog1.ShowDialog();
-            Keywords.SaveKeywords(saveFileDialog1.FileName, tbKeywords.Text);
-        }
-
         private void MiSelectEventlog_Click(object sender, EventArgs e)
         {
             Helper.Report("Loading event logs");
@@ -206,14 +245,14 @@ namespace EventFilter
                     Events.SetLocation(openFileDialog1.FileName);
             }
 
-            if (string.IsNullOrEmpty(Events.FileLocation.FullName))
+            if (string.IsNullOrEmpty(Event.FileLocation.FullName))
             {
                 Messages.NoLogFound();
             }
 
-            Helper.Report("Event log location: " + Events.FileLocation.FullName);
+            Helper.Report("Event log location: " + Event.FileLocation.FullName);
 
-            lblSelectedFile.Text = "Selected file: " + Events.FileLocation.FullName;
+            lblSelectedFile.Text = "Selected file: " + Event.FileLocation.FullName;
         }
 
         private void MiLoadKeywords_Click(object sender, EventArgs e)
@@ -225,12 +264,12 @@ namespace EventFilter
 
             Helper.Report("Keywords to use location: " + keyLoc);
 
-            Keywords.LoadFromLocation(keyLoc).Into(clbKeywords);
+            Keywords.LoadFromLocation(keyLoc).AddInto(clbKeywords);
         }
 
         private void MiAbout_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Name: \t\t EventFilter\nDeveloper: \t axe0\nVersion: \t\t 1.0.1\nDate: \t\t 12 Sept 2020", "About app", MessageBoxButtons.OK);
+            MessageBox.Show("Name: \t\t EventFilter\nDeveloper: \t axe0\nVersion: \t\t 1.0.1\nDate: \t\t 13 Sept 2020", "About app", MessageBoxButtons.OK);
         }
 
         private void MiEventFilter_Click(object sender, EventArgs e)
@@ -378,7 +417,7 @@ namespace EventFilter
             {
                 Helper.Report("Saving keywords");
 
-                saveKeywords.Invoke(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
+                Keyword.SaveKeywords(new[] { rtbKeywordsToUse.Text, rtbIgnorables.Text, rtbPiracyKeywords.Text, rtbPiracyIgnorable.Text });
             }
         }
         #endregion
@@ -406,46 +445,31 @@ namespace EventFilter
             if (File.Exists(Keyword.FileLocation))
                 fileKeywords = string.Join("\n", File.ReadAllLines(Keyword.FileLocation));
 
-            string keywordsToUse = rtbKeywordsToUse.Text;
-            string ignorable = rtbIgnorables.Text;
-            string piracy = rtbPiracyKeywords.Text;
-            string igPiracy = rtbPiracyIgnorable.Text;
+            string keywordsToUse = rtbKeywordsToUse.Text.RemoveTrailingNewLine();
+            string ignorable = rtbIgnorables.Text.RemoveTrailingNewLine();
+            string piracy = rtbPiracyKeywords.Text.RemoveTrailingNewLine();
+            string igPiracy = rtbPiracyIgnorable.Text.RemoveTrailingNewLine();
+            string trace = (new StackTrace()).GetFrame(1).GetMethod().Name;
 
             if (!keywordsToUse.Trim().IsEmpty())
-            {
-                keywordsToUse = keywordsToUse.RemoveTrailingNewLine();
-
                 input = keywordsToUse.Replace("\n", ", ");
-            }
 
             if (!ignorable.Trim().IsEmpty())
-            {
-                ignorable = ignorable.RemoveTrailingNewLine();
-
                 input += ignorable.Replace("\n", ", -").StartWith(", -");
-            }
 
             if (!piracy.Trim().IsEmpty() || !igPiracy.Trim().IsEmpty())
                 input = input.EndWith("\nPIRACY: ");
 
             if (!piracy.Trim().IsEmpty())
-            {
-                piracy = piracy.RemoveTrailingNewLine();
-
                 input += piracy.Replace("\n", ", ");
-            }
 
             if (!igPiracy.Trim().IsEmpty())
             {
-                igPiracy = igPiracy.RemoveTrailingNewLine();
-
                 if(!piracy.IsEmpty())
                     input += ", ";
 
                 input += igPiracy.Replace("\n", ", -").StartWith("-");
             }
-
-            string trace = (new StackTrace()).GetFrame(1).GetMethod().Name;
 
             if(trace != "BtnSaveKeywords_Click")
             {
@@ -457,6 +481,144 @@ namespace EventFilter
             }
 
             return true;
+        }
+
+        private void dataGridView1_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+
+        }
+
+        private void clbKeywords_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            string keyword = clbKeywords.Items[e.Index].ToString();
+
+            Keywords.Select(keyword, e.NewValue == CheckState.Checked);
+        }
+
+        private void UpdateResultsSearcher(object sender, ProgressChangedEventArgs e)
+        {
+            if (e.ProgressPercentage == 0)
+            {
+                dataGridView1.DataSource = Searcher.EventTable;
+                Searcher.EventTable.UpdateText += EventTable_UpdateText;
+            }
+
+            string text = e.UserState.ToString();
+            string state = text.Substring(0, e.UserState.ToString().IndexOf(": ", StringComparison.Ordinal));
+
+            switch (state)
+            {
+                case "Time":
+                    lblTime.Text = text.Replace("Time: ", "") + "s";
+                    break;
+
+                case "Piracy":
+                    lblKMS.Text = text.Replace("Piracy:", "");
+                    lblKMS.ForeColor = Color.Red;
+                    break;
+
+                case "Counter":
+                    lblResultCount.Text = "Events found: " + Searcher.EventTable.GetPagingInfo();// text.Replace("Counter: ", "");
+                    break;
+
+                case "Log":
+                    rtbBugReport.AppendText(text.Replace("Log: ", ""));
+                    break;
+            }
+        }
+
+        private void UpdateUIFinishSearch(object sender, RunWorkerCompletedEventArgs e)
+        {
+            if (Events.HasPiracyEvents())
+            {
+                linklblPiracy.Visible = true;
+                lblKMS.Visible = true;
+            }
+            else
+            {
+                lblKMS.Visible = false;
+                linklblPiracy.Visible = false;
+            }
+
+            if (Searcher.EventTable.HasNextPage())
+            {
+                linkLblNextPage.Visible = true;
+            }
+            else
+            {
+                linkLblNextPage.Visible = false;
+            }
+
+            if (Searcher.EventTable.HasPreviousPage())
+            {
+                linkLblPreviousPage.Visible = true;
+            }
+            else
+            {
+                linkLblPreviousPage.Visible = false;
+            }
+        }
+
+        private void UpdateUIFinishFilter(object sender, RunWorkerCompletedEventArgs e)
+        {
+            UpdatePagingButtons();
+        }
+
+        private void UpdatePagingButtons()
+        {
+            if (Searcher.EventTable.HasNextPage())
+            {
+                linkLblNextPage.Visible = true;
+            }
+            else
+            {
+                linkLblNextPage.Visible = false;
+            }
+
+            if (Searcher.EventTable.HasPreviousPage())
+            {
+                linkLblPreviousPage.Visible = true;
+            }
+            else
+            {
+                linkLblPreviousPage.Visible = false;
+            }
+        }
+
+        private void UpdateResultsEventFilter(object sender, ProgressChangedEventArgs e)
+        {
+            if (e.ProgressPercentage == 0)
+            {
+                dataGridView1.DataSource = Searcher.EventTable;
+            }
+
+            if (e.UserState.ToString().Contains("Resultcount:"))
+            {
+                lblResultCount.Text = e.UserState.ToString().Replace("Resultcount: ", "").Trim('{').Trim('}');
+            }
+        }
+
+        private void EventTable_UpdateText(string text)
+        {
+            lblResultCount.Text = "Events found: " + text;
+
+            UpdatePagingButtons();
+        }
+
+        private void linkLblPreviousPage_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (Searcher.EventTable.HasPreviousPage())
+            {
+                Searcher.EventTable.PreviousPage();
+            }
+        }
+
+        private void linkLblNextPage_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (Searcher.EventTable.HasNextPage())
+            {
+                Searcher.EventTable.NextPage();
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using EventFilter.Contracts;
+using EventFilter.Events;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -29,8 +31,9 @@ namespace EventFilter.Filesystem
 
             if (files.Count >= 2)
             {
+                IIndexer indexer = new Indexer();
                 string filename = files.First();
-                string[] fileContent = Events.Event.GetInstance().PrepareForMultipleLogs(files);
+                string[] fileContent = indexer.PrepareForMultipleLogs(files);
 
                 Move(ref filename, fileContent);
 

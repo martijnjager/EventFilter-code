@@ -12,7 +12,7 @@ namespace EventFilter
 {
     public class Bootstrap
     {
-        private const string EventFile = @"\eventlog.txt";
+        private const string DefaultEventFile = @"\eventlog.txt";
 
         private readonly List<string> _alternatives;
 
@@ -24,9 +24,9 @@ namespace EventFilter
         private static IEvent Events;
         private static IKeywords Keywords;
 
-        public static bool AreFilesFound = false;
+        //public static bool FilesFound = false;
 
-        private Bootstrap()
+        private Bootstrap(CheckedListBox checkedListBox)
         {
             _alternatives = new List<string>
             {
@@ -39,24 +39,24 @@ namespace EventFilter
 
             InitProps();
 
-            LoadFiles();
+            LoadFiles(checkedListBox);
         }
 
-        public static Bootstrap Boot()
+        public static Bootstrap Boot(CheckedListBox checkedListBox)
         {
             lock (Lock)
             {
-                return Instance ?? (Instance = new Bootstrap());
+                return Instance ?? (Instance = new Bootstrap(checkedListBox));
             }
         }
 
-        private void LoadFiles()
+        private void LoadFiles(CheckedListBox checkedListBox)
         {
             try
             {
-                LoadKeywordLocation();
+                LoadKeywordLocation(checkedListBox);
 
-                LoadEventlocation();
+                SetEventlocation();
 
                 LogFilesFound();
             }
@@ -70,29 +70,35 @@ namespace EventFilter
             }
         }
 
-        public static void LoadKeywordLocation()
+        public static void LoadKeywordLocation(CheckedListBox checkedListBox)
         {
             if (!File.Exists(Keyword.FileLocation)) return;
 
-            Keywords.LoadFromLocation().Into(Helper.Form.clbKeywords);
+            Keywords.LoadFromLocation().AddInto(checkedListBox);
         }
 
-        private void LoadEventlocation()
+        private void SetEventlocation()
         {
-            if (!File.Exists(CurrentLocation + EventFile))
+            if (!File.Exists(CurrentLocation + DefaultEventFile))
             {
                 string alternative = GetAlternativeLogs();
 
                 if (!alternative.IsEmpty())
+                {
                     Events.SetLocation(alternative);
+                }
                 else
                 {
                     if (Directory.Exists(Zip.ExtractLocation) && Directory.GetFiles(Zip.ExtractLocation).Length > 0)
+                    {
                         Events.SetLocation(Directory.GetFiles(Zip.ExtractLocation)[0]);
+                    }
                 }
             }
             else
-                Events.SetLocation(CurrentLocation + EventFile);
+            {
+                Events.SetLocation(CurrentLocation + DefaultEventFile);
+            }
         }
 
         private string GetAlternativeLogs()
@@ -112,21 +118,21 @@ namespace EventFilter
         {
             SetDefaultEncoding();
 
-            if (Keywords.GetAllKeywords().IsEmpty())
+            if (!Keywords.KeywordsLoaded)
                 Helper.Report("No Keywords.txt found");
             else
-                Helper.Report("Load Keywords from " + Keyword.FileLocation);
+                Helper.Report("Loaded Keywords from " + Keyword.FileLocation);
 
-            if (Event.GetInstance().FileLocation is FileInfo)
+            if (Event.FileLocation is FileInfo)
             {
-                Helper.Report("Load event log from " + Events.FileLocation.FullName);
-                Helper.Form.lblSelectedFile.Text = "Selected file: " + Events.FileLocation.FullName;
+                Helper.Report("Load event log from " + Event.FileLocation.FullName);
+                Helper.Form.lblSelectedFile.Text = "Selected file: " + Event.FileLocation.FullName;
 
-                AreFilesFound = true;
+                //FilesFound = true;
             }
             else
             {
-                AreFilesFound = false;
+                //FilesFound = false;
 
                 Helper.Report("No eventlog found");
                 Helper.Form.lblSelectedFile.Text = Properties.Resources.NoLogFound;
@@ -135,14 +141,22 @@ namespace EventFilter
 
         private static void SetDefaultEncoding()
         {
-            foreach (ToolStripMenuItem encoding in (from object items in Helper.Form.Utf8.Owner.Items let encoding = items as ToolStripMenuItem where encoding != null select encoding))
+            foreach (ToolStripMenuItem encoding in (
+                from object items 
+                in Helper.Form.Utf8.Owner.Items 
+                let encoding = items as ToolStripMenuItem 
+                where encoding != null 
+                select encoding)
+            )
+            {
                 Encodings.EncodingOptions.Add(encoding);
+            }
 
             Encodings.CurrentEncoding = Encoding.Default;
             Helper.Form.EncodingDefault.Text = Encodings.CurrentEncoding.BodyName;
             Helper.Form.EncodingDefault.Checked = true;
 
-            Helper.Report("Encoding set to" + Encoding.Default);
+            Helper.Report("Encoding set to" + Encoding.Default.EncodingName);
         }
 
         private static void InitProps()

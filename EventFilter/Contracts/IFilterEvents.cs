@@ -10,6 +10,8 @@ namespace EventFilter.Contracts
 
         List<Tuple<int, EventLog>> GetFilteredEvents();
 
+        List<EventLog> GetFilteredEventsForTable();
+
         void Filter();
 
         EventLog FindEvent(int id);

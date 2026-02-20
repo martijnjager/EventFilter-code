@@ -4,28 +4,28 @@ using System.IO;
 
 namespace EventFilter.Contracts
 {
-    public interface IEvent : IFilterEvents, IEventIndex, IFindKeywords
+    public interface IEvent : IFilterEvents, IFindKeywords
     {
-        void SetLocation(string location);
-
-        List<EventLog> PiracyEvents { get; }
-
-        //IKeywords Keyword { get; }
+        int EventIdentifier { get; set; }
 
         List<EventLog> Eventlogs { get; }
 
-        //List<string[]> Entries { get; }
+        void SetLocation(string location);
 
-        FileInfo FileLocation { get; }
-
-        int EventCounterForKeywords { get; set; }
-
-        IEvent IsCountOperatorUsed();
+        int CountableCounted { get; set; }
 
         bool CanAddListItem(string[] item);
 
-        //IEvent SetKeywordInstance(IKeywords keyword);
-
         List<EventLog> GetFoundEvents();
+
+        dynamic GoToNext(int curId, EventLog[] logs = null, bool useFoundEvents = false);
+
+        dynamic GoToPrevious(int curId, EventLog[] logs = null, bool useFoundEvents = false);
+
+        bool HasEvents();
+
+        bool HasPiracyEvents();
+
+        void Index();
     }
 }

@@ -27,14 +27,14 @@ namespace EventFilter
 
         private static string CollectionToString(dynamic array, string delimater = "")
         {
-            string x = string.Empty;
+            var sb = new System.Text.StringBuilder();
             foreach (string y in array)
             {
-                x += y;
-                x += delimater;
+                sb.Append(y);
+                sb.Append(delimater);
             }
 
-            return x;
+            return sb.ToString();
         }
 
         public static string[] Trim(this string[] array)

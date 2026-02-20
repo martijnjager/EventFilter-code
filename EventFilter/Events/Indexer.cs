@@ -33,7 +33,7 @@ namespace EventFilter.Events
         }
 
         /// <summary>
-        /// Improved event reading logic with strict error handling.
+        /// Improved event reading logic with robust error handling.
         /// </summary>
         private void CreateFromEventViewer()
         {
@@ -41,18 +41,59 @@ namespace EventFilter.Events
             HashSet<string> uniqueEvents = new HashSet<string>();
             int counter = 0;
 
-            // Strict error handling: exceptions will propagate up.
-            // This is required for testing/validation to ensure no errors are hidden.
-            using (var reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
+            try
             {
-                EventRecord record;
-                while ((record = reader.ReadEvent()) != null)
+                using (var reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
                 {
-                    using (record)
+                    EventRecord record = null;
+                    bool reading = true;
+
+                    while (reading)
                     {
-                        ProcessEventRecord(record, ref counter, uniqueEvents);
+                        try
+                        {
+                            record = reader.ReadEvent();
+                        }
+                        catch (EventLogException ex)
+                        {
+                            // If reading fails (e.g., corrupt log), notify the user visibly
+                            // and stop reading, but allow partial results.
+                            Messages.ProblemOccured("reading the event log (file corrupted). Showing partial results: " + ex.Message);
+                            reading = false;
+                            continue;
+                        }
+                        catch (Exception)
+                        {
+                            // Other critical errors should propagate
+                            throw;
+                        }
+
+                        if (record == null)
+                        {
+                            reading = false;
+                            continue;
+                        }
+
+                        using (record)
+                        {
+                            try
+                            {
+                                ProcessEventRecord(record, ref counter, uniqueEvents);
+                            }
+                            catch (Exception)
+                            {
+                                // Exceptions during processing (e.g. metadata) should propagate
+                                // as requested by user for strict testing.
+                                throw;
+                            }
+                        }
                     }
                 }
+            }
+            catch (Exception)
+            {
+                // Critical initialization errors propagate
+                throw;
             }
         }
 

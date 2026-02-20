@@ -54,19 +54,37 @@ namespace EventFilter.Events
                             {
                                 ProcessEventRecord(record, ref counter, uniqueEvents);
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
-                                // Log or ignore problematic records to prevent full crash
-                                // For now, we continue to the next record
+                                // Instead of silently ignoring, add an error event
+                                // This ensures the user is aware of the corruption or issue
+                                var errorLog = new EventLog
+                                {
+                                    Id = counter.ToString(),
+                                    Date = DateTime.Now,
+                                    Description = "Error processing event record: " + ex.Message,
+                                    Log = "Error: " + ex.ToString()
+                                };
+                                MappedEvents.Add(errorLog);
+                                RawEvents.Add(errorLog.Log);
+                                counter++;
                             }
                         }
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Handle critical errors (e.g., file not found, access denied)
-                // In a real scenario, we might want to log this or notify the user
+                // Handle critical errors (e.g., file not found, access denied) by adding a system error event
+                var criticalError = new EventLog
+                {
+                    Id = "-1",
+                    Date = DateTime.Now,
+                    Description = "Critical error reading event log file: " + ex.Message,
+                    Log = "Critical Error: " + ex.ToString()
+                };
+                MappedEvents.Add(criticalError);
+                RawEvents.Add(criticalError.Log);
             }
         }
 
@@ -129,10 +147,10 @@ namespace EventFilter.Events
             {
                 return record.FormatDescription() ?? "No description found.";
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Fallback if message table is missing or corrupt
-                return "Description not found or unreadable.";
+                // Fallback if message table is missing or corrupt, but include the error message
+                return "Description not found or unreadable. Error: " + ex.Message;
             }
         }
 

@@ -77,15 +77,7 @@ namespace EventFilter.Events
             }
             catch (Exception error)
             {
-                // Ensure exceptions (including those re-thrown from Indexer) are caught and reported
                 worker.ReportProgress(0, "Log: Error: " + error.Message);
-                // We cannot use UI method Messages.ProblemOccured here safely if it uses MessageBox on non-UI thread,
-                // but Messages implementation suggests it uses MessageBox which should be on UI thread.
-                // However, worker.ReportProgress is safe.
-                // Let's assume Messages handles UI thread marshalling or is called after completion?
-                // Actually Messages.ProblemOccured shows MessageBox. Showing MessageBox from BackgroundWorker is bad practice but works (blocks worker).
-                // But better to let the worker fail gracefully?
-                // The original code had it here.
                 Messages.ProblemOccured("searching events for keywords: " + error.Message);
             }
         }

@@ -33,7 +33,7 @@ namespace EventFilter.Events
         }
 
         /// <summary>
-        /// Improved event reading logic with robust error handling.
+        /// Improved event reading logic with strict error handling.
         /// </summary>
         private void CreateFromEventViewer()
         {
@@ -41,73 +41,18 @@ namespace EventFilter.Events
             HashSet<string> uniqueEvents = new HashSet<string>();
             int counter = 0;
 
-            try
+            // Strict error handling: exceptions will propagate up.
+            // This is required for testing/validation to ensure no errors are hidden.
+            using (var reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
             {
-                using (var reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
+                EventRecord record;
+                while ((record = reader.ReadEvent()) != null)
                 {
-                    EventRecord record = null;
-                    bool reading = true;
-
-                    while (reading)
+                    using (record)
                     {
-                        try
-                        {
-                            record = reader.ReadEvent();
-                        }
-                        catch (Exception ex)
-                        {
-                            // If reading fails (e.g., corrupt log), log the error and stop reading,
-                            // but allow processing of previously read events.
-                            var errorLog = new EventLog
-                            {
-                                Id = counter.ToString(),
-                                Date = DateTime.Now,
-                                Description = "Error reading event log (partial read): " + ex.Message,
-                                Log = "Error: " + ex.ToString()
-                            };
-                            MappedEvents.Add(errorLog);
-                            RawEvents.Add(errorLog.Log);
-                            reading = false; // Stop the loop
-                            continue;
-                        }
-
-                        if (record == null)
-                        {
-                            reading = false;
-                            continue;
-                        }
-
-                        using (record)
-                        {
-                            try
-                            {
-                                ProcessEventRecord(record, ref counter, uniqueEvents);
-                            }
-                            catch (Exception ex)
-                            {
-                                // Instead of silently ignoring or crashing the entire process,
-                                // add an error event. This ensures the user is aware of the
-                                // corruption or issue without stopping processing of valid records.
-                                var errorLog = new EventLog
-                                {
-                                    Id = counter.ToString(),
-                                    Date = DateTime.Now,
-                                    Description = "Error processing event record: " + ex.Message,
-                                    Log = "Error: " + ex.ToString()
-                                };
-                                MappedEvents.Add(errorLog);
-                                RawEvents.Add(errorLog.Log);
-                                counter++;
-                            }
-                        }
+                        ProcessEventRecord(record, ref counter, uniqueEvents);
                     }
                 }
-            }
-            catch (Exception)
-            {
-                // Critical file-level errors (e.g., file not found, access denied)
-                // should stop the process and be reported up the stack.
-                throw;
             }
         }
 
@@ -146,8 +91,17 @@ namespace EventFilter.Events
             // Add to RawEvents (as per original logic)
             RawEvents.Add(text);
 
-            // Deduplication logic: Date + ", " + Description
-            string uniqueKey = dateStr + ", " + description;
+            // Deduplication logic: Use RecordId if available for better uniqueness
+            string uniqueKey;
+            if (record.RecordId.HasValue)
+            {
+                uniqueKey = record.RecordId.Value.ToString() + "_" + logName;
+            }
+            else
+            {
+                // Fallback to Date + Description if RecordId is missing
+                uniqueKey = dateStr + ", " + description;
+            }
 
             if (uniqueEvents.Add(uniqueKey))
             {
@@ -166,42 +120,24 @@ namespace EventFilter.Events
 
         private string GetEventDescription(EventRecord record)
         {
-            try
+            string description = record.FormatDescription();
+            if (!string.IsNullOrEmpty(description))
             {
-                // Try to format the description using the provider's message table.
-                // This often fails if the event log comes from another machine (missing provider metadata).
-                string description = record.FormatDescription();
-                if (!string.IsNullOrEmpty(description))
-                {
-                    return description;
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore formatting errors and fall back to raw properties
+                return description;
             }
 
-            // Fallback: If formatting fails, reconstruct the description from raw event data.
-            // The essential information (strings, numbers) is usually present in the Properties list.
-            try
+            // If it's null but didn't throw, we can try properties.
+            if (record.Properties != null && record.Properties.Count > 0)
             {
-                if (record.Properties != null && record.Properties.Count > 0)
-                {
-                    List<string> props = new List<string>();
-                    foreach (var prop in record.Properties)
-                    {
-                        if (prop != null)
-                        {
-                            props.Add(prop.ToString());
-                        }
-                    }
-                    return "Event Data (No Metadata): " + string.Join(", ", props);
-                }
-            }
-            catch (Exception)
-            {
-                // If even accessing properties fails, return a generic error.
-                return "Description not found.";
+                 List<string> props = new List<string>();
+                 foreach (var prop in record.Properties)
+                 {
+                     if (prop != null)
+                     {
+                         props.Add(prop.ToString());
+                     }
+                 }
+                 return "Event Data (No Metadata): " + string.Join(", ", props);
             }
 
             return "No description found.";
@@ -209,16 +145,8 @@ namespace EventFilter.Events
 
         private string GetSafeProperty(Func<string> getter, string fallback)
         {
-            try
-            {
-                string val = getter();
-                return string.IsNullOrEmpty(val) ? fallback : val;
-            }
-            catch
-            {
-                // Return fallback for non-critical property access errors
-                return fallback;
-            }
+            string val = getter();
+            return string.IsNullOrEmpty(val) ? fallback : val;
         }
 
         private static string GetDescription(List<string> Event)

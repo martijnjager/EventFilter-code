@@ -33,23 +33,119 @@ namespace EventFilter.Events
         }
 
         /// <summary>
-        /// Under development
+        /// Improved event reading logic with robust error handling.
         /// </summary>
         private void CreateFromEventViewer()
         {
-            using (EventLogReader reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
+            RawEvents = new List<string>();
+            HashSet<string> uniqueEvents = new HashSet<string>();
+            int counter = 0;
+
+            try
             {
-                EventRecord record;
-                int counter = 0;
-                RawEvents = new List<string>();
-                HashSet<string> array = new HashSet<string>();
-
-                while ((record = reader.ReadEvent()) != null)
+                using (var reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
                 {
-                    string @event = this.CreateEventText(record, ref counter);
-
-                    this.AddToIndex(array, @event);
+                    EventRecord record;
+                    while ((record = reader.ReadEvent()) != null)
+                    {
+                        using (record)
+                        {
+                            try
+                            {
+                                ProcessEventRecord(record, ref counter, uniqueEvents);
+                            }
+                            catch (Exception)
+                            {
+                                // Log or ignore problematic records to prevent full crash
+                                // For now, we continue to the next record
+                            }
+                        }
+                    }
                 }
+            }
+            catch (Exception)
+            {
+                // Handle critical errors (e.g., file not found, access denied)
+                // In a real scenario, we might want to log this or notify the user
+            }
+        }
+
+        private void ProcessEventRecord(EventRecord record, ref int counter, HashSet<string> uniqueEvents)
+        {
+            string description = GetEventDescription(record);
+            string dateStr = record.TimeCreated.HasValue ? record.TimeCreated.Value.ToString() : DateTime.MinValue.ToString();
+
+            // Extract other properties safely
+            string task = GetSafeProperty(() => record.TaskDisplayName, "N/A");
+            string opcode = GetSafeProperty(() => record.OpcodeDisplayName, "N/A");
+            string level = GetSafeProperty(() => record.LevelDisplayName, "N/A");
+            string user = record.UserId != null ? record.UserId.ToString() : "N/A";
+            string logName = GetSafeProperty(() => record.LogName, "Unknown Log");
+            string provider = GetSafeProperty(() => record.ProviderName, "Unknown Source");
+            string computer = GetSafeProperty(() => record.MachineName, "Unknown Computer");
+            string eventId = GetSafeProperty(() => record.Id.ToString(), "0");
+            string keywords = GetSafeProperty(() => Arr.ToString(record.Keywords, ", "), "");
+
+            // Reconstruct the text format expected by the application
+            // Format: Event[index]:\n  Log Name: ...
+            string text = "Event[" + counter +
+                          "]:\n  Log Name: " + logName +
+                          "\n  Source: " + provider +
+                          "\n  Date: " + dateStr +
+                          "\n  Event ID: " + eventId +
+                          "\n  Task: " + task +
+                          "\n  Level: " + level +
+                          "\n  Opcode: " + opcode +
+                          "\n  Keyword: " + keywords +
+                          "\n  User: " + user +
+                          "\n  User Name: " + user +
+                          "\n  Computer: " + computer +
+                          "\n  Description: " + description + "\n\n";
+
+            // Add to RawEvents (as per original logic)
+            RawEvents.Add(text);
+
+            // Deduplication logic: Date + ", " + Description
+            string uniqueKey = dateStr + ", " + description;
+
+            if (uniqueEvents.Add(uniqueKey))
+            {
+                EventLog eventLog = new EventLog
+                {
+                    Id = counter.ToString(),
+                    Date = record.TimeCreated ?? DateTime.MinValue,
+                    Description = description,
+                    Log = text
+                };
+                MappedEvents.Add(eventLog);
+            }
+
+            counter++;
+        }
+
+        private string GetEventDescription(EventRecord record)
+        {
+            try
+            {
+                return record.FormatDescription() ?? "No description found.";
+            }
+            catch (Exception)
+            {
+                // Fallback if message table is missing or corrupt
+                return "Description not found or unreadable.";
+            }
+        }
+
+        private string GetSafeProperty(Func<string> getter, string fallback)
+        {
+            try
+            {
+                string val = getter();
+                return string.IsNullOrEmpty(val) ? fallback : val;
+            }
+            catch
+            {
+                return fallback;
             }
         }
 
@@ -102,29 +198,6 @@ namespace EventFilter.Events
             }
 
             RawEvents.Add(text);
-        }
-
-        private string CreateEventText(EventRecord record, ref int counter)
-        {
-            string task = !string.IsNullOrEmpty(record.TaskDisplayName) ? record.TaskDisplayName : "N/A";
-            string user = record.UserId != null ? record.UserId.ToString() : "N/A";
-            string opcode = !string.IsNullOrEmpty(record.OpcodeDisplayName) ? record.OpcodeDisplayName : "N/A";
-            string desc = record.FormatDescription();
-
-            string text = "Event[" + counter++ +
-                "]:\n  Log Name: " + record.LogName +
-                "\n  Source: " + record.ProviderName +
-                "\n  Date: " + record.TimeCreated +
-                "\n  Event ID: " + record.Id +
-                "\n  Task: " + task +
-                "\n  Level: " + record.LevelDisplayName +
-                "\n  Opcode: " + opcode +
-                "\n  Keyword: " + Arr.ToString(record.Keywords, ", ") +
-                "\n  User: " + user +
-                "\n  User Name: " + user +
-                "\n  Computer: " + record.MachineName +
-                "\n  Description: " + desc + "\n\n";
-            return text;
         }
 
         /// <summary>

@@ -56,8 +56,9 @@ namespace EventFilter.Events
                             }
                             catch (Exception ex)
                             {
-                                // Instead of silently ignoring, add an error event
-                                // This ensures the user is aware of the corruption or issue
+                                // Instead of silently ignoring or crashing the entire process,
+                                // add an error event. This ensures the user is aware of the
+                                // corruption or issue without stopping processing of valid records.
                                 var errorLog = new EventLog
                                 {
                                     Id = counter.ToString(),
@@ -73,18 +74,11 @@ namespace EventFilter.Events
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Handle critical errors (e.g., file not found, access denied) by adding a system error event
-                var criticalError = new EventLog
-                {
-                    Id = "-1",
-                    Date = DateTime.Now,
-                    Description = "Critical error reading event log file: " + ex.Message,
-                    Log = "Critical Error: " + ex.ToString()
-                };
-                MappedEvents.Add(criticalError);
-                RawEvents.Add(criticalError.Log);
+                // Critical file-level errors (e.g., file not found, access denied)
+                // should stop the process and be reported up the stack.
+                throw;
             }
         }
 
@@ -149,7 +143,7 @@ namespace EventFilter.Events
             }
             catch (Exception ex)
             {
-                // Fallback if message table is missing or corrupt, but include the error message
+                // Fallback for missing provider metadata, but include the error message
                 return "Description not found or unreadable. Error: " + ex.Message;
             }
         }
@@ -163,6 +157,7 @@ namespace EventFilter.Events
             }
             catch
             {
+                // Return fallback for non-critical property access errors
                 return fallback;
             }
         }

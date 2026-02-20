@@ -45,9 +45,38 @@ namespace EventFilter.Events
             {
                 using (var reader = new EventLogReader(Event.FileLocation.FullName, PathType.FilePath))
                 {
-                    EventRecord record;
-                    while ((record = reader.ReadEvent()) != null)
+                    EventRecord record = null;
+                    bool reading = true;
+
+                    while (reading)
                     {
+                        try
+                        {
+                            record = reader.ReadEvent();
+                        }
+                        catch (Exception ex)
+                        {
+                            // If reading fails (e.g., corrupt log), log the error and stop reading,
+                            // but allow processing of previously read events.
+                            var errorLog = new EventLog
+                            {
+                                Id = counter.ToString(),
+                                Date = DateTime.Now,
+                                Description = "Error reading event log (partial read): " + ex.Message,
+                                Log = "Error: " + ex.ToString()
+                            };
+                            MappedEvents.Add(errorLog);
+                            RawEvents.Add(errorLog.Log);
+                            reading = false; // Stop the loop
+                            continue;
+                        }
+
+                        if (record == null)
+                        {
+                            reading = false;
+                            continue;
+                        }
+
                         using (record)
                         {
                             try

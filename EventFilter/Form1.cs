@@ -27,6 +27,8 @@ namespace EventFilter
 
         private int currentCheckListState;
 
+        private string originalSearchText;
+
         public Form1()
         {
             InitializeComponent();
@@ -115,6 +117,10 @@ namespace EventFilter
                     {
                         if (!SearchEventBGWorker.IsBusy)
                         {
+                            originalSearchText = btnSearch.Text;
+                            btnSearch.Text = "Searching...";
+                            btnSearch.Enabled = false;
+                            Cursor = Cursors.WaitCursor;
                             SearchEventBGWorker.RunWorkerAsync();
                         }
                     }
@@ -123,6 +129,11 @@ namespace EventFilter
                 {
                     if (!SearchEventBGWorker.IsBusy)
                     {
+                        originalSearchText = btnSearch.Text;
+                        btnSearch.Text = "Searching...";
+                        btnSearch.Enabled = false;
+                        Cursor = Cursors.WaitCursor;
+
                         List<string> items = tbKeywords.Text.Split(' ').ToList();
 
                         Tuple<List<string>> keywords = new Tuple<List<string>>(items);
@@ -529,6 +540,10 @@ namespace EventFilter
 
         private void UpdateUIFinishSearch(object sender, RunWorkerCompletedEventArgs e)
         {
+            btnSearch.Text = originalSearchText ?? "Search";
+            btnSearch.Enabled = true;
+            Cursor = Cursors.Default;
+
             if (Events.HasPiracyEvents())
             {
                 linklblPiracy.Visible = true;

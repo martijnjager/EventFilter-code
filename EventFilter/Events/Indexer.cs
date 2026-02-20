@@ -168,13 +168,43 @@ namespace EventFilter.Events
         {
             try
             {
-                return record.FormatDescription() ?? "No description found.";
+                // Try to format the description using the provider's message table.
+                // This often fails if the event log comes from another machine (missing provider metadata).
+                string description = record.FormatDescription();
+                if (!string.IsNullOrEmpty(description))
+                {
+                    return description;
+                }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Fallback for missing provider metadata, but include the error message
-                return "Description not found or unreadable. Error: " + ex.Message;
+                // Ignore formatting errors and fall back to raw properties
             }
+
+            // Fallback: If formatting fails, reconstruct the description from raw event data.
+            // The essential information (strings, numbers) is usually present in the Properties list.
+            try
+            {
+                if (record.Properties != null && record.Properties.Count > 0)
+                {
+                    List<string> props = new List<string>();
+                    foreach (var prop in record.Properties)
+                    {
+                        if (prop != null)
+                        {
+                            props.Add(prop.ToString());
+                        }
+                    }
+                    return "Event Data (No Metadata): " + string.Join(", ", props);
+                }
+            }
+            catch (Exception)
+            {
+                // If even accessing properties fails, return a generic error.
+                return "Description not found.";
+            }
+
+            return "No description found.";
         }
 
         private string GetSafeProperty(Func<string> getter, string fallback)

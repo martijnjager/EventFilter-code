@@ -167,13 +167,20 @@ namespace EventFilter.Events
 
         private string GetEventDescription(EventRecord record)
         {
-            string description = record.FormatDescription();
-            if (!string.IsNullOrEmpty(description))
+            try
             {
-                return description;
+                string description = record.FormatDescription();
+                if (!string.IsNullOrEmpty(description))
+                {
+                    return description;
+                }
+            }
+            catch (Exception)
+            {
+                // Fallback to raw data if formatting fails
             }
 
-            // If it's null but didn't throw, we can try properties.
+            // If it's null or threw an exception, we can try properties.
             if (record.Properties != null && record.Properties.Count > 0)
             {
                  List<string> props = new List<string>();
@@ -192,8 +199,15 @@ namespace EventFilter.Events
 
         private string GetSafeProperty(Func<string> getter, string fallback)
         {
-            string val = getter();
-            return string.IsNullOrEmpty(val) ? fallback : val;
+            try
+            {
+                string val = getter();
+                return string.IsNullOrEmpty(val) ? fallback : val;
+            }
+            catch
+            {
+                return fallback;
+            }
         }
 
         private static string GetDescription(List<string> Event)

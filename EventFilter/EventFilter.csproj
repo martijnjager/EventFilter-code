@@ -91,12 +91,15 @@
     <Compile Include="Encodings.cs" />
     <Compile Include="Events\EventLog.cs" />
     <Compile Include="Events\Events.cs" />
+    <Compile Include="Events\EventViewerFileProcessor.cs" />
+    <Compile Include="Events\EvtxStructureConfigLoader.cs" />
     <Compile Include="Events\Finder.cs" />
     <Compile Include="Events\Filter.cs" />
     <Compile Include="Filesystem\RemoveWithExceptions.cs" />
     <Compile Include="Bug.cs" />
     <Compile Include="Events\Indexer.cs" />
     <Compile Include="Filesystem\Remover.cs" />
+    <Compile Include="Filesystem\TemporaryCopier.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="Keywords\Concerns\ManagesKeywords.cs" />
     <Compile Include="Keywords\Concerns\Type.cs" />
@@ -147,6 +150,23 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="Events\BINXML_PARSER_IMPROVEMENTS.md" />
+    <None Include="Events\BINXML_STRING_TABLE_NL.md" />
+    <None Include="Events\CUSTOM_EVTX_PARSER_README.md" />
+    <None Include="Events\DEBUGGING_RULESENGIN_TRUNCATION.md" />
+    <None Include="Events\DIAGNOSTICS_GUIDE.md" />
+    <None Include="Events\dump_chunk_header.ps1" />
+    <None Include="Events\EVENT_DESCRIPTION_LIMITATION.md" />
+    <None Include="Events\evtx-structure.json" />
+    <None Include="Events\HYBRID_APPROACH_GUIDE.md" />
+    <None Include="Events\MEMORY_OPTIMIZATIONS_NL.md" />
+    <None Include="Events\OFFSET_VARIATION_FIX_NL.md" />
+    <None Include="Events\RULESENGIN_DIAGNOSTIC_SCRIPT.md" />
+    <None Include="Events\STRING_TRUNCATION_FIX.md" />
+    <None Include="Events\TESTING_GUIDE.md" />
+    <None Include="Events\verify_encoding.ps1" />
+    <None Include="Events\XMLDATA_TRUNCATION_CRITICAL_FIX.md" />
+    <None Include="Events\XMLDATA_TRUNCATION_VISUAL.md" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

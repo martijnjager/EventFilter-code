@@ -48,7 +48,7 @@ namespace EventFilter
 
                 int createdFiles = 0;
 
-                if (Event.GetInstance().Eventlogs is List<string> && Event.GetInstance().Eventlogs.Count > 0)
+                if (Event.GetInstance().Eventlogs is List<EventLog> && Event.GetInstance().Eventlogs.Count > 0)
                 {
                     List<string> log = new List<string>();
 

@@ -1,7 +1,6 @@
 ﻿using EventFilter.Contracts;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 
@@ -33,103 +32,50 @@ namespace EventFilter.Events
         }
 
         /// <summary>
-        /// Improved event reading logic with robust error handling using EventLogQuery.
+        /// Improved event reading logic with robust error handling using custom binary parser.
         /// </summary>
         private void CreateFromEventViewer()
         {
             RawEvents = new List<string>();
+            MappedEvents = new List<EventLog>();
             HashSet<string> uniqueEvents = new HashSet<string>();
+            
+            var processor = new EventViewerFileProcessor(Event.FileLocation.FullName);
+            
             int counter = 0;
-
-            try
+            
+            bool success = processor.ProcessEvents((record) =>
             {
-                // Using EventLogQuery can be more stable for certain corrupt files or large datasets.
-                var query = new EventLogQuery(Event.FileLocation.FullName, PathType.FilePath);
-                // Ensure we read from the oldest record first to maintain chronological order if needed,
-                // though default is usually oldest first.
-                // query.ReverseDirection = false;
+                ProcessEvtxEventRecord(record, ref counter, uniqueEvents);
+            });
 
-                using (var reader = new EventLogReader(query))
-                {
-                    EventRecord record = null;
-                    bool reading = true;
-
-                    while (reading)
-                    {
-                        try
-                        {
-                            record = reader.ReadEvent();
-                        }
-                        catch (EventLogException ex)
-                        {
-                            // If reading fails (e.g., corrupt log), notify the user visibly
-                            // and stop reading, but allow partial results.
-                            Messages.ProblemOccured("reading the event log (file corrupted). Showing partial results: " + ex.Message);
-                            reading = false;
-                            continue;
-                        }
-                        catch (Exception)
-                        {
-                            // Other critical errors should propagate
-                            throw;
-                        }
-
-                        if (record == null)
-                        {
-                            reading = false;
-                            continue;
-                        }
-
-                        using (record)
-                        {
-                            try
-                            {
-                                ProcessEventRecord(record, ref counter, uniqueEvents);
-                            }
-                            catch (Exception)
-                            {
-                                // Exceptions during processing (e.g. metadata) should propagate
-                                // as requested by user for strict testing.
-                                throw;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception)
+            if (!success || processor.SuccessfulReads == 0)
             {
-                // Critical initialization errors propagate
-                throw;
+                Messages.ProblemOccured("processing the event log file. No events could be read.");
             }
         }
 
-        private void ProcessEventRecord(EventRecord record, ref int counter, HashSet<string> uniqueEvents)
+        private void ProcessEvtxEventRecord(EvtxEventRecord record, ref int counter, HashSet<string> uniqueEvents)
         {
-            string description = GetEventDescription(record);
-            string dateStr = record.TimeCreated.HasValue ? record.TimeCreated.Value.ToString() : DateTime.MinValue.ToString();
-
-            // Extract other properties safely
-            string task = GetSafeProperty(() => record.TaskDisplayName, "N/A");
-            string opcode = GetSafeProperty(() => record.OpcodeDisplayName, "N/A");
-            string level = GetSafeProperty(() => record.LevelDisplayName, "N/A");
-            string user = record.UserId != null ? record.UserId.ToString() : "N/A";
-            string logName = GetSafeProperty(() => record.LogName, "Unknown Log");
-            string provider = GetSafeProperty(() => record.ProviderName, "Unknown Source");
-            string computer = GetSafeProperty(() => record.MachineName, "Unknown Computer");
-            string eventId = GetSafeProperty(() => record.Id.ToString(), "0");
-            string keywords = GetSafeProperty(() => Arr.ToString(record.Keywords, ", "), "");
+            string description = record.GetDescription();
+            string dateStr = record.TimeCreated.ToString();
+            string level = record.Level ?? "Information";
+            string user = record.UserSid ?? "N/A";
+            string logName = record.Channel ?? "Application";
+            string provider = record.Provider ?? "Unknown Source";
+            string computer = record.Computer ?? "Unknown Computer";
+            string eventId = record.EventId ?? "0";
 
             // Reconstruct the text format expected by the application
-            // Format: Event[index]:\n  Log Name: ...
             string text = "Event[" + counter +
                           "]:\n  Log Name: " + logName +
                           "\n  Source: " + provider +
                           "\n  Date: " + dateStr +
                           "\n  Event ID: " + eventId +
-                          "\n  Task: " + task +
+                          "\n  Task: N/A" +
                           "\n  Level: " + level +
-                          "\n  Opcode: " + opcode +
-                          "\n  Keyword: " + keywords +
+                          "\n  Opcode: N/A" +
+                          "\n  Keyword: " +
                           "\n  User: " + user +
                           "\n  User Name: " + user +
                           "\n  Computer: " + computer +
@@ -138,24 +84,15 @@ namespace EventFilter.Events
             // Add to RawEvents (as per original logic)
             RawEvents.Add(text);
 
-            // Deduplication logic: Use RecordId if available for better uniqueness
-            string uniqueKey;
-            if (record.RecordId.HasValue)
-            {
-                uniqueKey = record.RecordId.Value.ToString() + "_" + logName;
-            }
-            else
-            {
-                // Fallback to Date + Description if RecordId is missing
-                uniqueKey = dateStr + ", " + description;
-            }
+            // Deduplication logic
+            string uniqueKey = record.RecordId.ToString() + "_" + logName;
 
             if (uniqueEvents.Add(uniqueKey))
             {
                 EventLog eventLog = new EventLog
                 {
                     Id = counter.ToString(),
-                    Date = record.TimeCreated ?? DateTime.MinValue,
+                    Date = record.TimeCreated,
                     Description = description,
                     Log = text
                 };
@@ -163,51 +100,6 @@ namespace EventFilter.Events
             }
 
             counter++;
-        }
-
-        private string GetEventDescription(EventRecord record)
-        {
-            try
-            {
-                string description = record.FormatDescription();
-                if (!string.IsNullOrEmpty(description))
-                {
-                    return description;
-                }
-            }
-            catch (Exception)
-            {
-                // Fallback to raw data if formatting fails
-            }
-
-            // If it's null or threw an exception, we can try properties.
-            if (record.Properties != null && record.Properties.Count > 0)
-            {
-                 List<string> props = new List<string>();
-                 foreach (var prop in record.Properties)
-                 {
-                     if (prop != null)
-                     {
-                         props.Add(prop.ToString());
-                     }
-                 }
-                 return "Event Data (No Metadata): " + string.Join(", ", props);
-            }
-
-            return "No description found.";
-        }
-
-        private string GetSafeProperty(Func<string> getter, string fallback)
-        {
-            try
-            {
-                string val = getter();
-                return string.IsNullOrEmpty(val) ? fallback : val;
-            }
-            catch
-            {
-                return fallback;
-            }
         }
 
         private static string GetDescription(List<string> Event)

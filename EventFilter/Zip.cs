@@ -13,8 +13,8 @@ namespace EventFilter
          */
 
 
-        public static List<string> Logs { get; } = new List<string> { "eventlog.txt", "EvtxSysDump.txt", "EvtAppDump.txt", "system-events.txt", ".evtx", "application-events.txt", "pnp-events.txt" };
-        public static string ExtractLocation { get; } = Bootstrap.CurrentLocation + "\\extract";
+        public static List<string> Logs { get; } = new List<string> { "eventlog.txt", "EvtxSysDump.txt", "EvtAppDump.txt", "system-events.txt", "System.evtx", ".evtx", "application-events.txt", "pnp-events.txt" };
+        public static string ExtractLocation { get; } = Bootstrap.CurrentLocation + "extract";
 
         public static void ExtractZip(string zipfile, ref string eventLocation)
         {
@@ -29,7 +29,7 @@ namespace EventFilter
             }
             catch (IOException exception)
             {
-                Messages.NoLogFound();
+                //Messages.NoLogFound();
                 Helper.Report("An error occured during zip extraction: " + exception.Message + "\n" + exception.StackTrace);
             }
             catch (Exception exception)

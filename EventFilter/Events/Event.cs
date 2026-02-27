@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using EventFilter.Filesystem;
 
 namespace EventFilter.Events
 {
@@ -113,7 +114,22 @@ namespace EventFilter.Events
             else
             {
                 if (File.Exists(location))
-                    FileLocation = new FileInfo(location);
+                {
+                    try
+                    {
+                        // Copy the file to a temporary location to avoid issues with:
+                        // - OneDrive file locking/syncing conflicts
+                        // - Corrupted event log files being processed from their original location
+                        FileInfo tempFile = TemporaryCopier.CopyToTemporaryLocation(location);
+                        FileLocation = new FileInfo(location);
+                    }
+                    catch (Exception ex)
+                    {
+                        // If copying to temp fails, try to use the original file
+                        Messages.ProblemOccured("copying event log to temporary location: " + ex.Message);
+                        FileLocation = new FileInfo(location);
+                    }
+                }
             }
         }
 

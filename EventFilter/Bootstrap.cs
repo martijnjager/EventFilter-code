@@ -1,5 +1,6 @@
 ﻿using EventFilter.Contracts;
 using EventFilter.Events;
+using EventFilter.Filesystem;
 using EventFilter.Keywords;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,8 @@ namespace EventFilter
 
         private Bootstrap(CheckedListBox checkedListBox)
         {
+            TemporaryCopier.CreateTemporaryDirectory();
+
             _alternatives = new List<string>
             {
                 "eventlog.txt",

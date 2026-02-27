@@ -31,8 +31,8 @@ namespace EventFilter.Events
         {
             worker = sender as BackgroundWorker;
 
-            //try
-            //{
+            try
+            {
                 /**
                  * Preparations before searching
                  */
@@ -74,12 +74,12 @@ namespace EventFilter.Events
                 Report(4, elapsedTime, ref actionCounter);
 
                 e.Result = foundIds;
-            //}
-            //catch (Exception error)
-            //{
-            //    worker.ReportProgress(0, "Log: Error: " + error.Message);
-            //    Messages.ProblemOccured("searching events for keywords");
-            //}
+            }
+            catch (Exception error)
+            {
+                worker.ReportProgress(0, "Log: Error: " + error.Message);
+                Messages.ProblemOccured("searching events for keywords: " + error.Message);
+            }
         }
 
         private static void PerformSearch(ref int eventsCounted, ref int actionCounter, List<string> foundIds)

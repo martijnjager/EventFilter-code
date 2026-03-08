@@ -7,16 +7,6 @@ namespace EventFilter.Test
     public class BootstrapTest
     {
         [TestMethod()]
-        public void LoadFilesTest()
-        {
-            //Actions.Form = new Form1();
-
-            //var boot = Bootstrap.Boot();
-
-            //Assert.IsTrue(boot.IsBooted);
-        }
-
-        [TestMethod()]
         public void FilesFoundTest()
         {
             Helper.Form = new Form1();

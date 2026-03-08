@@ -62,6 +62,7 @@
     <Compile Include="Events\BootTest.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="Keywords\IndexTest.cs" />
+    <Compile Include="Keywords\Concerns\KeywordTypeTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

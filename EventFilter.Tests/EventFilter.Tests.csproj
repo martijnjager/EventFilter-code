@@ -58,6 +58,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="BugsTest.cs" />
+    <Compile Include="HelperTest.cs" />
     <Compile Include="Events\IndexTest.cs" />
     <Compile Include="Events\BootTest.cs" />
     <Compile Include="FileSystem.cs" />

@@ -42,7 +42,38 @@ namespace EventFilter
         {
             EmptyExtractLocation();
 
-            ZipFile.ExtractToDirectory(zipfile, ExtractLocation);
+            string destinationDirectoryFullPath = Path.GetFullPath(ExtractLocation);
+            if (!destinationDirectoryFullPath.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal))
+            {
+                destinationDirectoryFullPath += Path.DirectorySeparatorChar;
+            }
+
+            using (ZipArchive archive = ZipFile.OpenRead(zipfile))
+            {
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    string destinationPath = Path.GetFullPath(Path.Combine(destinationDirectoryFullPath, entry.FullName));
+
+                    if (!destinationPath.StartsWith(destinationDirectoryFullPath, StringComparison.Ordinal))
+                    {
+                        throw new IOException("Zip Slip detected: " + entry.FullName);
+                    }
+
+                    if (string.IsNullOrEmpty(entry.Name))
+                    {
+                        Directory.CreateDirectory(destinationPath);
+                        continue;
+                    }
+
+                    string directoryPath = Path.GetDirectoryName(destinationPath);
+                    if (directoryPath != null)
+                    {
+                        Directory.CreateDirectory(directoryPath);
+                    }
+
+                    entry.ExtractToFile(destinationPath, false);
+                }
+            }
         }
 
         private static void EmptyExtractLocation()

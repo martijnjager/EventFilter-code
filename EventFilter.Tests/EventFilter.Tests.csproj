@@ -60,6 +60,7 @@
     <Compile Include="BugsTest.cs" />
     <Compile Include="Events\IndexTest.cs" />
     <Compile Include="Events\BootTest.cs" />
+    <Compile Include="Events\FinderTest.cs" />
     <Compile Include="FileSystem.cs" />
     <Compile Include="Keywords\IndexTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
